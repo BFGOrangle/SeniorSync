@@ -1,9 +1,5 @@
-import React from 'react'
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <div>
-      <h1>CRM UI Home page</h1>
-    </div>
-  );
+  redirect('/admin');
 }
