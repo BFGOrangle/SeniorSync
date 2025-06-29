@@ -43,7 +43,7 @@ const navigationItems = [
     title: "Senior Profiles",
     url: "/admin/senior-profiles",
     icon: Users,
-    badge: "Coming Soon",
+    // badge: "Coming Soon",
   },
   {
     title: "Tickets",
