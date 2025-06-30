@@ -6,9 +6,9 @@ import {
   FileText,
   Users,
   Settings,
-  BarChart3,
   HeartHandshake,
   Layout,
+  PlusCircleIcon,
 } from "lucide-react";
 
 import {
@@ -34,21 +34,19 @@ const navigationItems = [
     icon: Layout,
   },
   {
-    title: "Senior Requests",
-    url: "/admin/senior-requests",
-    icon: HeartHandshake,
+    title: "Senior Request Management",
+    url: "/admin/request-management",
+    icon: FileText,
+  },
+  {
+    title: "Create Senior Request",
+    url: "/admin/create-senior-request",
+    icon: PlusCircleIcon,
   },
   {
     title: "Senior Profiles",
     url: "/admin/senior-profiles",
     icon: Users,
-    // badge: "Coming Soon",
-  },
-  {
-    title: "Tickets",
-    url: "/admin/tickets",
-    icon: FileText,
-    // badge: "Coming Soon",
   },
 ];
 
@@ -66,7 +64,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b p-4">
+      <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <HeartHandshake className="h-6 w-6 text-blue-600 shrink-0" />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
@@ -109,8 +107,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <Separator />
 
         <SidebarGroup>
           <SidebarGroupLabel>Administration</SidebarGroupLabel>
