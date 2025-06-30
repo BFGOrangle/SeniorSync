@@ -1,39 +1,42 @@
+
+// Updated Ticket interface that is compatible with both legacy and new backend structure
 export interface Ticket {
-  id: string;
-
-  // Personal Information
-  seniorName: string;
-  phoneNumber: string;
-  email?: string;
-  address: string;
-  emergencyContact: string;
-  emergencyPhone: string;
-
-  // Request Details
-  requestType: string;
-  priority: "low" | "medium" | "high" | "urgent";
+  // Core fields (from backend)
+  id: number;
+  title: string;
   description: string;
+  createdAt: string;
+  updatedAt: string;
+  status: "pending" | "in-progress" | "in-review" | "completed" | "cancelled";
+  priority: "low" | "medium" | "high" | "urgent";
+  
+  // Senior information (from joined data or legacy fields)
+  seniorName?: string;
+  seniorId?: number;
+  phoneNumber?: string;
+  email?: string;
+  address?: string;
+  
+  // Request details
+  requestType?: string; // Maps to requestTypeName from backend
+  requestTypeId?: number;
+  
+  // Staff/Agent information
+  assignee?: string; // Maps to assignedStaffName
+  assignedStaffId?: number;
+  agentName?: string; // Legacy compatibility
+  agentId?: string; // Legacy compatibility
+  
+  // Legacy fields for backward compatibility
+  emergencyContact?: string;
+  emergencyPhone?: string;
   preferredDate?: string;
   preferredTime?: string;
-
-  // Medical Information
   medicalConditions?: string;
   medications?: string;
-  mobilityAssistance: boolean;
-
-  // Agent Information
-  agentName: string;
-  agentId: string;
-
-  // System fields
-  createdAt: string;
-  status: "pending" | "in-progress" | "in-review" | "completed" | "cancelled";
+  mobilityAssistance?: boolean;
   dueDate?: Date;
-
-  // Legacy compatibility for display
-  title?: string;
-  assignee?: string;
-  createdDate?: Date;
+  completedAt?: string;
 }
 
 export type ViewMode = "kanban" | "table";

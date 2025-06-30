@@ -11,7 +11,7 @@ import {
 import { PaginatedResponse } from "@/types/common";
 
 // Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8088';
 const SENIORS_ENDPOINT = `${API_BASE_URL}/api/seniors`;
 
 // Default pagination settings following big tech practices

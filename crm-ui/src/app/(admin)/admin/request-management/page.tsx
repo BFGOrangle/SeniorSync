@@ -4,93 +4,93 @@ import { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { KanbanSquare, List, Loader2, BarChart3 } from "lucide-react";
+import { KanbanSquare, List, Loader2, BarChart3, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { KanbanView } from "@/components/kanban-view";
 import { TableView } from "@/components/table-view";
 import { TicketFilters } from "@/components/ticket-filters";
 import { Ticket, ViewMode, FilterOptions, SortOption } from "@/types/ticket";
-import { mockTickets } from "@/lib/ticket-data";
-import { filterTickets, sortTickets } from "@/lib/ticket-utils";
+import { useRequestManagement } from "@/hooks/use-requests";
 import { useToast } from "@/hooks/use-toast";
+import { TicketUtils } from "@/lib/ticket-conversion";
 
 export default function TicketManagement() {
   const [mounted, setMounted] = useState(false);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [filters, setFilters] = useState<FilterOptions>({});
   const [sort, setSort] = useState<SortOption>({
     field: "createdAt",
     direction: "desc",
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const { toast } = useToast();
 
+  // Use the new request management hook
+  const {
+    requests,
+    loading: isLoading,
+    error,
+    lastUpdated,
+    updateRequest,
+    refresh,
+    filterAndSortRequests,
+    getStatusCounts,
+  } = useRequestManagement();
+
   // Fix hydration error by ensuring client-side rendering
   useEffect(() => {
-    setTickets(mockTickets);
     setMounted(true);
   }, []);
 
+  // Convert enhanced requests to legacy ticket format for existing components
+  const tickets: Ticket[] = useMemo(() => {
+    if (!mounted || !requests) return [];
+    return TicketUtils.enhancedArrayToTicketArray(requests);
+  }, [mounted, requests]);
+
   // Filter and sort tickets based on current state
   const processedTickets = useMemo(() => {
-    if (!mounted) return [];
-    let filtered = filterTickets(tickets, filters);
-    if (viewMode === "table") {
-      filtered = sortTickets(filtered, sort);
-    }
-    return filtered;
-  }, [tickets, filters, sort, viewMode, mounted]);
+    if (!mounted || !tickets) return [];
+    
+    // Convert FilterOptions to the new filter format
+    const newFilters = {
+      priority: filters.priority,
+      status: filters.status,
+      requestType: filters.requestType,
+      assignedStaff: filters.assignee,
+      searchTerm: filters.search,
+    };
+
+    // Convert sort field
+    const sortField = sort.field === 'seniorName' ? 'seniorName' : 
+                     sort.field === 'createdAt' ? 'createdAt' :
+                     sort.field === 'priority' ? 'priority' :
+                     sort.field === 'status' ? 'status' : 'createdAt';
+
+    // Use the enhanced requests for filtering, then convert back to tickets
+    const filteredEnhanced = filterAndSortRequests(newFilters, sortField, sort.direction);
+    
+    // Convert enhanced tickets back to legacy ticket format
+    return TicketUtils.enhancedArrayToTicketArray(filteredEnhanced);
+  }, [tickets, filters, sort, viewMode, mounted, filterAndSortRequests]);
 
   const handleTicketUpdate = async (updatedTicket: Ticket) => {
     try {
-      setIsLoading(true);
+      // Convert ticket back to enhanced request format
+      const enhancedTicket = TicketUtils.ticketToEnhanced(updatedTicket);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setTickets((prev) =>
-        prev.map((ticket) =>
-          ticket.id === updatedTicket.id ? updatedTicket : ticket
-        )
-      );
-
-      toast({
-        title: "Senior request updated",
-        description: `Request ${updatedTicket.id} for ${updatedTicket.seniorName} has been updated successfully.`,
-      });
+      const success = await updateRequest(enhancedTicket);
+      if (!success) {
+        // Error handling is done in the hook
+        return;
+      }
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update senior request. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const getStatusCounts = () => {
-    if (!mounted)
-      return {
-        pending: 0,
-        "in-progress": 0,
-        "in-review": 0,
-        completed: 0,
-        cancelled: 0,
-      };
-
-    const counts = {
-      pending: 0,
-      "in-progress": 0,
-      "in-review": 0,
-      completed: 0,
-      cancelled: 0,
-    };
-    tickets.forEach((ticket) => {
-      counts[ticket.status]++;
-    });
-    return counts;
   };
 
   const statusCounts = getStatusCounts();
@@ -109,14 +109,32 @@ export default function TicketManagement() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading && (!requests || requests.length === 0)) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           <span className="text-gray-600 font-medium">
-            Updating senior requests...
+            Loading senior requests...
           </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="flex items-center gap-2 justify-center mb-4">
+            <span className="text-red-600 font-medium">
+              Error loading requests: {error.errors[0]?.message || 'Unknown error'}
+            </span>
+          </div>
+          <Button onClick={refresh} className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -224,7 +242,7 @@ export default function TicketManagement() {
           <div className="flex items-center gap-4">
             <span className="font-medium">
               Total requests:{" "}
-              <span className="text-gray-900">{tickets.length}</span>
+              <span className="text-gray-900">{requests?.length || 0}</span>
             </span>
             <Separator orientation="vertical" className="h-4" />
             <span className="font-medium">
@@ -234,7 +252,16 @@ export default function TicketManagement() {
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <BarChart3 className="h-4 w-4" />
-            <span>Last updated: {new Date().toLocaleTimeString()}</span>
+            <span>Last updated: {lastUpdated?.toLocaleTimeString() || 'Never'}</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={refresh}
+              disabled={isLoading}
+              className="h-6 px-2 ml-2"
+            >
+              <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
         </div>
       </div>
