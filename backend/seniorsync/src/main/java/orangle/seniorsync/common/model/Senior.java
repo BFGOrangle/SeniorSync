@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 public class Senior {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "senior_id", nullable = false)
+    @Column(name = "id", nullable = false)
     private Long id;
 
     @Column(name = "first_name", nullable = false, length = Integer.MAX_VALUE)

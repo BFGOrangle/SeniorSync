@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record CreateSeniorRequestDto(
         @NotNull Long seniorId,
-        @NotNull Integer requestTypeId,
+        @NotNull Long requestTypeId,
         @NotBlank String title,
         @NotBlank String description,
         @NotNull Short priority
