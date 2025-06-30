@@ -27,7 +27,7 @@ public class RequestAttachment {
     private String fileUrl;
 
     @ColumnDefault("now()")
-    @Column(name = "uploaded_at", nullable = false, insertable = false)
+    @Column(name = "uploaded_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime uploadedAt;
 
 }
