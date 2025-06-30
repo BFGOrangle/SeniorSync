@@ -1,31 +1,29 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo } from "react"
-
+import { useState } from "react"
 import {
-  Plus,
   Search,
   Calendar,
   Phone,
-  Heart,
-  Activity,
+  Mail,
+  MapPin,
   Users,
-  ShipWheelIcon as Wheelchair,
-  Brain,
-  Eye,
-  Ear,
-  Upload,
+  Edit,
+  Trash2,
   Loader2,
+  PlusCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -34,315 +32,276 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-interface Client {
-  id: string
-  fullName: string
-  dateOfBirth: string
-  gender: string
-  contactNumber: string
-  emergencyContactName: string
-  emergencyContactPhone: string
-  medicalConditions: string[]
-  preferredActivities: string[]
-  specialNeeds: string[]
-  joinedDate: Date
-}
+// Import our backend integration with pagination
+import { SeniorDto, SeniorFilterDto } from "@/types/senior"
+import { useSeniorsPaginated, useSeniorForm, useLoadingStates } from "@/hooks/use-seniors"
+import { seniorUtils } from "@/services/senior-api"
 
-const AVAILABLE_ACTIVITIES = [
-  "Tai Chi",
-  "Art Therapy",
-  "Water Aerobics",
-  "Chair Yoga",
-  "Music Therapy",
-  "Gardening",
-  "Dancing",
-  "Walking Group",
-  "Card Games",
-  "Book Club",
-  "Cooking Classes",
-  "Computer Classes",
-  "Crafts",
-  "Meditation",
-  "Strength Training",
-]
+export default function SeniorProfilesPage() {
+  // Backend integration hooks with pagination
+  const {
+    seniors,
+    paginationInfo,
+    loading: seniorsLoading,
+    error: seniorsError,
+    createSenior,
+    updateSenior,
+    deleteSenior,
+    goToPage,
+    changePageSize,
+    applyFilter,
+    clearFilter,
+    applySorting,
+    currentFilter
+  } = useSeniorsPaginated({
+    page: 0,
+    size: 20,
+    sort: ["lastName,asc", "firstName,asc"]
+  });
 
-const COMMON_CONDITIONS = [
-  "Arthritis",
-  "Diabetes",
-  "Hypertension",
-  "Heart Disease",
-  "Osteoporosis",
-  "Dementia",
-  "Parkinson's",
-  "Vision Impairment",
-  "Hearing Impairment",
-  "Mobility Issues",
-]
+  const { setLoading, isLoading } = useLoadingStates();
 
-const SPECIAL_NEEDS = [
-  "Wheelchair Access",
-  "Dementia Care",
-  "Vision Support",
-  "Hearing Support",
-  "Mobility Assistance",
-  "Medication Reminders",
-]
+  // UI state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingSenior, setEditingSenior] = useState<SeniorDto | null>(null);
+  const [deletingSenior, setDeletingSenior] = useState<SeniorDto | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
-const initialClients: Client[] = [
-  {
-    id: "1",
-    fullName: "Margaret Thompson",
-    dateOfBirth: "1945-03-15",
-    gender: "Female",
-    contactNumber: "(555) 123-4567",
-    emergencyContactName: "Sarah Thompson (Daughter)",
-    emergencyContactPhone: "(555) 987-6543",
-    medicalConditions: ["Arthritis", "Hypertension"],
-    preferredActivities: ["Tai Chi", "Art Therapy", "Book Club"],
-    specialNeeds: [],
-    joinedDate: new Date("2024-01-15"),
-  },
-  {
-    id: "2",
-    fullName: "Robert Chen",
-    dateOfBirth: "1938-07-22",
-    gender: "Male",
-    contactNumber: "(555) 234-5678",
-    emergencyContactName: "Michael Chen (Son)",
-    emergencyContactPhone: "(555) 876-5432",
-    medicalConditions: ["Diabetes", "Vision Impairment"],
-    preferredActivities: ["Chair Yoga", "Music Therapy", "Card Games"],
-    specialNeeds: ["Vision Support"],
-    joinedDate: new Date("2024-02-01"),
-  },
-  {
-    id: "3",
-    fullName: "Dorothy Williams",
-    dateOfBirth: "1942-11-08",
-    gender: "Female",
-    contactNumber: "(555) 345-6789",
-    emergencyContactName: "James Williams (Husband)",
-    emergencyContactPhone: "(555) 765-4321",
-    medicalConditions: ["Osteoporosis"],
-    preferredActivities: ["Water Aerobics", "Dancing", "Gardening"],
-    specialNeeds: [],
-    joinedDate: new Date("2024-01-20"),
-  },
-  {
-    id: "4",
-    fullName: "Frank Rodriguez",
-    dateOfBirth: "1935-05-12",
-    gender: "Male",
-    contactNumber: "(555) 456-7890",
-    emergencyContactName: "Maria Rodriguez (Wife)",
-    emergencyContactPhone: "(555) 654-3210",
-    medicalConditions: ["Parkinson's", "Hearing Impairment"],
-    preferredActivities: ["Crafts", "Meditation", "Walking Group"],
-    specialNeeds: ["Mobility Assistance", "Hearing Support"],
-    joinedDate: new Date("2024-03-05"),
-  },
-]
+  // Local filter state (before applying to backend)
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  const [localAgeFilter, setLocalAgeFilter] = useState<string>("all");
 
-const DUMMY_IMPORT_DATA: Omit<Client, "id" | "joinedDate">[] = [
-  {
-    fullName: "Eleanor Martinez",
-    dateOfBirth: "1940-09-14",
-    gender: "Female",
-    contactNumber: "(555) 111-2222",
-    emergencyContactName: "Carlos Martinez (Son)",
-    emergencyContactPhone: "(555) 333-4444",
-    medicalConditions: ["Arthritis", "Diabetes"],
-    preferredActivities: ["Chair Yoga", "Music Therapy", "Crafts"],
-    specialNeeds: ["Mobility Assistance"],
-  },
-  {
-    fullName: "George Patterson",
-    dateOfBirth: "1943-12-03",
-    gender: "Male",
-    contactNumber: "(555) 555-6666",
-    emergencyContactName: "Linda Patterson (Wife)",
-    emergencyContactPhone: "(555) 777-8888",
-    medicalConditions: ["Hypertension", "Heart Disease"],
-    preferredActivities: ["Walking Group", "Card Games", "Book Club"],
-    specialNeeds: [],
-  },
-  {
-    fullName: "Betty Lou Johnson",
-    dateOfBirth: "1936-04-18",
-    gender: "Female",
-    contactNumber: "(555) 999-0000",
-    emergencyContactName: "Robert Johnson (Nephew)",
-    emergencyContactPhone: "(555) 111-3333",
-    medicalConditions: ["Dementia", "Osteoporosis"],
-    preferredActivities: ["Art Therapy", "Music Therapy", "Meditation"],
-    specialNeeds: ["Dementia Care", "Medication Reminders"],
-  },
-  {
-    fullName: "Arthur Kim",
-    dateOfBirth: "1941-08-25",
-    gender: "Male",
-    contactNumber: "(555) 222-4444",
-    emergencyContactName: "Susan Kim (Daughter)",
-    emergencyContactPhone: "(555) 666-7777",
-    medicalConditions: ["Vision Impairment", "Arthritis"],
-    preferredActivities: ["Tai Chi", "Meditation", "Computer Classes"],
-    specialNeeds: ["Vision Support"],
-  },
-  {
-    fullName: "Rose O'Connor",
-    dateOfBirth: "1939-01-30",
-    gender: "Female",
-    contactNumber: "(555) 888-9999",
-    emergencyContactName: "Patrick O'Connor (Son)",
-    emergencyContactPhone: "(555) 000-1111",
-    medicalConditions: ["Hearing Impairment"],
-    preferredActivities: ["Dancing", "Gardening", "Cooking Classes"],
-    specialNeeds: ["Hearing Support"],
-  },
-]
+  // Form hooks
+  const createForm = useSeniorForm();
+  const editForm = useSeniorForm();
 
-export default function ClientsPage() { const [clients, setClients] = useState<Client[]>(initialClients)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedAgeGroup, setSelectedAgeGroup] = useState<string>("all")
-  const [selectedActivity, setSelectedActivity] = useState<string>("all")
-  const [selectedCondition, setSelectedCondition] = useState<string>("all")
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
-
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isImporting, setIsImporting] = useState(false)
-
-  // Form state
-  const [formData, setFormData] = useState({
-    fullName: "",
-    dateOfBirth: "",
-    gender: "",
-    contactNumber: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    medicalConditions: [] as string[],
-    preferredActivities: [] as string[],
-    specialNeeds: [] as string[],
-  })
-
-  // Calculate age from date of birth
-  const calculateAge = (dateOfBirth: string): number => {
-    const today = new Date()
-    const birthDate = new Date(dateOfBirth)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
-  }
-
-  // Get age group for a client
-  const getAgeGroup = (dateOfBirth: string): string => {
-    const age = calculateAge(dateOfBirth)
-    if (age < 60) return "Under 60"
-    if (age < 70) return "60-69"
-    if (age < 80) return "70-79"
-    return "80+"
-  }
-
-  // Filter clients based on search and filters
-  const filteredClients = useMemo(() => {
-    return clients.filter((client) => {
-      const matchesSearch =
-        client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || client.contactNumber.includes(searchTerm)
-
-      const matchesAgeGroup = selectedAgeGroup === "all" || getAgeGroup(client.dateOfBirth) === selectedAgeGroup
-
-      const matchesActivity = selectedActivity === "all" || client.preferredActivities.includes(selectedActivity)
-
-      const matchesCondition = selectedCondition === "all" || client.medicalConditions.includes(selectedCondition)
-
-      return matchesSearch && matchesAgeGroup && matchesActivity && matchesCondition
-    })
-  }, [clients, searchTerm, selectedAgeGroup, selectedActivity, selectedCondition])
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const newClient: Client = {
-      id: Date.now().toString(),
-      ...formData,
-      joinedDate: new Date(),
+  // Apply filters to backend
+  const handleApplyFilters = () => {
+    const filter: SeniorFilterDto = {};
+    
+    if (localSearchTerm.trim()) {
+      if (localSearchTerm.includes('@')) {
+        filter.contactEmail = localSearchTerm.trim();
+      } else if (/^\d/.test(localSearchTerm)) {
+        filter.contactPhone = localSearchTerm.trim();
+      } else {
+        const nameParts = localSearchTerm.trim().split(' ');
+        if (nameParts.length >= 2) {
+          filter.firstName = nameParts[0];
+          filter.lastName = nameParts.slice(1).join(' ');
+        } else {
+          filter.firstName = nameParts[0];
+        }
+      }
     }
 
-    setClients((prev) => [newClient, ...prev])
-    setFormData({
-      fullName: "",
-      dateOfBirth: "",
-      gender: "",
-      contactNumber: "",
-      emergencyContactName: "",
-      emergencyContactPhone: "",
-      medicalConditions: [],
-      preferredActivities: [],
-      specialNeeds: [],
-    })
-    setIsDialogOpen(false)
-  }
-
-  const handleCheckboxChange = (
-    field: "medicalConditions" | "preferredActivities" | "specialNeeds",
-    value: string,
-    checked: boolean,
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: checked ? [...prev[field], value] : prev[field].filter((item) => item !== value),
-    }))
-  }
-
-  const getSpecialNeedsIcon = (need: string) => {
-    switch (need) {
-      case "Wheelchair Access":
-        return <Wheelchair className="h-4 w-4" />
-      case "Dementia Care":
-        return <Brain className="h-4 w-4" />
-      case "Vision Support":
-        return <Eye className="h-4 w-4" />
-      case "Hearing Support":
-        return <Ear className="h-4 w-4" />
-      default:
-        return <Heart className="h-4 w-4" />
+    // Age filter converted to date ranges
+    if (localAgeFilter !== "all") {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      
+      switch (localAgeFilter) {
+        case "under-60":
+          filter.minDateOfBirth = `${currentYear - 59}-01-01`;
+          break;
+        case "60-69":
+          filter.minDateOfBirth = `${currentYear - 69}-01-01`;
+          filter.maxDateOfBirth = `${currentYear - 60}-12-31`;
+          break;
+        case "70-79":
+          filter.minDateOfBirth = `${currentYear - 79}-01-01`;
+          filter.maxDateOfBirth = `${currentYear - 70}-12-31`;
+          break;
+        case "80-plus":
+          filter.maxDateOfBirth = `${currentYear - 80}-12-31`;
+          break;
+      }
     }
+
+    applyFilter(filter);
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setLocalSearchTerm("");
+    setLocalAgeFilter("all");
+    clearFilter();
+  };
+
+  // Handle create senior
+  const handleCreateSenior = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.isValid) return;
+
+    setLoading('create', true);
+    const result = await createSenior(createForm.toCreateDto());
+    setLoading('create', false);
+
+    if (result) {
+      createForm.reset();
+      setIsCreateDialogOpen(false);
+    }
+  };
+
+  // Handle edit senior
+  const handleEditSenior = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editForm.isValid || !editingSenior) return;
+
+    setLoading('update', true);
+    const result = await updateSenior(editForm.toUpdateDto(editingSenior.id));
+    setLoading('update', false);
+
+    if (result) {
+      setEditingSenior(null);
+      editForm.reset();
+    }
+  };
+
+  // Handle delete senior
+  const handleDeleteSenior = async () => {
+    if (!deletingSenior) return;
+
+    setLoading('delete', true);
+    const success = await deleteSenior(deletingSenior.id, seniorUtils.getFullName(deletingSenior));
+    setLoading('delete', false);
+
+    if (success) {
+      setDeletingSenior(null);
+    }
+  };
+
+  // Start editing a senior
+  const startEdit = (senior: SeniorDto) => {
+    setEditingSenior(senior);
+    editForm.reset(seniorUtils.dtoToFormData(senior));
+  };
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingSenior(null);
+    editForm.reset();
+  };
+
+  // Pagination component
+  const PaginationControls = () => {
+    if (!paginationInfo) return null;
+
+    const { currentPage, totalPages, hasPrevious, hasNext, startItem, endItem, totalItems } = paginationInfo;
+
+    return (
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={currentFilter.size?.toString() || "20"}
+              onValueChange={(value) => changePageSize(parseInt(value))}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 50, 100].map((pageSize) => (
+                  <SelectItem key={pageSize} value={pageSize.toString()}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {totalItems > 0 ? `Showing ${startItem}-${endItem} of ${totalItems} seniors` : 'No seniors found'}
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            className="hidden h-8 w-8 p-0 lg:flex"
+            onClick={() => goToPage(0)}
+            disabled={!hasPrevious || seniorsLoading}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            className="h-8 w-8 p-0"
+            onClick={() => goToPage(currentPage - 2)} // Convert to 0-based
+            disabled={!hasPrevious || seniorsLoading}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            className="h-8 w-8 p-0"
+            onClick={() => goToPage(currentPage)} // Convert to 0-based
+            disabled={!hasNext || seniorsLoading}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            className="hidden h-8 w-8 p-0 lg:flex"
+            onClick={() => goToPage(totalPages - 1)}
+            disabled={!hasNext || seniorsLoading}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  if (seniorsLoading && seniors.length === 0) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading seniors...</span>
+        </div>
+      </div>
+    );
   }
 
-  const clearFilters = () => {
-    setSearchTerm("")
-    setSelectedAgeGroup("all")
-    setSelectedActivity("all")
-    setSelectedCondition("all")
-  }
-
-  const handleImport = async () => {
-    if (!selectedFile) return
-
-    setIsImporting(true)
-
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // Add dummy data as if imported from CSV
-    const newClients: Client[] = DUMMY_IMPORT_DATA.map((clientData, index) => ({
-      ...clientData,
-      id: (Date.now() + index).toString(),
-      joinedDate: new Date(),
-    }))
-
-    setClients((prev) => [...newClients, ...prev])
-    setIsImporting(false)
-    setIsImportDialogOpen(false)
-    setSelectedFile(null)
+  if (seniorsError) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-red-800">Error Loading Seniors</h3>
+              <p className="text-red-600 mt-2">{seniorsError.message}</p>
+              <Button onClick={() => window.location.reload()} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -350,309 +309,136 @@ export default function ClientsPage() { const [clients, setClients] = useState<C
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-blue-900">Active Aging Center</h1>
-          <p className="text-lg text-muted-foreground">Client Profile Management</p>
+          <h1 className="text-3xl font-bold">Senior Profiles</h1>
+          {paginationInfo && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {paginationInfo.totalItems} total seniors
+            </p>
+          )}
         </div>
 
-        <div className="flex gap-3">
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 bg-transparent"
-              >
-                <Upload className="mr-2 h-5 w-5" />
-                Import CSV
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle className="text-xl">Import Client Profiles</DialogTitle>
-                <DialogDescription>Upload a CSV file to import multiple client profiles at once.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Upload CSV File</Label>
-                    <div
-                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                        selectedFile
-                          ? "border-green-500 bg-green-50"
-                          : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
-                      }`}
-                      onDrop={(e) => {
-                        e.preventDefault()
-                        const file = e.dataTransfer.files[0]
-                        if (file && file.type === "text/csv") {
-                          setSelectedFile(file)
-                        }
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDragEnter={(e) => e.preventDefault()}
-                    >
-                      <div className="space-y-4">
-                        {selectedFile ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-center">
-                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <Upload className="h-6 w-6 text-green-600" />
-                              </div>
-                            </div>
-                            <div>
-                              <p className="font-medium text-green-700">{selectedFile.name}</p>
-                              <p className="text-sm text-green-600">
-                                {(selectedFile.size / 1024).toFixed(1)} KB • Ready to import
-                              </p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedFile(null)}
-                              className="text-gray-600 hover:text-gray-800"
-                            >
-                              Remove file
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-center">
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Upload className="h-6 w-6 text-blue-600" />
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-lg font-medium text-gray-700">Drag and drop your CSV file here</p>
-                              <p className="text-sm text-gray-500">or click to browse files</p>
-                            </div>
-                            <div>
-                              <Input
-                                type="file"
-                                accept=".csv"
-                                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                                className="hidden"
-                                id="csvFileInput"
-                              />
-                              <Label
-                                htmlFor="csvFileInput"
-                                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer transition-colors"
-                              >
-                                <Upload className="mr-2 h-4 w-4" />
-                                Choose File
-                              </Label>
-                            </div>
-                            <p className="text-xs text-gray-400">Supports CSV files up to 10MB</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="bg-blue-700 hover:bg-blue-600">
+              <PlusCircle className="mr-2 h-5 w-5"/>
+              Create Senior Profile
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add New Senior Profile</DialogTitle>
+              <DialogDescription>
+                Create a new profile for a senior member.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateSenior} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-firstName">First Name *</Label>
+                  <Input
+                    id="create-firstName"
+                    value={createForm.formData.firstName}
+                    onChange={(e) => createForm.updateField('firstName', e.target.value)}
+                    placeholder="John"
+                    disabled={isLoading('create')}
+                  />
+                  {createForm.errors.firstName && createForm.touched.firstName && (
+                    <p className="text-sm text-red-600">{createForm.errors.firstName}</p>
+                  )}
                 </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsImportDialogOpen(false)
-                      setSelectedFile(null)
-                    }}
-                    disabled={isImporting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleImport}
-                    disabled={!selectedFile || isImporting}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isImporting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Import Profiles
-                      </>
-                    )}
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="create-lastName">Last Name *</Label>
+                  <Input
+                    id="create-lastName"
+                    value={createForm.formData.lastName}
+                    onChange={(e) => createForm.updateField('lastName', e.target.value)}
+                    placeholder="Doe"
+                    disabled={isLoading('create')}
+                  />
+                  {createForm.errors.lastName && createForm.touched.lastName && (
+                    <p className="text-sm text-red-600">{createForm.errors.lastName}</p>
+                  )}
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="mr-2 h-5 w-5" />
-                Add New Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-xl">Add New Client Profile</DialogTitle>
-                <DialogDescription>Create a comprehensive profile for a new center member.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Basic Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Basic Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name *</Label>
-                      <Input
-                        id="fullName"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, fullName: e.target.value }))}
-                        placeholder="Margaret Thompson"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                      <Input
-                        id="dateOfBirth"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="create-dateOfBirth"
+                  type="date"
+                  value={createForm.formData.dateOfBirth}
+                  onChange={(e) => createForm.updateField('dateOfBirth', e.target.value)}
+                  disabled={isLoading('create')}
+                />
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="gender">Gender</Label>
-                      <Select
-                        value={formData.gender}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, gender: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                          <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="contactNumber">Contact Number *</Label>
-                      <Input
-                        id="contactNumber"
-                        value={formData.contactNumber}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, contactNumber: e.target.value }))}
-                        placeholder="(555) 123-4567"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-contactPhone">Phone Number</Label>
+                <Input
+                  id="create-contactPhone"
+                  value={createForm.formData.contactPhone}
+                  onChange={(e) => createForm.updateField('contactPhone', e.target.value)}
+                  placeholder="(555) 123-4567"
+                  disabled={isLoading('create')}
+                />
+                {createForm.errors.contactPhone && createForm.touched.contactPhone && (
+                  <p className="text-sm text-red-600">{createForm.errors.contactPhone}</p>
+                )}
+              </div>
 
-                {/* Emergency Contact */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Emergency Contact</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="emergencyContactName">Emergency Contact Name *</Label>
-                      <Input
-                        id="emergencyContactName"
-                        value={formData.emergencyContactName}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, emergencyContactName: e.target.value }))}
-                        placeholder="Sarah Thompson (Daughter)"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="emergencyContactPhone">Emergency Contact Phone *</Label>
-                      <Input
-                        id="emergencyContactPhone"
-                        value={formData.emergencyContactPhone}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, emergencyContactPhone: e.target.value }))}
-                        placeholder="(555) 987-6543"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-contactEmail">Email Address</Label>
+                <Input
+                  id="create-contactEmail"
+                  type="email"
+                  value={createForm.formData.contactEmail}
+                  onChange={(e) => createForm.updateField('contactEmail', e.target.value)}
+                  placeholder="john.doe@example.com"
+                  disabled={isLoading('create')}
+                />
+                {createForm.errors.contactEmail && createForm.touched.contactEmail && (
+                  <p className="text-sm text-red-600">{createForm.errors.contactEmail}</p>
+                )}
+              </div>
 
-                {/* Medical Conditions */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Medical Conditions (Optional)</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {COMMON_CONDITIONS.map((condition) => (
-                      <div key={condition} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`condition-${condition}`}
-                          checked={formData.medicalConditions.includes(condition)}
-                          onCheckedChange={(checked) =>
-                            handleCheckboxChange("medicalConditions", condition, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`condition-${condition}`} className="text-sm">
-                          {condition}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-address">Address</Label>
+                <Input
+                  id="create-address"
+                  value={createForm.formData.address}
+                  onChange={(e) => createForm.updateField('address', e.target.value)}
+                  placeholder="123 Main St, City, State"
+                  disabled={isLoading('create')}
+                />
+              </div>
 
-                {/* Preferred Activities */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Preferred Activities</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {AVAILABLE_ACTIVITIES.map((activity) => (
-                      <div key={activity} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`activity-${activity}`}
-                          checked={formData.preferredActivities.includes(activity)}
-                          onCheckedChange={(checked) =>
-                            handleCheckboxChange("preferredActivities", activity, checked as boolean)
-                          }
-                        />
-                        <Label htmlFor={`activity-${activity}`} className="text-sm">
-                          {activity}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Special Needs */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Special Needs</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {SPECIAL_NEEDS.map((need) => (
-                      <div key={need} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`need-${need}`}
-                          checked={formData.specialNeeds.includes(need)}
-                          onCheckedChange={(checked) => handleCheckboxChange("specialNeeds", need, checked as boolean)}
-                        />
-                        <Label htmlFor={`need-${need}`} className="text-sm">
-                          {need}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                    Create Profile
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={isLoading('create')}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-blue-700 hover:bg-blue-600"
+                  disabled={!createForm.isValid || isLoading('create')}
+                >
+                  {isLoading('create') ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Profile'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search and Filter Section */}
@@ -660,180 +446,170 @@ export default function ClientsPage() { const [clients, setClients] = useState<C
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Search & Filter Clients
+            Search & Filter Seniors
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Search Input */}
-          <div className="space-y-2">
-            <Label htmlFor="search">Search by Name or Phone</Label>
-            <Input
-              id="search"
-              placeholder="Search clients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="text-base"
-            />
-          </div>
-
-          {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="search">Search by Name, Phone, or Email</Label>
+              <Input
+                id="search"
+                placeholder="Search seniors..."
+                value={localSearchTerm}
+                onChange={(e) => setLocalSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label>Age Group</Label>
-              <Select value={selectedAgeGroup} onValueChange={setSelectedAgeGroup}>
+              <Select value={localAgeFilter} onValueChange={setLocalAgeFilter}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Ages</SelectItem>
-                  <SelectItem value="Under 60">Under 60</SelectItem>
+                  <SelectItem value="under-60">Under 60</SelectItem>
                   <SelectItem value="60-69">60-69 years</SelectItem>
                   <SelectItem value="70-79">70-79 years</SelectItem>
-                  <SelectItem value="80+">80+ years</SelectItem>
+                  <SelectItem value="80-plus">80+ years</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Preferred Activity</Label>
-              <Select value={selectedActivity} onValueChange={setSelectedActivity}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Activities</SelectItem>
-                  {AVAILABLE_ACTIVITIES.map((activity) => (
-                    <SelectItem key={activity} value={activity}>
-                      {activity}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Medical Condition</Label>
-              <Select value={selectedCondition} onValueChange={setSelectedCondition}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Conditions</SelectItem>
-                  {COMMON_CONDITIONS.map((condition) => (
-                    <SelectItem key={condition} value={condition}>
-                      {condition}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-end space-x-2">
+              <Button onClick={handleClearFilters} variant="outline">
+                Clear Filters
+              </Button>
+              <Button onClick={handleApplyFilters}>
+                Search
+              </Button>
             </div>
           </div>
 
-          {/* Clear Filters */}
           <div className="flex justify-between items-center">
-            <Button variant="outline" onClick={clearFilters}>
-              Clear All Filters
-            </Button>
             <p className="text-sm text-muted-foreground">
-              Showing {filteredClients.length} of {clients.length} clients
+              {paginationInfo ? (
+                `Showing ${paginationInfo.startItem}-${paginationInfo.endItem} of ${paginationInfo.totalItems} seniors`
+              ) : (
+                'Loading...'
+              )}
             </p>
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm">Sort by:</Label>
+              <Select
+                value={currentFilter.sort?.[0]?.split(',')[0] || 'lastName'}
+                onValueChange={(value) => {
+                  const direction = currentFilter.sort?.[0]?.split(',')[1] || 'asc';
+                  applySorting(value, direction as 'asc' | 'desc');
+                }}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lastName">Last Name</SelectItem>
+                  <SelectItem value="firstName">First Name</SelectItem>
+                  <SelectItem value="dateOfBirth">Age</SelectItem>
+                  <SelectItem value="createdAt">Created Date</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentSort = currentFilter.sort?.[0] || 'lastName,asc';
+                  const [field, direction] = currentSort.split(',');
+                  const newDirection = direction === 'asc' ? 'desc' : 'asc';
+                  applySorting(field, newDirection);
+                }}
+              >
+                {currentFilter.sort?.[0]?.includes('desc') ? '↓' : '↑'}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* View Toggle and Results */}
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "cards" | "table")}>
-        <TabsList>
-          <TabsTrigger value="cards">Card View</TabsTrigger>
-          <TabsTrigger value="table">Table View</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="cards">Card View</TabsTrigger>
+            <TabsTrigger value="table">Table View</TabsTrigger>
+          </TabsList>
+          {seniorsLoading && (
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Loading...
+            </div>
+          )}
+        </div>
 
         <TabsContent value="cards" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredClients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow">
+            {seniors.map((senior) => (
+              <Card key={senior.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{client.fullName}</CardTitle>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{seniorUtils.getFullName(senior)}</CardTitle>
                       <CardDescription className="flex items-center gap-2 text-base">
                         <Calendar className="h-4 w-4" />
-                        Age {calculateAge(client.dateOfBirth)} • {client.gender}
+                        {senior.dateOfBirth ? (
+                          `Age ${seniorUtils.calculateAge(senior.dateOfBirth)} • ${seniorUtils.formatDate(senior.dateOfBirth)}`
+                        ) : (
+                          'Age unknown'
+                        )}
                       </CardDescription>
+                    </div>
+                    <div className="flex space-x-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEdit(senior)}
+                        disabled={isLoading('update') || isLoading('delete')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeletingSenior(senior)}
+                        disabled={isLoading('update') || isLoading('delete')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{client.contactNumber}</span>
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Emergency:</span> {client.emergencyContactName}
-                    </div>
+                    {senior.contactPhone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{senior.contactPhone}</span>
+                      </div>
+                    )}
+                    {senior.contactEmail && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{senior.contactEmail}</span>
+                      </div>
+                    )}
+                    {senior.address && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{senior.address}</span>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
 
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <Activity className="h-4 w-4" />
-                      Preferred Activities
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {client.preferredActivities.slice(0, 3).map((activity) => (
-                        <Badge key={activity} variant="secondary" className="text-xs">
-                          {activity}
-                        </Badge>
-                      ))}
-                      {client.preferredActivities.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{client.preferredActivities.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
+                  <div className="text-xs text-muted-foreground">
+                    Created: {seniorUtils.formatDateTime(senior.createdAt)}
                   </div>
-
-                  {client.medicalConditions.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium flex items-center gap-2">
-                        <Heart className="h-4 w-4" />
-                        Medical Conditions
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {client.medicalConditions.slice(0, 2).map((condition) => (
-                          <Badge key={condition} variant="outline" className="text-xs">
-                            {condition}
-                          </Badge>
-                        ))}
-                        {client.medicalConditions.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{client.medicalConditions.length - 2} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {client.specialNeeds.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Special Needs</p>
-                      <div className="flex flex-wrap gap-2">
-                        {client.specialNeeds.map((need) => (
-                          <div
-                            key={need}
-                            className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded"
-                          >
-                            {getSpecialNeedsIcon(need)}
-                            <span>{need}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="text-xs text-muted-foreground">Joined {client.joinedDate.toLocaleDateString()}</div>
                 </CardContent>
               </Card>
             ))}
@@ -845,52 +621,44 @@ export default function ClientsPage() { const [clients, setClients] = useState<C
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Age</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Emergency Contact</TableHead>
-                  <TableHead>Preferred Activities</TableHead>
-                  <TableHead>Special Needs</TableHead>
+                  <TableHead className="font-bold">Name</TableHead>
+                  <TableHead className="font-bold">Age</TableHead>
+                  <TableHead className="font-bold">Contact</TableHead>
+                  <TableHead className="font-bold">Email</TableHead>
+                  <TableHead className="font-bold">Address</TableHead>
+                  <TableHead className="font-bold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClients.map((client) => (
-                  <TableRow key={client.id}>
+                {seniors.map((senior) => (
+                  <TableRow key={senior.id}>
                     <TableCell className="font-medium">
-                      <div>
-                        <div>{client.fullName}</div>
-                        <div className="text-sm text-muted-foreground">{client.gender}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{calculateAge(client.dateOfBirth)}</TableCell>
-                    <TableCell>{client.contactNumber}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{client.emergencyContactName}</div>
-                        <div className="text-muted-foreground">{client.emergencyContactPhone}</div>
-                      </div>
+                      {seniorUtils.getFullName(senior)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {client.preferredActivities.slice(0, 2).map((activity) => (
-                          <Badge key={activity} variant="secondary" className="text-xs">
-                            {activity}
-                          </Badge>
-                        ))}
-                        {client.preferredActivities.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{client.preferredActivities.length - 2}
-                          </Badge>
-                        )}
-                      </div>
+                      {senior.dateOfBirth ? seniorUtils.calculateAge(senior.dateOfBirth) : 'N/A'}
                     </TableCell>
+                    <TableCell>{senior.contactPhone || 'N/A'}</TableCell>
+                    <TableCell>{senior.contactEmail || 'N/A'}</TableCell>
+                    <TableCell>{senior.address || 'N/A'}</TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {client.specialNeeds.map((need) => (
-                          <div key={need} className="flex items-center gap-1">
-                            {getSpecialNeedsIcon(need)}
-                          </div>
-                        ))}
+                      <div className="flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => startEdit(senior)}
+                          disabled={isLoading('update') || isLoading('delete')}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeletingSenior(senior)}
+                          disabled={isLoading('update') || isLoading('delete')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -901,22 +669,168 @@ export default function ClientsPage() { const [clients, setClients] = useState<C
         </TabsContent>
       </Tabs>
 
+      {/* Pagination Controls */}
+      <PaginationControls />
+
       {/* Empty State */}
-      {filteredClients.length === 0 && (
+      {seniors.length === 0 && !seniorsLoading && (
         <Card className="text-center py-12">
           <CardContent>
             <div className="space-y-2">
               <Users className="h-12 w-12 mx-auto text-muted-foreground" />
-              <h3 className="text-lg font-semibold">No clients found</h3>
+              <h3 className="text-lg font-semibold">No seniors found</h3>
               <p className="text-muted-foreground">
-                {clients.length === 0
-                  ? "Get started by adding your first client profile."
+                {paginationInfo?.totalItems === 0
+                  ? "Get started by adding your first senior profile."
                   : "Try adjusting your search or filter criteria."}
               </p>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingSenior} onOpenChange={(open) => !open && cancelEdit()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Senior Profile</DialogTitle>
+            <DialogDescription>
+              Update the information for {editingSenior && seniorUtils.getFullName(editingSenior)}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSenior} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">First Name *</Label>
+                <Input
+                  id="edit-firstName"
+                  value={editForm.formData.firstName}
+                  onChange={(e) => editForm.updateField('firstName', e.target.value)}
+                  disabled={isLoading('update')}
+                />
+                {editForm.errors.firstName && editForm.touched.firstName && (
+                  <p className="text-sm text-red-600">{editForm.errors.firstName}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name *</Label>
+                <Input
+                  id="edit-lastName"
+                  value={editForm.formData.lastName}
+                  onChange={(e) => editForm.updateField('lastName', e.target.value)}
+                  disabled={isLoading('update')}
+                />
+                {editForm.errors.lastName && editForm.touched.lastName && (
+                  <p className="text-sm text-red-600">{editForm.errors.lastName}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
+              <Input
+                id="edit-dateOfBirth"
+                type="date"
+                value={editForm.formData.dateOfBirth}
+                onChange={(e) => editForm.updateField('dateOfBirth', e.target.value)}
+                disabled={isLoading('update')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-contactPhone">Phone Number</Label>
+              <Input
+                id="edit-contactPhone"
+                value={editForm.formData.contactPhone}
+                onChange={(e) => editForm.updateField('contactPhone', e.target.value)}
+                disabled={isLoading('update')}
+              />
+              {editForm.errors.contactPhone && editForm.touched.contactPhone && (
+                <p className="text-sm text-red-600">{editForm.errors.contactPhone}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-contactEmail">Email Address</Label>
+              <Input
+                id="edit-contactEmail"
+                type="email"
+                value={editForm.formData.contactEmail}
+                onChange={(e) => editForm.updateField('contactEmail', e.target.value)}
+                disabled={isLoading('update')}
+              />
+              {editForm.errors.contactEmail && editForm.touched.contactEmail && (
+                <p className="text-sm text-red-600">{editForm.errors.contactEmail}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-address">Address</Label>
+              <Input
+                id="edit-address"
+                value={editForm.formData.address}
+                onChange={(e) => editForm.updateField('address', e.target.value)}
+                disabled={isLoading('update')}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={cancelEdit}
+                disabled={isLoading('update')}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!editForm.isValid || isLoading('update')}
+              >
+                {isLoading('update') ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Profile'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingSenior} onOpenChange={(open) => !open && setDeletingSenior(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Senior Profile</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the profile for{' '}
+              <strong>{deletingSenior && seniorUtils.getFullName(deletingSenior)}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading('delete')}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSenior}
+              disabled={isLoading('delete')}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isLoading('delete') ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Profile'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
