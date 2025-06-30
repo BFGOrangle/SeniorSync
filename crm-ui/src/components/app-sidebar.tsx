@@ -2,14 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { 
-  Calendar,
+import {
   FileText,
   Users,
   Settings,
   BarChart3,
   HeartHandshake,
-  Layout
+  Layout,
 } from "lucide-react";
 
 import {
@@ -49,7 +48,7 @@ const navigationItems = [
     title: "Tickets",
     url: "/admin/tickets",
     icon: FileText,
-    badge: "Coming Soon",
+    // badge: "Coming Soon",
   },
 ];
 
@@ -76,19 +75,53 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => {
-                const isActive = pathname === item.url || 
-                  (item.title === "Dashboard" && pathname === "/admin/dashboard");
+                const isActive =
+                  pathname === item.url ||
+                  (item.title === "Dashboard" &&
+                    pathname === "/admin/dashboard");
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                    >
+                      <Link href={item.url} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                        {/* {item.badge && (
+                          <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                            {item.badge}
+                          </span>
+                        )} */}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <Separator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Administration</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsItems.map((item) => {
+                const isActive = pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
                       isActive={isActive}
                       tooltip={item.title}
                     >
@@ -108,43 +141,15 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        
-        <Separator />
-        
-        <SidebarGroup>
-          <SidebarGroupLabel>Administration</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => {
-                const isActive = pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                      <Link href={item.url} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
-      
+
       <SidebarFooter className="border-t p-4">
         <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           <p>Admin Panel</p>
           <p>v1.0.0</p>
         </div>
       </SidebarFooter>
-      
+
       <SidebarRail />
     </Sidebar>
   );
