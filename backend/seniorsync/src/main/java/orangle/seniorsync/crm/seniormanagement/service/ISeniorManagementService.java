@@ -17,6 +17,5 @@ public interface ISeniorManagementService {
     long countSeniors(SeniorFilterDto filter);
     SeniorDto updateSenior(UpdateSeniorDto updateSeniorDto);
     void deleteSenior(long id);
-    @Deprecated
     List<SeniorDto> findSeniors(SeniorFilterDto filter);
 }

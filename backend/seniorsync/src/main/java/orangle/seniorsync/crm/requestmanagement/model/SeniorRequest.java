@@ -52,14 +52,14 @@ public class SeniorRequest {
     // FYI:
     // By marking the column as insertable = false (and updatable = false), you tell Hibernate not to include that property in its INSERT (or UPDATE) statements. Here’s why that fixes the “not-null property references a null value” error:
     // insertable = false lets the database fill in the creation timestamp via its DEFAULT now() clause without Hibernate overwriting it with NULL.
-    // updatable = false ensure###s that after the row is created, neither Hibernate nor your application code will ever try to change that original timestamp.
+    // updatable = false ensures that after the row is created, neither Hibernate nor your application code will ever try to change that original timestamp.
     // Combined with a DDL default (DEFAULT now() in your table definition), this makes the database the single source of truth for created_at.
     @ColumnDefault("now()")
-    @Column(name = "created_at", nullable = false, insertable = false,updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @ColumnDefault("now()")
-    @Column(name = "updated_at", nullable = false, insertable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
 
     // This will be set to the current timestamp by the backend code when the status changes to COMPLETED.

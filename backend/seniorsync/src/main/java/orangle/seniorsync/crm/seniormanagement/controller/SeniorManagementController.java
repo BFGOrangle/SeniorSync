@@ -10,7 +10,6 @@ import orangle.seniorsync.crm.seniormanagement.service.ISeniorManagementService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +37,7 @@ public class SeniorManagementController {
 
     /**
      * Get paginated seniors with filtering
-     * This endpoint ALWAYS uses pagination and never fetches all records.
+     * This endpoint uses pagination and does not fetch all records.
      */
     @PostMapping("/paginated")
     public ResponseEntity<Page<SeniorDto>> getSeniorsPaginated(
@@ -93,14 +92,10 @@ public class SeniorManagementController {
 
     @Deprecated
     @GetMapping
-    public ResponseEntity<List<SeniorDto>> getSeniors(@RequestBody(required = false) SeniorFilterDto filter) {
-        log.warn("Legacy /seniors endpoint called. Consider migrating to /seniors/paginated");
-
-        // Delegate to paginated version with reasonable defaults
-        Page<SeniorDto> page = seniorManagementService.findSeniorsPaginated(filter,
-                PageRequest.of(0, 50, Sort.by("lastName", "firstName")));
-
-        return ResponseEntity.ok(page.getContent());
+    public ResponseEntity<List<SeniorDto>> getAllSeniors(@RequestBody(required = false) SeniorFilterDto filter) {
+        List<SeniorDto> allSeniors = seniorManagementService.findSeniors(filter);
+        log.info("Retrieved all {} seniors", allSeniors.size());
+        return ResponseEntity.ok(allSeniors);
     }
 
     @PutMapping
