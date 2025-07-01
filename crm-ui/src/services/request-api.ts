@@ -4,9 +4,9 @@ import {
   UpdateSeniorRequestDto,
   SeniorRequestFilterDto,
   SeniorRequestView,
+  SeniorRequestDisplayView,
   RequestTypeDto,
   StaffDto,
-  EnhancedTicket,
   RequestUtils
 } from '@/types/request';
 import { SeniorDto } from '@/types/senior';
@@ -203,7 +203,7 @@ export class RequestManagementApiService {
    * Enhanced method to get requests with full details
    * This method combines request data with senior and staff information
    */
-  async getEnhancedRequests(filter?: SeniorRequestFilterDto): Promise<EnhancedTicket[]> {
+  async getEnhancedRequests(filter?: SeniorRequestFilterDto): Promise<SeniorRequestDisplayView[]> {
     try {
       // Get basic request data
       const requests = await this.getRequests(filter);
@@ -226,7 +226,7 @@ export class RequestManagementApiService {
         const assignedStaff = request.assignedStaffId ? staffMap.get(request.assignedStaffId) : undefined;
         const requestType = request.requestTypeId ? requestTypeMap.get(request.requestTypeId) : undefined;
 
-        return RequestUtils.toEnhancedTicket(request, {
+        return RequestUtils.fromDtoToDisplayView(request, {
           seniorName: senior ? `${senior.firstName} ${senior.lastName}` : `Senior ID ${request.seniorId}`,
           seniorPhone: senior?.contactPhone || undefined,
           seniorEmail: senior?.contactEmail || undefined,
@@ -239,7 +239,7 @@ export class RequestManagementApiService {
       console.error('Error getting enhanced requests:', error);
       // Fallback to basic request data if enhancement fails
       const requests = await this.getRequests(filter);
-      return requests.map(request => RequestUtils.toEnhancedTicket(request));
+      return requests.map(request => RequestUtils.fromDtoToDisplayView(request));
     }
   }
 
@@ -317,7 +317,7 @@ export const requestUtils = {
   /**
    * Format request for display
    */
-  formatRequestTitle(request: EnhancedTicket): string {
+  formatRequestTitle(request: SeniorRequestDisplayView): string {
     const typeName = request.requestTypeName || 'Request';
     const seniorName = request.seniorName || `Senior ${request.seniorId}`;
     return `${typeName} for ${seniorName}`;
@@ -354,7 +354,7 @@ export const requestUtils = {
    * Filter requests based on frontend filter options
    */
   filterRequests(
-    requests: EnhancedTicket[],
+    requests: SeniorRequestDisplayView[],
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
       status?: ('pending' | 'in-progress' | 'in-review' | 'completed' | 'cancelled')[];
@@ -362,7 +362,7 @@ export const requestUtils = {
       assignedStaff?: string[];
       searchTerm?: string;
     }
-  ): EnhancedTicket[] {
+  ): SeniorRequestDisplayView[] {
     return requests.filter(request => {
       // Priority filter
       if (filters.priority && filters.priority.length > 0) {
@@ -419,10 +419,10 @@ export const requestUtils = {
    * Sort requests
    */
   sortRequests(
-    requests: EnhancedTicket[],
+    requests: SeniorRequestDisplayView[],
     sortBy: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName',
     direction: 'asc' | 'desc' = 'desc'
-  ): EnhancedTicket[] {
+  ): SeniorRequestDisplayView[] {
     return [...requests].sort((a, b) => {
       let comparison = 0;
 

@@ -8,7 +8,7 @@ import {
   requestUtils
 } from '@/services/request-api';
 import {
-  EnhancedTicket,
+  SeniorRequestDisplayView,
   SeniorRequestFilterDto,
   UpdateSeniorRequestDto,
   RequestUtils
@@ -16,7 +16,7 @@ import {
 
 // Hook for managing requests with full CRUD operations
 export function useRequestManagement() {
-  const [requests, setRequests] = useState<EnhancedTicket[]>([]);
+  const [requests, setRequests] = useState<SeniorRequestDisplayView[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<RequestApiError | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -55,11 +55,11 @@ export function useRequestManagement() {
   }, [loadRequests]);
 
   // Update a request
-  const updateRequest = useCallback(async (updatedRequest: EnhancedTicket): Promise<boolean> => {
+  const updateRequest = useCallback(async (updatedRequest: SeniorRequestDisplayView): Promise<boolean> => {
     try {
       setLoading(true);
 
-      // Convert EnhancedTicket back to UpdateSeniorRequestDto
+      // Convert SeniorRequestDisplayView back to UpdateSeniorRequestDto
       const updateDto: UpdateSeniorRequestDto = {
         id: updatedRequest.id,
         title: updatedRequest.title,
@@ -76,7 +76,7 @@ export function useRequestManagement() {
       setRequests(prev => 
         prev.map(request => 
           request.id === updated.id 
-            ? RequestUtils.toEnhancedTicket(updated, {
+            ? RequestUtils.fromDtoToDisplayView(updated, {
                 seniorName: updatedRequest.seniorName,
                 seniorPhone: updatedRequest.seniorPhone,
                 seniorEmail: updatedRequest.seniorEmail,
