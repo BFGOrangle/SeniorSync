@@ -186,7 +186,10 @@ export function TicketModal({
                           />
                           {status
                             .split("-")
-                            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                            .map(
+                              (word) =>
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                            )
                             .join(" ")}
                         </div>
                       </SelectItem>
@@ -237,7 +240,10 @@ export function TicketModal({
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
-                    className={cn("capitalize", getPriorityColor(ticket.priority))}
+                    className={cn(
+                      "capitalize",
+                      getPriorityColor(ticket.priority)
+                    )}
                   >
                     {ticket.priority}
                   </Badge>
@@ -254,7 +260,7 @@ export function TicketModal({
               <User className="h-5 w-5" />
               Senior Information
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="seniorName">Senior Name</Label>
@@ -263,7 +269,10 @@ export function TicketModal({
                     id="seniorName"
                     value={editedTicket.seniorName || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, seniorName: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        seniorName: e.target.value,
+                      })
                     }
                     placeholder="Enter senior's name"
                   />
@@ -274,7 +283,9 @@ export function TicketModal({
                         {getInitials(ticket.seniorName || "N/A")}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{ticket.seniorName || "N/A"}</span>
+                    <span className="font-medium">
+                      {ticket.seniorName || "N/A"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -286,7 +297,10 @@ export function TicketModal({
                     id="phoneNumber"
                     value={editedTicket.phoneNumber || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, phoneNumber: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        phoneNumber: e.target.value,
+                      })
                     }
                     placeholder="Enter phone number"
                   />
@@ -306,7 +320,10 @@ export function TicketModal({
                     type="email"
                     value={editedTicket.email || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, email: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        email: e.target.value,
+                      })
                     }
                     placeholder="Enter email address"
                   />
@@ -325,7 +342,10 @@ export function TicketModal({
                     id="address"
                     value={editedTicket.address || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, address: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        address: e.target.value,
+                      })
                     }
                     placeholder="Enter address"
                     className="min-h-[60px]"
@@ -357,7 +377,10 @@ export function TicketModal({
                     id="title"
                     value={editedTicket.title || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, title: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        title: e.target.value,
+                      })
                     }
                     placeholder="Enter request title"
                   />
@@ -387,7 +410,9 @@ export function TicketModal({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Badge variant="secondary">{ticket.requestType || "N/A"}</Badge>
+                  <Badge variant="secondary">
+                    {ticket.requestType || "N/A"}
+                  </Badge>
                 )}
               </div>
 
@@ -398,7 +423,10 @@ export function TicketModal({
                     id="description"
                     value={editedTicket.description || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, description: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        description: e.target.value,
+                      })
                     }
                     placeholder="Enter request description"
                     className="min-h-[100px]"
@@ -418,7 +446,10 @@ export function TicketModal({
                     type="date"
                     value={editedTicket.preferredDate || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, preferredDate: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        preferredDate: e.target.value,
+                      })
                     }
                   />
                 ) : (
@@ -441,7 +472,10 @@ export function TicketModal({
                     type="time"
                     value={editedTicket.preferredTime || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, preferredTime: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        preferredTime: e.target.value,
+                      })
                     }
                   />
                 ) : (
@@ -467,14 +501,19 @@ export function TicketModal({
                       })
                     }
                   />
-                  <Label htmlFor="mobilityAssistance" className="text-sm font-normal">
+                  <Label
+                    htmlFor="mobilityAssistance"
+                    className="text-sm font-normal"
+                  >
                     This senior requires mobility assistance
                   </Label>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant={ticket.mobilityAssistance ? "default" : "secondary"}
+                    variant={
+                      ticket.mobilityAssistance ? "default" : "secondary"
+                    }
                   >
                     {ticket.mobilityAssistance ? "Required" : "Not Required"}
                   </Badge>
@@ -510,7 +549,8 @@ export function TicketModal({
                   />
                 ) : (
                   <p className="text-gray-700">
-                    {ticket.medicalConditions || "No medical conditions specified."}
+                    {ticket.medicalConditions ||
+                      "No medical conditions specified."}
                   </p>
                 )}
               </div>
@@ -522,7 +562,10 @@ export function TicketModal({
                     id="medications"
                     value={editedTicket.medications || ""}
                     onChange={(e) =>
-                      setEditedTicket({ ...editedTicket, medications: e.target.value })
+                      setEditedTicket({
+                        ...editedTicket,
+                        medications: e.target.value,
+                      })
                     }
                     placeholder="Enter current medications"
                     className="min-h-[60px]"
@@ -627,7 +670,9 @@ export function TicketModal({
                       {getInitials(ticket.assignee || ticket.agentName || "U")}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{ticket.assignee || ticket.agentName || "Unassigned"}</span>
+                  <span>
+                    {ticket.assignee || ticket.agentName || "Unassigned"}
+                  </span>
                 </div>
               )}
             </div>

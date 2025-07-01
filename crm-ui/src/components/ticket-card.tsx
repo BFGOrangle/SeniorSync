@@ -223,79 +223,82 @@ export function TicketCard({
             </div>
           </div>
 
-        <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
-          {ticket.title}
-        </h3>
+          <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
+            {ticket.title}
+          </h3>
 
-        {ticket.description && (
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-            {ticket.description}
-          </p>
-        )}
+          {ticket.description && (
+            <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+              {ticket.description}
+            </p>
+          )}
 
-        <div className="flex items-center gap-2 mb-3">
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-xs font-medium",
-              getPriorityColor(ticket.priority)
-            )}
-          >
-            {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
-          </Badge>
-          {!isKanban && (
+          <div className="flex items-center gap-2 mb-3">
             <Badge
               variant="outline"
               className={cn(
                 "text-xs font-medium",
-                getStatusColor(ticket.status)
+                getPriorityColor(ticket.priority)
               )}
             >
-              {ticket.status
-                .replace("-", " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase())}
+              {ticket.priority.charAt(0).toUpperCase() +
+                ticket.priority.slice(1)}
             </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-gray-100 text-gray-600 font-medium">
-                {getInitials(ticket.agentName || ticket.assignee || "Unassigned")}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-gray-600 font-medium">
-              {ticket.agentName || ticket.assignee || "Unassigned"}
-            </span>
+            {!isKanban && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs font-medium",
+                  getStatusColor(ticket.status)
+                )}
+              >
+                {ticket.status
+                  .replace("-", " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+              </Badge>
+            )}
           </div>
 
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <Clock className="h-3 w-3" />
-            <span
-              className={cn(
-                "font-medium",
-                isOverdue(ticket.dueDate) &&
-                  ticket.status !== "completed" &&
-                  "text-red-600"
-              )}
-            >
-              {formatDate(ticket.dueDate)}
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarFallback className="text-xs bg-gray-100 text-gray-600 font-medium">
+                  {getInitials(
+                    ticket.agentName || ticket.assignee || "Unassigned"
+                  )}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-gray-600 font-medium">
+                {ticket.agentName || ticket.assignee || "Unassigned"}
+              </span>
+            </div>
 
-    <TicketModal
-      ticket={ticket}
-      isOpen={isModalOpen}
-      onOpenChange={setIsModalOpen}
-      onUpdate={(updatedTicket) => {
-        onUpdate?.(updatedTicket);
-        setIsModalOpen(false);
-      }}
-    />
-  </>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <Clock className="h-3 w-3" />
+              <span
+                className={cn(
+                  "font-medium",
+                  isOverdue(ticket.dueDate) &&
+                    ticket.status !== "completed" &&
+                    "text-red-600"
+                )}
+              >
+                {formatDate(ticket.dueDate)}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <TicketModal
+        ticket={ticket}
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onUpdate={(updatedTicket) => {
+          onUpdate?.(updatedTicket);
+          setIsModalOpen(false);
+        }}
+      />
+    </>
   );
 }
