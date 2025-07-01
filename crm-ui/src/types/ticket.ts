@@ -2,11 +2,11 @@
 // Updated Ticket interface that is compatible with both legacy and new backend structure
 export interface Ticket {
   // Core fields (from backend)
-  id: number;
+  id: string; // Changed from number to string to match current implementation
   title: string;
   description: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string; // Made optional since not all tickets have this
   status: "pending" | "in-progress" | "in-review" | "completed" | "cancelled";
   priority: "low" | "medium" | "high" | "urgent";
   

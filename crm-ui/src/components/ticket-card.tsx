@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, Edit2, Save, X, AlertTriangle } from "lucide-react";
+import { Clock, Edit2, Save, X, AlertTriangle, Eye } from "lucide-react";
 import { Ticket, Priority, Status } from "@/types/ticket";
 import {
   getPriorityColor,
@@ -22,6 +22,7 @@ import {
   formatDate,
   isOverdue,
 } from "@/lib/ticket-utils";
+import { TicketModal } from "@/components/ticket-modal";
 import { cn } from "@/lib/utils";
 
 interface TicketCardProps {
@@ -37,6 +38,7 @@ export function TicketCard({
 }: TicketCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTicket, setEditedTicket] = useState<Ticket>(ticket);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     attributes,
@@ -47,7 +49,7 @@ export function TicketCard({
     isDragging,
   } = useSortable({
     id: ticket.id,
-    disabled: isEditing,
+    disabled: isEditing || isModalOpen, // Disable dragging when modal is open
   });
 
   const style = {
@@ -167,42 +169,59 @@ export function TicketCard({
   }
 
   return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        "w-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group",
-        isDragging && "opacity-50 rotate-3 scale-105",
-        isKanban && "mb-3"
-      )}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="secondary"
-              className="text-xs font-mono bg-gray-50 text-gray-600 hover:bg-gray-50"
-            >
-              {ticket.id}
-            </Badge>
-            {isOverdue(ticket.dueDate) && ticket.status !== "completed" && (
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-            )}
+    <>
+      <Card
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        onClick={() => setIsModalOpen(true)}
+        className={cn(
+          "w-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group",
+          isDragging && "opacity-50 rotate-3 scale-105",
+          isKanban && "mb-3"
+        )}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="secondary"
+                className="text-xs font-mono bg-gray-50 text-gray-600 hover:bg-gray-50"
+              >
+                {ticket.id}
+              </Badge>
+              {isOverdue(ticket.dueDate) && ticket.status !== "completed" && (
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+              )}
+            </div>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModalOpen(true);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
+                title="View Details"
+              >
+                <Eye className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
+                title="Quick Edit"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
-          >
-            <Edit2 className="h-3 w-3" />
-          </Button>
-        </div>
 
         <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
           {ticket.title}
@@ -243,11 +262,11 @@ export function TicketCard({
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs bg-gray-100 text-gray-600 font-medium">
-                {getInitials(ticket.agentName)}
+                {getInitials(ticket.agentName || ticket.assignee || "Unassigned")}
               </AvatarFallback>
             </Avatar>
             <span className="text-xs text-gray-600 font-medium">
-              {ticket.agentName}
+              {ticket.agentName || ticket.assignee || "Unassigned"}
             </span>
           </div>
 
@@ -267,5 +286,16 @@ export function TicketCard({
         </div>
       </CardContent>
     </Card>
+
+    <TicketModal
+      ticket={ticket}
+      isOpen={isModalOpen}
+      onOpenChange={setIsModalOpen}
+      onUpdate={(updatedTicket) => {
+        onUpdate?.(updatedTicket);
+        setIsModalOpen(false);
+      }}
+    />
+  </>
   );
 }

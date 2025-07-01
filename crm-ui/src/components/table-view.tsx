@@ -37,6 +37,7 @@ import {
   formatDate,
   isOverdue,
 } from "@/lib/ticket-utils";
+import { TicketModal } from "@/components/ticket-modal";
 import { cn } from "@/lib/utils";
 
 interface TableViewProps {
@@ -48,6 +49,8 @@ export function TableView({ tickets, onTicketUpdate }: TableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -285,7 +288,8 @@ export function TableView({ tickets, onTicketUpdate }: TableViewProps) {
                   data-state={row.getIsSelected() && "selected"}
                   className="hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors"
                   onClick={() => {
-                    // Handle row click for editing
+                    setSelectedTicket(row.original);
+                    setIsModalOpen(true);
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -371,6 +375,18 @@ export function TableView({ tickets, onTicketUpdate }: TableViewProps) {
           </Button>
         </div>
       </div>
+
+      {selectedTicket && (
+        <TicketModal
+          ticket={selectedTicket}
+          isOpen={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onUpdate={(updatedTicket) => {
+            onTicketUpdate(updatedTicket);
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
