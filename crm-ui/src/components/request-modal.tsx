@@ -29,12 +29,14 @@ import {
   Phone,
   Mail,
   MapPin,
+  Plus,
+  Trash2,
 } from "lucide-react";
-import { SeniorRequestDisplayView } from "@/types/request";
+import { SeniorRequestDisplayView, Reminder } from "@/types/request";
 import { cn } from "@/lib/utils";
 
 type Priority = "low" | "medium" | "high" | "urgent";
-type Status = "pending" | "in-progress" | "in-review" | "completed" | "cancelled";
+type Status = "pending" | "in-progress" | "completed";
 
 interface RequestModalProps {
   request: SeniorRequestDisplayView;
@@ -53,6 +55,15 @@ export function RequestModal({
 }: RequestModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedRequest, setEditedRequest] = useState<SeniorRequestDisplayView>(request);
+  
+  // Reminder management state
+  const [newReminder, setNewReminder] = useState<Partial<Reminder>>({
+    title: '',
+    description: '',
+    reminderDateTime: '',
+    isCompleted: false,
+  });
+  const [isAddingReminder, setIsAddingReminder] = useState(false);
 
   // Update editedRequest when request prop changes
   useEffect(() => {
@@ -69,6 +80,46 @@ export function RequestModal({
     setIsEditing(false);
   };
 
+  // Reminder management functions
+  const addReminder = () => {
+    if (!newReminder.title || !newReminder.reminderDateTime) return;
+    
+    const reminder: Reminder = {
+      id: `reminder-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: newReminder.title,
+      description: newReminder.description,
+      reminderDateTime: newReminder.reminderDateTime,
+      isCompleted: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedReminders = [...(editedRequest.reminders || []), reminder];
+    setEditedRequest({ ...editedRequest, reminders: updatedReminders });
+    
+    // Reset form
+    setNewReminder({
+      title: '',
+      description: '',
+      reminderDateTime: '',
+      isCompleted: false,
+    });
+    setIsAddingReminder(false);
+  };
+
+  const removeReminder = (reminderId: string) => {
+    const updatedReminders = editedRequest.reminders?.filter(r => r.id !== reminderId) || [];
+    setEditedRequest({ ...editedRequest, reminders: updatedReminders });
+  };
+
+  const toggleReminderComplete = (reminderId: string) => {
+    const updatedReminders = editedRequest.reminders?.map(reminder => 
+      reminder.id === reminderId 
+        ? { ...reminder, isCompleted: !reminder.isCompleted }
+        : reminder
+    ) || [];
+    setEditedRequest({ ...editedRequest, reminders: updatedReminders });
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -81,9 +132,7 @@ export function RequestModal({
   const statusOptions: Status[] = [
     "pending",
     "in-progress", 
-    "in-review",
     "completed",
-    "cancelled",
   ];
 
   const getPriorityColor = (priority: string): string => {
@@ -399,6 +448,127 @@ export function RequestModal({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Reminders */}
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Reminders</h3>
+              {isEditing && (
+                <Button
+                  size="sm"
+                  onClick={() => setIsAddingReminder(!isAddingReminder)}
+                  className="h-8"
+                >
+                  {isAddingReminder ? "Cancel" : "Add Reminder"}
+                </Button>
+              )}
+            </div>
+
+            {isAddingReminder && isEditing && (
+              <div className="bg-gray-50 p-4 rounded-md border">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reminderTitle">Title</Label>
+                    <Input
+                      id="reminderTitle"
+                      value={newReminder.title}
+                      onChange={(e) =>
+                        setNewReminder({ ...newReminder, title: e.target.value })
+                      }
+                      placeholder="Enter reminder title"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reminderDateTime">Date & Time</Label>
+                    <Input
+                      id="reminderDateTime"
+                      type="datetime-local"
+                      value={newReminder.reminderDateTime}
+                      onChange={(e) =>
+                        setNewReminder({ ...newReminder, reminderDateTime: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <Label htmlFor="reminderDescription">Description</Label>
+                  <Textarea
+                    id="reminderDescription"
+                    value={newReminder.description}
+                    onChange={(e) =>
+                      setNewReminder({ ...newReminder, description: e.target.value })
+                    }
+                    placeholder="Enter reminder description"
+                    className="min-h-[80px]"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button size="sm" onClick={addReminder} className="h-8">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Reminder
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {editedRequest.reminders && editedRequest.reminders.length > 0 ? (
+              <div className="space-y-2">
+                {editedRequest.reminders.map((reminder) => (
+                  <div
+                    key={reminder.id}
+                    className="flex items-center justify-between p-4 rounded-md border"
+                  >
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "w-3 h-3 rounded-full",
+                            reminder.isCompleted
+                              ? "bg-green-500"
+                              : "bg-red-500"
+                          )}
+                        />
+                        <span className="font-medium">{reminder.title}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {formatDate(reminder.reminderDateTime)}
+                      </span>
+                    </div>
+
+                    {isEditing && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => toggleReminderComplete(reminder.id)}
+                          className="h-8"
+                        >
+                          {reminder.isCompleted ? "Undo" : "Complete"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => removeReminder(reminder.id)}
+                          className="h-8"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">
+                No reminders set for this request.
+              </p>
+            )}
           </div>
 
           {/* System Information */}

@@ -130,11 +130,11 @@ export default function RequestManagement() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-full max-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="px-4 lg:px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Request Management
@@ -145,7 +145,7 @@ export default function RequestManagement() {
             </div>
 
             {/* Status Summary */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
               <Badge
                 variant="outline"
                 className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
