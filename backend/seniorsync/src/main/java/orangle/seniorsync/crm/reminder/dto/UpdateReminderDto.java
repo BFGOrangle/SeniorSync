@@ -6,6 +6,7 @@ public record UpdateReminderDto(
         Long id,
         String title,
         String description,
-        OffsetDateTime reminderDate
+        OffsetDateTime reminderDate,
+        Long staffAssigneeId
 ) {
 }

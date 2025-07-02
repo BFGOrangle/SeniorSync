@@ -8,6 +8,7 @@ public record ReminderDto(
         String description,
         OffsetDateTime reminderDate,
         Long requestId,
+        Long staffAssigneeId,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {

@@ -31,8 +31,11 @@ public class DailyReminderService implements IDailyReminderService{
         log.info("Found {} reminders due today", remindersDueToday.size());
         for (Reminder reminder : remindersDueToday) {
             // Send email notification for each reminder
-            // Placeholder email until auth is set up
-            emailService.sendEmail("jitthing617@gmail.com", reminder.getDescription(), reminder.getTitle());
+            /*
+            * function to get email by assignee staff id
+            * placeholder for now, assuming email is hardcoded
+            * */
+            emailService.sendEmail("holycowandsheep@gmail.com", reminder.getDescription(), reminder.getTitle());
             log.info("Sent reminder email for reminder ID: {}", reminder.getId());
         }
     }

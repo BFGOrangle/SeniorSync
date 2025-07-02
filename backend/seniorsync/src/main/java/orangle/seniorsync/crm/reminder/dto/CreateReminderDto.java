@@ -9,6 +9,7 @@ public record CreateReminderDto(
         @NotBlank String title,
         @NotBlank String description,
         @NotNull Long requestId,
-        @NotNull OffsetDateTime reminderDate
+        @NotNull OffsetDateTime reminderDate,
+        Long staffAssigneeId
 ) {
 }
