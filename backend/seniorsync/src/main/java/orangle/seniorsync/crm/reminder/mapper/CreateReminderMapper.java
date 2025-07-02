@@ -1,7 +1,7 @@
-package orangle.seniorsync.crm.requestmanagement.mapper;
+package orangle.seniorsync.crm.reminder.mapper;
 
-import orangle.seniorsync.crm.requestmanagement.dto.CreateReminderDto;
-import orangle.seniorsync.crm.requestmanagement.model.Reminder;
+import orangle.seniorsync.crm.reminder.dto.CreateReminderDto;
+import orangle.seniorsync.crm.reminder.model.Reminder;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 

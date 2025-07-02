@@ -1,11 +1,11 @@
-package orangle.seniorsync.crm.requestmanagement.controller;
+package orangle.seniorsync.crm.reminder.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import orangle.seniorsync.crm.requestmanagement.dto.CreateReminderDto;
-import orangle.seniorsync.crm.requestmanagement.dto.ReminderDto;
-import orangle.seniorsync.crm.requestmanagement.dto.UpdateReminderDto;
-import orangle.seniorsync.crm.requestmanagement.service.ReminderService;
+import orangle.seniorsync.crm.reminder.dto.CreateReminderDto;
+import orangle.seniorsync.crm.reminder.dto.ReminderDto;
+import orangle.seniorsync.crm.reminder.dto.UpdateReminderDto;
+import orangle.seniorsync.crm.reminder.service.ReminderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

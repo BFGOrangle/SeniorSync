@@ -1,4 +1,4 @@
-package orangle.seniorsync.crm.requestmanagement.dto;
+package orangle.seniorsync.crm.reminder.dto;
 
 import java.time.OffsetDateTime;
 

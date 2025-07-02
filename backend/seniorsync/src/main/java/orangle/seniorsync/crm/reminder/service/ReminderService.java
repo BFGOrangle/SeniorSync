@@ -1,14 +1,13 @@
-package orangle.seniorsync.crm.requestmanagement.service;
+package orangle.seniorsync.crm.reminder.service;
 
-import orangle.seniorsync.crm.requestmanagement.dto.CreateReminderDto;
-import orangle.seniorsync.crm.requestmanagement.dto.ReminderDto;
-import orangle.seniorsync.crm.requestmanagement.dto.UpdateReminderDto;
-import orangle.seniorsync.crm.requestmanagement.mapper.CreateReminderMapper;
-import orangle.seniorsync.crm.requestmanagement.mapper.ReminderMapper;
-import orangle.seniorsync.crm.requestmanagement.mapper.UpdateReminderMapper;
-import orangle.seniorsync.crm.requestmanagement.model.Reminder;
-import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
-import orangle.seniorsync.crm.requestmanagement.repository.ReminderRepository;
+import orangle.seniorsync.crm.reminder.dto.CreateReminderDto;
+import orangle.seniorsync.crm.reminder.dto.ReminderDto;
+import orangle.seniorsync.crm.reminder.dto.UpdateReminderDto;
+import orangle.seniorsync.crm.reminder.mapper.CreateReminderMapper;
+import orangle.seniorsync.crm.reminder.mapper.ReminderMapper;
+import orangle.seniorsync.crm.reminder.mapper.UpdateReminderMapper;
+import orangle.seniorsync.crm.reminder.model.Reminder;
+import orangle.seniorsync.crm.reminder.repository.ReminderRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

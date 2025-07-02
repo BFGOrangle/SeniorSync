@@ -1,4 +1,4 @@
-package orangle.seniorsync.crm.requestmanagement.dto;
+package orangle.seniorsync.crm.reminder.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
