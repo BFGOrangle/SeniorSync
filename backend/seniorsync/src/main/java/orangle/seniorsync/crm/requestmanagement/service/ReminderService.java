@@ -60,7 +60,7 @@ public class ReminderService implements IReminderService {
         Reminder reminderToUpdate = reminderRepository.findById(updateReminderDto.id())
                 .orElseThrow(() -> new IllegalArgumentException("Reminder not found with id: " + updateReminderDto.id()));
 
-        updateReminderMapper.updateExitingReminderFromDto(updateReminderDto, reminderToUpdate);
+        updateReminderMapper.updateExistingReminderFromDto(updateReminderDto, reminderToUpdate);
 
         Reminder updatedReminder = reminderRepository.save(reminderToUpdate);
         return reminderMapper.toDto(updatedReminder);
