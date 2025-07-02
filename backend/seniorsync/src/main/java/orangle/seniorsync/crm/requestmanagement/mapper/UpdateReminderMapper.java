@@ -7,5 +7,5 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = org.mapstruct.ReportingPolicy.IGNORE)
 public interface UpdateReminderMapper {
-    void updateExitingReminderFromDto(UpdateReminderDto updateReminderDto, @MappingTarget Reminder existingReminder);
+    void updateExistingReminderFromDto(UpdateReminderDto updateReminderDto, @MappingTarget Reminder existingReminder);
 }
