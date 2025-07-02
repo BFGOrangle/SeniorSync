@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,24 +18,36 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Search, Filter, SortAsc, SortDesc, ChevronDown } from "lucide-react";
-import { FilterOptions, SortOption, Priority, Status } from "@/types/ticket";
-import { assignees } from "@/lib/ticket-data";
-import { REQUEST_TYPES } from "@/services/senior-request-api";
 
-interface TicketFiltersProps {
-  filters: FilterOptions;
-  sort: SortOption;
-  onFiltersChange: (filters: FilterOptions) => void;
-  onSortChange: (sort: SortOption) => void;
-  onAddTicket?: () => void;
+type Priority = "low" | "medium" | "high" | "urgent";
+type Status = "pending" | "in-progress" | "in-review" | "completed" | "cancelled";
+
+interface RequestFilterOptions {
+  priority?: Priority[];
+  status?: Status[];
+  requestType?: string[];
+  assignedStaff?: string[];
+  searchTerm?: string;
 }
 
-export function TicketFilters({
+interface RequestSortOption {
+  field: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName';
+  direction: "asc" | "desc";
+}
+
+interface RequestFiltersProps {
+  filters: RequestFilterOptions;
+  sort: RequestSortOption;
+  onFiltersChange: (filters: RequestFilterOptions) => void;
+  onSortChange: (sort: RequestSortOption) => void;
+}
+
+export function RequestFilters({
   filters,
   sort,
   onFiltersChange,
   onSortChange,
-}: TicketFiltersProps) {
+}: RequestFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
@@ -49,13 +61,28 @@ export function TicketFilters({
 
   const sortOptions = [
     { field: "createdAt", label: "Created Date" },
-    { field: "dueDate", label: "Due Date" },
+    { field: "updatedAt", label: "Updated Date" },
     { field: "seniorName", label: "Senior Name" },
     { field: "priority", label: "Priority" },
     { field: "status", label: "Status" },
-    { field: "agentName", label: "Agent" },
-    { field: "requestType", label: "Request Type" },
   ] as const;
+
+  // Sample request types and staff - in real app these would come from props or API
+  const requestTypes = [
+    "Medical Assistance",
+    "Transportation", 
+    "Home Care",
+    "Emergency Support",
+    "Other"
+  ];
+
+  const staffMembers = [
+    "Sarah Johnson",
+    "Michael Chen",
+    "Emily Rodriguez",
+    "David Wilson",
+    "Lisa Anderson"
+  ];
 
   const handlePriorityChange = (priority: Priority, checked: boolean) => {
     const currentPriorities = filters.priority || [];
@@ -93,15 +120,15 @@ export function TicketFilters({
     });
   };
 
-  const handleAssigneeChange = (assignee: string, checked: boolean) => {
-    const currentAssignees = filters.assignee || [];
-    const newAssignees = checked
-      ? [...currentAssignees, assignee]
-      : currentAssignees.filter((a) => a !== assignee);
+  const handleStaffChange = (staff: string, checked: boolean) => {
+    const currentStaff = filters.assignedStaff || [];
+    const newStaff = checked
+      ? [...currentStaff, staff]
+      : currentStaff.filter((s) => s !== staff);
 
     onFiltersChange({
       ...filters,
-      assignee: newAssignees.length > 0 ? newAssignees : undefined,
+      assignedStaff: newStaff.length > 0 ? newStaff : undefined,
     });
   };
 
@@ -113,8 +140,8 @@ export function TicketFilters({
     filters.priority?.length,
     filters.status?.length,
     filters.requestType?.length,
-    filters.assignee?.length,
-    filters.search ? 1 : 0,
+    filters.assignedStaff?.length,
+    filters.searchTerm ? 1 : 0,
   ].reduce((sum: number, count) => sum + (count || 0), 0);
 
   return (
@@ -125,48 +152,46 @@ export function TicketFilters({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search requests..."
-            value={filters.search || ""}
+            value={filters.searchTerm || ""}
             onChange={(e) =>
-              onFiltersChange({ ...filters, search: e.target.value })
+              onFiltersChange({ ...filters, searchTerm: e.target.value })
             }
             className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
-        {/* Filter Popover */}
+        {/* Filters */}
         <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="relative border-gray-300 hover:bg-gray-50"
+              className="border-gray-300 hover:bg-gray-50 relative"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filters
               <ChevronDown className="h-4 w-4 ml-2" />
               {activeFilterCount > 0 && (
                 <Badge
-                  variant="destructive"
-                  className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                  variant="secondary"
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center"
                 >
                   {activeFilterCount}
                 </Badge>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="start">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-gray-900">Filters</h4>
-                {activeFilterCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="h-8 px-2 text-gray-600 hover:text-gray-900"
-                  >
-                    Clear all
-                  </Button>
-                )}
+          <PopoverContent className="w-80 p-4" align="start">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-gray-900">Filters</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-6 text-gray-500 hover:text-gray-700"
+                >
+                  Clear all
+                </Button>
               </div>
 
               <div className="space-y-4">
@@ -241,7 +266,7 @@ export function TicketFilters({
                     Request Type
                   </Label>
                   <div className="space-y-2">
-                    {REQUEST_TYPES.map((requestType) => (
+                    {requestTypes.map((requestType) => (
                       <div
                         key={requestType}
                         className="flex items-center space-x-2"
@@ -272,32 +297,32 @@ export function TicketFilters({
 
                 <Separator />
 
-                {/* Agent Filter */}
+                {/* Staff Filter */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium text-gray-900">
-                    Agent
+                    Assigned Staff
                   </Label>
                   <div className="space-y-2">
-                    {assignees.map((assignee) => (
+                    {staffMembers.map((staff) => (
                       <div
-                        key={assignee}
+                        key={staff}
                         className="flex items-center space-x-2"
                       >
                         <Checkbox
-                          id={`assignee-${assignee}`}
+                          id={`staff-${staff}`}
                           checked={
-                            filters.assignee?.includes(assignee) || false
+                            filters.assignedStaff?.includes(staff) || false
                           }
                           onCheckedChange={(checked) =>
-                            handleAssigneeChange(assignee, checked as boolean)
+                            handleStaffChange(staff, checked as boolean)
                           }
                           className="border-gray-300"
                         />
                         <Label
-                          htmlFor={`assignee-${assignee}`}
+                          htmlFor={`staff-${staff}`}
                           className="text-sm text-gray-700 font-normal cursor-pointer"
                         >
-                          {assignee}
+                          {staff}
                         </Label>
                       </div>
                     ))}
@@ -314,31 +339,31 @@ export function TicketFilters({
             value={`${sort.field}-${sort.direction}`}
             onValueChange={(value) => {
               const [field, direction] = value.split("-") as [
-                keyof SortOption["field"],
+                RequestSortOption["field"],
                 "asc" | "desc"
               ];
-              onSortChange({ field: field as any, direction });
+              onSortChange({ field, direction });
             }}
           >
-            <SelectTrigger className="w-[180px] border-gray-300">
-              <SelectValue placeholder="Sort by..." />
+            <SelectTrigger className="w-48 border-gray-300 hover:bg-gray-50">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {sortOptions.map((option) => (
-                <div key={option.field}>
-                  <SelectItem value={`${option.field}-asc`}>
-                    <div className="flex items-center gap-2">
-                      <SortAsc className="h-4 w-4" />
-                      {option.label} (A-Z)
-                    </div>
-                  </SelectItem>
+                <React.Fragment key={option.field}>
                   <SelectItem value={`${option.field}-desc`}>
                     <div className="flex items-center gap-2">
                       <SortDesc className="h-4 w-4" />
-                      {option.label} (Z-A)
+                      {option.label} (Newest)
                     </div>
                   </SelectItem>
-                </div>
+                  <SelectItem value={`${option.field}-asc`}>
+                    <div className="flex items-center gap-2">
+                      <SortAsc className="h-4 w-4" />
+                      {option.label} (Oldest)
+                    </div>
+                  </SelectItem>
+                </React.Fragment>
               ))}
             </SelectContent>
           </Select>
