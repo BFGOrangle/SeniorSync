@@ -33,8 +33,9 @@ public class ReminderService implements IReminderService {
         List<Reminder> reminders;
         if (requestId == null) {
             reminders = reminderRepository.findAll();
+        } else {
+            reminders = reminderRepository.findByRequestId(requestId);
         }
-        reminders = reminderRepository.findByRequestId(requestId);
         return reminders.stream()
                 .map(reminderMapper::toDto)
                 .toList();
