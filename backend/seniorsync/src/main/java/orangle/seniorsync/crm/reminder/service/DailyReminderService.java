@@ -6,6 +6,7 @@ import orangle.seniorsync.crm.reminder.repository.ReminderRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -22,7 +23,11 @@ public class DailyReminderService implements IDailyReminderService{
     @Scheduled(cron = "0 0 8 * * ?") // Runs daily at 8:00 AM
     public void sendDailyReminders() {
         // Logic to send daily reminders
-        List<Reminder> remindersDueToday = reminderRepository.findByReminderDate(new Date());
+        OffsetDateTime startOfDay = OffsetDateTime.now().toLocalDate().atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+        OffsetDateTime endOfDay = startOfDay.plusDays(1).minusNanos(1);
+
+        // Find reminders for the entire day
+        List<Reminder> remindersDueToday = reminderRepository.findByReminderDateBetween(startOfDay, endOfDay);
         log.info("Found {} reminders due today", remindersDueToday.size());
         for (Reminder reminder : remindersDueToday) {
             // Send email notification for each reminder
