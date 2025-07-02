@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import orangle.seniorsync.crm.requestmanagement.dto.CreateReminderDto;
 import orangle.seniorsync.crm.requestmanagement.dto.ReminderDto;
+import orangle.seniorsync.crm.requestmanagement.dto.UpdateReminderDto;
 import orangle.seniorsync.crm.requestmanagement.service.ReminderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +22,17 @@ public class ReminderController {
         this.reminderService = reminderService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<List<ReminderDto>> getReminders(@PathVariable Long id) {
-        List<ReminderDto> requestReminders = reminderService.findReminders(id);
-        log.info("Retrieved {} reminders for request {}", requestReminders.size(), id);
+    @GetMapping
+    public ResponseEntity<List<ReminderDto>> getAllReminders() {
+        List<ReminderDto> reminders = reminderService.findReminders(null);
+        log.info("Retrieved {} reminders", reminders.size());
+        return ResponseEntity.ok().body(reminders);
+    }
+
+    @GetMapping("/request/{requestId}")
+    public ResponseEntity<List<ReminderDto>> getRemindersByRequest(@PathVariable Long requestId) {
+        List<ReminderDto> requestReminders = reminderService.findReminders(requestId);
+        log.info("Retrieved {} reminders for request {}", requestReminders.size(), requestId);
         return ResponseEntity.ok().body(requestReminders);
     }
 
@@ -33,5 +41,19 @@ public class ReminderController {
         ReminderDto reminder = reminderService.createReminder(createReminderDto);
         log.info("Created reminder with id {}", reminder.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(reminder);
+    }
+
+    @PutMapping
+    public ReminderDto updateReminder(@Valid @RequestBody UpdateReminderDto updateReminderDto) {
+        ReminderDto updatedReminder = reminderService.updateReminder(updateReminderDto);
+        log.info("Updated reminder with id {}", updatedReminder.id());
+        return updatedReminder;
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReminder(@PathVariable long id) {
+        reminderService.deleteReminder(id);
+        log.info("Deleted reminder with id {}", id);
+        return ResponseEntity.noContent().build();
     }
 }

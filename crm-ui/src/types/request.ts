@@ -1,15 +1,8 @@
 // Backend API types for request management
 export type RequestStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
 
-// Reminder types for frontend use
-export interface Reminder {
-  id: string; // Required ID for UI purposes
-  title: string;
-  description?: string;
-  reminderDateTime: string; // ISO string
-  isCompleted: boolean;
-  createdAt?: string;
-}
+// Import reminder types from dedicated file
+import { Reminder } from './reminder';
 
 export interface SeniorRequestDto {
   id: number;
