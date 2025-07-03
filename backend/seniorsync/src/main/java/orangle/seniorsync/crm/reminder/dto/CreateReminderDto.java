@@ -1,4 +1,4 @@
-package orangle.seniorsync.crm.requestmanagement.dto;
+package orangle.seniorsync.crm.reminder.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +9,7 @@ public record CreateReminderDto(
         @NotBlank String title,
         @NotBlank String description,
         @NotNull Long requestId,
-        @NotNull OffsetDateTime reminderDate
+        @NotNull OffsetDateTime reminderDate,
+        Long staffAssigneeId
 ) {
 }

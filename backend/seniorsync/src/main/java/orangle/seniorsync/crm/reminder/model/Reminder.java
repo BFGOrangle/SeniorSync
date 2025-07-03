@@ -1,4 +1,4 @@
-package orangle.seniorsync.crm.requestmanagement.model;
+package orangle.seniorsync.crm.reminder.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

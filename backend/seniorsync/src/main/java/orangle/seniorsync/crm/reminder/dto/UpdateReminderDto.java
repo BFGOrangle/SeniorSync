@@ -1,4 +1,4 @@
-package orangle.seniorsync.crm.requestmanagement.dto;
+package orangle.seniorsync.crm.reminder.dto;
 
 import java.time.OffsetDateTime;
 
@@ -6,6 +6,7 @@ public record UpdateReminderDto(
         Long id,
         String title,
         String description,
-        OffsetDateTime reminderDate
+        OffsetDateTime reminderDate,
+        Long staffAssigneeId
 ) {
 }

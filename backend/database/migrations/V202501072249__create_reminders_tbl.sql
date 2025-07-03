@@ -5,6 +5,7 @@ CREATE SCHEMA IF NOT EXISTS senior_sync;
 CREATE TABLE IF NOT EXISTS senior_sync.reminders (
     id BIGSERIAL PRIMARY KEY,
     request_id BIGINT NOT NULL,
+    staff_assignee_id BIGINT REFERENCES senior_sync.staff(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     reminder_date TIMESTAMPTZ NOT NULL,

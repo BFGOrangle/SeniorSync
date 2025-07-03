@@ -1,8 +1,8 @@
-package orangle.seniorsync.crm.requestmanagement.service;
+package orangle.seniorsync.crm.reminder.service;
 
-import orangle.seniorsync.crm.requestmanagement.dto.CreateReminderDto;
-import orangle.seniorsync.crm.requestmanagement.dto.ReminderDto;
-import orangle.seniorsync.crm.requestmanagement.dto.UpdateReminderDto;
+import orangle.seniorsync.crm.reminder.dto.CreateReminderDto;
+import orangle.seniorsync.crm.reminder.dto.ReminderDto;
+import orangle.seniorsync.crm.reminder.dto.UpdateReminderDto;
 
 import java.util.List;
 
