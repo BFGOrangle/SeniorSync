@@ -35,7 +35,7 @@ public class DailyReminderService implements IDailyReminderService{
             * function to get email by assignee staff id
             * placeholder for now, assuming email is hardcoded
             * */
-            emailService.sendEmail("holycowandsheep@gmail.com", reminder.getDescription(), reminder.getTitle());
+            emailService.sendEmail("holycowandsheep@gmail.com", reminder.getTitle(), reminder.getDescription());
             log.info("Sent reminder email for reminder ID: {}", reminder.getId());
         }
     }
