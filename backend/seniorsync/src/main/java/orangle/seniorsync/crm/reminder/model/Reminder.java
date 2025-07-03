@@ -33,7 +33,7 @@ public class Reminder {
 
     // nullable for now, non-nullable in the future
     @Column(name = "staff_assignee_id", nullable = true)
-    private Long staffAssigneeId
+    private Long staffAssigneeId;
 
     @NotNull
     @Column(name = "reminder_date", nullable = false)
