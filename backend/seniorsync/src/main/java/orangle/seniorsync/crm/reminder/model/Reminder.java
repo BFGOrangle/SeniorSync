@@ -31,6 +31,10 @@ public class Reminder {
     @Column(name = "description", nullable = false, length = Integer.MAX_VALUE)
     private String description;
 
+    // nullable for now, non-nullable in the future
+    @Column(name = "staff_assignee_id", nullable = true)
+    private Long staffAssigneeId
+
     @NotNull
     @Column(name = "reminder_date", nullable = false)
     private OffsetDateTime reminderDate;
