@@ -1,194 +1,154 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
 import { 
-  Calendar,
-  FileText,
-  Users,
-  BarChart3,
-  HeartHandshake,
-  TrendingUp,
-  Clock,
-  AlertCircle
-} from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-
-const stats = [
-  {
-    title: "Total Requests",
-    value: "124",
-    description: "This month",
-    icon: HeartHandshake,
-    trend: "+12%",
-    color: "text-blue-600",
-  },
-  {
-    title: "Pending Requests",
-    value: "23",
-    description: "Awaiting response",
-    icon: Clock,
-    trend: "-5%",
-    color: "text-orange-600",
-  },
-  {
-    title: "Urgent Cases",
-    value: "8",
-    description: "Requires immediate attention",
-    icon: AlertCircle,
-    trend: "+2",
-    color: "text-red-600",
-  },
-  {
-    title: "Completed",
-    value: "93",
-    description: "Successfully resolved",
-    icon: TrendingUp,
-    trend: "+18%",
-    color: "text-green-600",
-  },
-];
-
-const quickActions = [
-  {
-    title: "New Senior Request",
-    description: "Create a new request for senior assistance",
-    href: "/admin/senior-requests",
-    icon: HeartHandshake,
-    color: "bg-blue-600 hover:bg-blue-700",
-  },
-  {
-    title: "View Tickets",
-    description: "Check upcoming appointments and schedules",
-    href: "/admin/tickets",
-    icon: Calendar,
-    color: "bg-green-600 hover:bg-green-700",
-  },
-  {
-    title: "Manage Senior Profiles",
-    description: "View and manage client information",
-    href: "/admin/senior-profiles",
-    icon: Users,
-    color: "bg-indigo-600 hover:bg-indigo-700",
-  },
-];
+  TotalRequestsCard,
+  PendingRequestsCard,
+  CompletedThisMonthCard,
+  AverageCompletionTimeCard,
+} from '@/components/dashboard-stats-card';
+import {
+  StatusDistributionChart,
+  PriorityDistributionChart,
+  RequestTypesChart,
+  MonthlyTrendChart,
+  StaffWorkloadChart,
+  RequestTypeDetails,
+} from '@/components/dashboard-charts';
+import { useDashboard } from '@/hooks/use-dashboard';
+import { RefreshCw, Calendar, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function DashboardPage() {
+  const {
+    dashboardStats,
+    requestTypeSummaries,
+    statusDistribution,
+    priorityDistribution,
+    monthlyTrend,
+    staffWorkload,
+    loading,
+    error,
+    lastUpdated,
+    refreshAll,
+    clearError,
+  } = useDashboard();
+
+  const handleRefresh = async () => {
+    await refreshAll();
+  };
+
   return (
-    <div className="flex-1 p-6 space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Welcome to your SeniorSync CRM dashboard. Here's an overview of your current activities.
-        </p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
-              <div className="flex items-center pt-1">
-                <span className={`text-xs font-medium ${
-                  stat.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.trend}
-                </span>
-                <span className="text-xs text-muted-foreground ml-1">
-                  from last month
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {quickActions.map((action) => (
-            <Card key={action.title} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                    <action.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{action.title}</CardTitle>
-                    <CardDescription>{action.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link href={action.href} className={action.disabled ? "pointer-events-none" : ""}>
-                  <Button 
-                    className="w-full" 
-                    disabled={action.disabled}
-                    variant={action.disabled ? "secondary" : "default"}
-                  >
-                    {action.disabled ? "Coming Soon" : "Go to " + action.title}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Overview of senior request management system
+          </p>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {lastUpdated && (
+            <Badge variant="secondary" className="text-xs">
+              <Calendar className="w-3 h-3 mr-1" />
+              Updated {lastUpdated.toLocaleTimeString()}
+            </Badge>
+          )}
+          
+          <Button 
+            onClick={handleRefresh} 
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            Latest updates and actions in your system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50">
-              <HeartHandshake className="h-5 w-5 text-blue-600" />
-              <div className="flex-1">
-                <p className="font-medium">New senior request submitted</p>
-                <p className="text-sm text-muted-foreground">
-                  Margaret Johnson requested transportation assistance
-                </p>
-              </div>
-              <span className="text-sm text-muted-foreground">2 hours ago</span>
+      {/* Error State */}
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-sm font-medium text-red-800">
+                Error loading dashboard data
+              </h3>
+              <p className="text-sm text-red-600 mt-1">
+                {error.message}. Please try refreshing the page.
+              </p>
             </div>
-            
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              <div className="flex-1">
-                <p className="font-medium">Request completed</p>
-                <p className="text-sm text-muted-foreground">
-                  Home care service for Robert Davis completed successfully
-                </p>
-              </div>
-              <span className="text-sm text-muted-foreground">4 hours ago</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50">
-              <Clock className="h-5 w-5 text-orange-600" />
-              <div className="flex-1">
-                <p className="font-medium">Urgent request pending</p>
-                <p className="text-sm text-muted-foreground">
-                  Medical assistance needed for Eleanor Smith
-                </p>
-              </div>
-              <span className="text-sm text-muted-foreground">6 hours ago</span>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800"
+            >
+              Dismiss
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Key Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <TotalRequestsCard 
+          value={dashboardStats?.totalRequests || 0}
+          loading={loading}
+        />
+        <PendingRequestsCard 
+          value={dashboardStats?.totalPendingRequests || 0}
+          loading={loading}
+        />
+        <CompletedThisMonthCard 
+          value={dashboardStats?.totalCompletedThisMonth || 0}
+          loading={loading}
+        />
+        <AverageCompletionTimeCard 
+          value={dashboardStats?.averageCompletionTime || 0}
+          loading={loading}
+        />
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        <StatusDistributionChart 
+          data={statusDistribution}
+          loading={loading}
+        />
+        <PriorityDistributionChart 
+          data={priorityDistribution}
+          loading={loading}
+        />
+        <RequestTypesChart 
+          data={requestTypeSummaries}
+          loading={loading}
+        />
+        <MonthlyTrendChart 
+          data={monthlyTrend}
+          loading={loading}
+        />
+      </div>
+
+      {/* Staff Workload and Request Details */}
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <StaffWorkloadChart 
+          data={staffWorkload}
+          loading={loading}
+        />
+        <RequestTypeDetails 
+          data={requestTypeSummaries}
+          loading={loading}
+        />
+      </div>
     </div>
   );
 } 
