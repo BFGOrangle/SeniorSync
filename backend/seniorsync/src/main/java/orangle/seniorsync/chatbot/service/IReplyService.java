@@ -1,5 +1,7 @@
 package orangle.seniorsync.chatbot.service;
 
+import orangle.seniorsync.chatbot.dto.ReplyDto;
+
 public interface IReplyService {
-    void replyMessage();
+    ReplyDto replyMessage(String campaignName, Long seniorId);
 }
