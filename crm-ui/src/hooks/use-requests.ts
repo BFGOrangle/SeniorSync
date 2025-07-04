@@ -64,7 +64,7 @@ export function useRequestManagement() {
         id: updatedRequest.id,
         title: updatedRequest.title,
         description: updatedRequest.description,
-        priority: updatedRequest.priority,
+        priority: RequestUtils.frontendToBackendPriority(updatedRequest.frontendPriority),
         status: RequestUtils.frontendToBackendStatus(updatedRequest.frontendStatus),
         assignedStaffId: updatedRequest.assignedStaffId,
         requestTypeId: updatedRequest.requestTypeId,

@@ -8,7 +8,6 @@ import {
   Settings,
   HeartHandshake,
   Layout,
-  PlusCircleIcon,
 } from "lucide-react";
 
 import {
@@ -33,14 +32,9 @@ const navigationItems = [
     icon: Layout,
   },
   {
-    title: "Senior Request Management",
+    title: "Request Management",
     url: "/admin/request-management",
     icon: FileText,
-  },
-  {
-    title: "Create Senior Request",
-    url: "/admin/create-senior-request",
-    icon: PlusCircleIcon,
   },
   {
     title: "Senior Profiles",
