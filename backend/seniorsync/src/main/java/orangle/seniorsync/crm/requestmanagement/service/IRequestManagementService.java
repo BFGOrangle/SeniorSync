@@ -12,6 +12,7 @@ import java.util.List;
 public interface IRequestManagementService {
     SeniorRequestDto createRequest(CreateSeniorRequestDto createSeniorRequestDto);
     List<SeniorRequestDto> findRequests(SeniorRequestFilterDto filter);
+    SeniorRequestDto findRequestById(long id);
     List<SeniorRequestView> findRequestsByStatus(RequestStatus status);
     SeniorRequestDto updateRequest(UpdateSeniorRequestDto updateSeniorRequestDto);
     List<SeniorRequestDto> findRequestsBySenior(long id);

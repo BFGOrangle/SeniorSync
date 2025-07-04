@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -21,9 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, Clock, Phone } from "lucide-react";
+import { ArrowUpDown, Clock, Phone, ExternalLink } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
-import { RequestModal } from "@/components/request-modal";
 import { cn } from "@/lib/utils";
 
 interface RequestTableViewProps {
@@ -35,8 +35,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [selectedRequest, setSelectedRequest] = useState<SeniorRequestDisplayView | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   const getInitials = (name: string) => {
     return name
@@ -104,8 +103,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
           <Button
             variant="ghost"
             onClick={() => {
-              setSelectedRequest(request);
-              setIsModalOpen(true);
+              router.push(`/admin/requests/${request.id}`);
             }}
             className="h-auto p-0 font-mono text-blue-600 hover:text-blue-800 hover:bg-transparent underline"
           >
@@ -344,8 +342,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
                   data-state={row.getIsSelected() && "selected"}
                   className="border-gray-100 hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    setSelectedRequest(row.original);
-                    setIsModalOpen(true);
+                    router.push(`/admin/requests/${row.original.id}`);
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -372,18 +369,6 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
         </Table>
       </div>
 
-      {/* Request Modal */}
-      {selectedRequest && (
-        <RequestModal
-          request={selectedRequest}
-          isOpen={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onUpdate={(updatedRequest) => {
-            onRequestUpdate(updatedRequest);
-            setIsModalOpen(false);
-          }}
-        />
-      )}
     </div>
   );
 }

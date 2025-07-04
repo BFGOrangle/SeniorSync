@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +8,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Clock, Eye } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
-import { RequestModal } from "@/components/request-modal";
 import { cn } from "@/lib/utils";
 
 interface RequestCardProps {
@@ -21,7 +21,8 @@ export function RequestCard({
   isKanban = false,
   onUpdate,
 }: RequestCardProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const router = useRouter();
 
   const {
     attributes,
@@ -32,8 +33,13 @@ export function RequestCard({
     isDragging,
   } = useSortable({
     id: request.id,
-    disabled: isModalOpen,
+    disabled: isNavigating,
   });
+
+  const handleViewDetails = () => {
+    setIsNavigating(true);
+    router.push(`/admin/requests/${request.id}`);
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -94,7 +100,7 @@ export function RequestCard({
         style={style}
         {...attributes}
         {...listeners}
-        onClick={() => setIsModalOpen(true)}
+        onClick={handleViewDetails}
         className={cn(
           "w-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group",
           isDragging && "opacity-50 rotate-3 scale-105",
@@ -140,7 +146,7 @@ export function RequestCard({
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsModalOpen(true);
+                  handleViewDetails();
                 }}
                 className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
                 title="View Details"
@@ -182,16 +188,6 @@ export function RequestCard({
           </div>
         </CardContent>
       </Card>
-
-      <RequestModal
-        request={request}
-        isOpen={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onUpdate={(updatedRequest: SeniorRequestDisplayView) => {
-          onUpdate?.(updatedRequest);
-          setIsModalOpen(false);
-        }}
-      />
     </>
   );
 }

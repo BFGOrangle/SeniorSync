@@ -309,6 +309,49 @@ export class RequestManagementApiService {
       };
     }
   }
+
+  /**
+   * Get a single request by ID with enhanced details
+   */
+  async getRequestById(id: number): Promise<SeniorRequestDisplayView | null> {
+    try {
+      // Get basic request data (we'll need to implement this endpoint)
+      const request = await this.client.get<SeniorRequestDto>(`${REQUESTS_ENDPOINT}/${id}`);
+      
+      if (!request) {
+        return null;
+      }
+
+      // Get reference data in parallel
+      const [seniors, staff, requestTypes] = await Promise.all([
+        this.getSeniorsForRequests([request]),
+        this.getStaff().catch(() => [] as StaffDto[]),
+        this.getRequestTypes().catch(() => [] as RequestTypeDto[])
+      ]);
+
+      // Create lookup maps for performance
+      const seniorMap = new Map(seniors.map(s => [s.id, s]));
+      const staffMap = new Map(staff.map(s => [s.id, s]));
+      const requestTypeMap = new Map(requestTypes.map(rt => [rt.id, rt]));
+
+      // Enhance request with additional information
+      const senior = seniorMap.get(request.seniorId);
+      const assignedStaff = request.assignedStaffId ? staffMap.get(request.assignedStaffId) : undefined;
+      const requestType = request.requestTypeId ? requestTypeMap.get(request.requestTypeId) : undefined;
+
+      return RequestUtils.fromDtoToDisplayView(request, {
+        seniorName: senior ? `${senior.firstName} ${senior.lastName}` : `Senior ID ${request.seniorId}`,
+        seniorPhone: senior?.contactPhone || undefined,
+        seniorEmail: senior?.contactEmail || undefined,
+        seniorAddress: senior?.address || undefined,
+        assignedStaffName: assignedStaff ? `${assignedStaff.firstName} ${assignedStaff.lastName}` : undefined,
+        requestTypeName: requestType?.name,
+      });
+    } catch (error) {
+      console.error('Error getting request by ID:', error);
+      return null;
+    }
+  }
 }
 
 // Export singleton instance

@@ -66,4 +66,11 @@ public class RequestManagementController {
         log.info("Deleted senior request with ID: {}", id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SeniorRequestDto> getRequestById(@PathVariable long id) {
+        SeniorRequestDto seniorRequest = requestManagementService.findRequestById(id);
+        log.info("Retrieved senior request with ID: {}", id);
+        return ResponseEntity.ok().body(seniorRequest);
+    }
 }
