@@ -19,43 +19,49 @@ import { RequestCard } from "@/components/request-card";
 import { DroppableColumn } from "@/components/ui/droppable-column";
 import { cn } from "@/lib/utils";
 
-type Status = "pending" | "in-progress" | "completed";
+type Priority = "urgent" | "high" | "medium" | "low";
 
-interface RequestKanbanViewProps {
+interface RequestKanbanPriorityViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
-  showOnlyFilteredStatuses?: boolean;
+  showOnlyFilteredPriorities?: boolean;
 }
 
-interface Column {
-  id: Status;
+interface PriorityColumn {
+  id: Priority;
   title: string;
   color: string;
   description: string;
 }
 
-const allColumns: Column[] = [
+const priorityColumns: PriorityColumn[] = [
   {
-    id: "pending",
-    title: "Pending",
-    color: "bg-blue-50 border-blue-200",
-    description: "Awaiting assignment",
+    id: "urgent",
+    title: "Urgent",
+    color: "bg-red-50 border-red-200",
+    description: "Immediate attention required",
   },
   {
-    id: "in-progress",
-    title: "In Progress", 
+    id: "high",
+    title: "High Priority",
     color: "bg-orange-50 border-orange-200",
-    description: "Currently being worked on",
+    description: "Important requests",
   },
   {
-    id: "completed",
-    title: "Completed",
+    id: "medium",
+    title: "Medium Priority",
+    color: "bg-yellow-50 border-yellow-200",
+    description: "Standard requests",
+  },
+  {
+    id: "low",
+    title: "Low Priority",
     color: "bg-green-50 border-green-200",
-    description: "Successfully completed",
-  }
+    description: "Non-urgent requests",
+  },
 ];
 
-export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredStatuses = false }: RequestKanbanViewProps) {
+export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyFilteredPriorities = false }: RequestKanbanPriorityViewProps) {
   const [activeRequest, setActiveRequest] = useState<SeniorRequestDisplayView | null>(null);
 
   const sensors = useSensors(
@@ -66,14 +72,14 @@ export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredS
     })
   );
 
-  // Get unique statuses from requests if we want to filter columns
+  // Get visible columns based on filtering
   const getVisibleColumns = () => {
-    if (!showOnlyFilteredStatuses) {
-      return allColumns;
+    if (!showOnlyFilteredPriorities) {
+      return priorityColumns;
     }
     
-    const requestStatuses = new Set(requests.map(r => r.frontendStatus));
-    return allColumns.filter(col => requestStatuses.has(col.id));
+    const requestPriorities = new Set(requests.map(r => r.frontendPriority));
+    return priorityColumns.filter(col => requestPriorities.has(col.id));
   };
 
   const visibleColumns = getVisibleColumns();
@@ -88,13 +94,12 @@ export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredS
     const { active, over } = event;
     setActiveRequest(null);
 
-    // The request should remain in its original position (no action needed)
     if (!over) {
       return;
     }
 
     const requestId = active.id as number;
-    const newStatus = over.id as Status;
+    const newPriority = over.id as Priority;
 
     const request = requests.find((r) => r.id === requestId);
 
@@ -103,19 +108,48 @@ export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredS
       return;
     }
 
-    // Only update if the status actually changed
-    if (request.frontendStatus !== newStatus) {
-      onRequestUpdate({ ...request, frontendStatus: newStatus });
+    // Only update if the priority actually changed
+    if (request.frontendPriority !== newPriority) {
+      onRequestUpdate({ ...request, frontendPriority: newPriority });
     }
   };
 
-  const getRequestsForStatus = (status: Status) => {
-    // Add defensive check to ensure requests is always an array
+  const getRequestsForPriority = (priority: Priority) => {
     if (!Array.isArray(requests)) {
       console.warn("Requests is not an array:", requests);
       return [];
     }
-    return requests.filter((request) => request && request.frontendStatus === status);
+    return requests.filter((request) => request && request.frontendPriority === priority);
+  };
+
+  const getPriorityIcon = (priority: Priority) => {
+    switch (priority) {
+      case "urgent":
+        return "🚨";
+      case "high":
+        return "⚡";
+      case "medium":
+        return "📋";
+      case "low":
+        return "📝";
+      default:
+        return "📋";
+    }
+  };
+
+  const getPriorityColor = (priority: Priority) => {
+    switch (priority) {
+      case "urgent":
+        return "text-red-600";
+      case "high":
+        return "text-orange-600";
+      case "medium":
+        return "text-yellow-600";
+      case "low":
+        return "text-green-600";
+      default:
+        return "text-gray-600";
+    }
   };
 
   return (
@@ -126,7 +160,7 @@ export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredS
     >
       <div className="flex gap-6 h-full overflow-x-auto pb-6">
         {visibleColumns.map((column) => {
-          const columnRequests = getRequestsForStatus(column.id);
+          const columnRequests = getRequestsForPriority(column.id);
           
           return (
             <Card
@@ -138,11 +172,16 @@ export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredS
             >
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-lg">
-                  <div className="flex flex-col">
-                    <span>{column.title}</span>
-                    <span className="text-xs text-gray-500 font-normal">
-                      {column.description}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{getPriorityIcon(column.id)}</span>
+                    <div className="flex flex-col">
+                      <span className={cn("font-semibold", getPriorityColor(column.id))}>
+                        {column.title}
+                      </span>
+                      <span className="text-xs text-gray-500 font-normal">
+                        {column.description}
+                      </span>
+                    </div>
                   </div>
                   <Badge
                     variant="secondary"
@@ -168,7 +207,12 @@ export function RequestKanbanView({ requests, onRequestUpdate, showOnlyFilteredS
                     ))}
                     {columnRequests.length === 0 && (
                       <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
-                        Drop requests here
+                        <div className="text-center">
+                          <div className="text-2xl mb-2 opacity-50">
+                            {getPriorityIcon(column.id)}
+                          </div>
+                          <div>Drop requests here</div>
+                        </div>
                       </div>
                     )}
                   </DroppableColumn>

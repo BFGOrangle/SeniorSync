@@ -14,7 +14,6 @@ const MOCK_DATA = {
       'Pending': 15,
       'In Progress': 8,
       'Completed': 45,
-      'Cancelled': 2
     },
     requestTypeCounts: {
       'Medical Assistance': 25,

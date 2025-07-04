@@ -64,7 +64,7 @@ export function useRequestManagement() {
         id: updatedRequest.id,
         title: updatedRequest.title,
         description: updatedRequest.description,
-        priority: updatedRequest.priority,
+        priority: RequestUtils.frontendToBackendPriority(updatedRequest.frontendPriority),
         status: RequestUtils.frontendToBackendStatus(updatedRequest.frontendStatus),
         assignedStaffId: updatedRequest.assignedStaffId,
         requestTypeId: updatedRequest.requestTypeId,
@@ -164,7 +164,7 @@ export function useRequestManagement() {
   const filterAndSortRequests = useCallback((
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
-      status?: ('pending' | 'in-progress' | 'in-review' | 'completed' | 'cancelled')[];
+      status?: ('pending' | 'in-progress' | 'completed')[];
       requestType?: string[];
       assignedStaff?: string[];
       searchTerm?: string;
@@ -181,9 +181,7 @@ export function useRequestManagement() {
     const counts = {
       pending: 0,
       'in-progress': 0,
-      'in-review': 0,
       completed: 0,
-      cancelled: 0,
     };
 
     requests.forEach(request => {
@@ -284,9 +282,7 @@ export function useRequestDashboard() {
   const [statusCounts, setStatusCounts] = useState({
     pending: 0,
     'in-progress': 0,
-    'in-review': 0,
     completed: 0,
-    cancelled: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<RequestApiError | null>(null);

@@ -4,20 +4,22 @@ import { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { KanbanSquare, List, Loader2, BarChart3, RefreshCw } from "lucide-react";
+import { KanbanSquare, List, Loader2, BarChart3, RefreshCw, AlertTriangle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestKanbanView } from "@/components/request-kanban-view";
+import { RequestKanbanPriorityView } from "@/components/request-kanban-priority-view";
 import { RequestTableView } from "@/components/request-table-view";
 import { RequestFilters } from "@/components/request-filters";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useRequestManagement } from "@/hooks/use-requests";
 import { useToast } from "@/hooks/use-toast";
+import { CreateRequestModal } from "@/components/create-request-modal";
 
-type ViewMode = "kanban" | "table";
+type ViewMode = "kanban-status" | "kanban-priority" | "table";
 
 interface RequestFilterOptions {
   priority?: ("low" | "medium" | "high" | "urgent")[];
-  status?: ("pending" | "in-progress" | "in-review" | "completed" | "cancelled")[];
+  status?: ("pending" | "in-progress" | "completed")[];
   requestType?: string[];
   assignedStaff?: string[];
   searchTerm?: string;
@@ -30,7 +32,8 @@ interface RequestSortOption {
 
 export default function RequestManagement() {
   const [mounted, setMounted] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("kanban");
+  const [viewMode, setViewMode] = useState<ViewMode>("kanban-status");
+  const [smartFilter, setSmartFilter] = useState(true); // Hide empty columns when filtering
   const [filters, setFilters] = useState<RequestFilterOptions>({});
   const [sort, setSort] = useState<RequestSortOption>({
     field: "createdAt",
@@ -144,52 +147,89 @@ export default function RequestManagement() {
               </p>
             </div>
 
-            {/* Status Summary */}
-            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-              <Badge
-                variant="outline"
-                className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
-              >
-                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                Pending: {statusCounts.pending}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="bg-orange-50 text-orange-700 border-orange-200 font-medium px-3 py-1"
-              >
-                <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
-                In Progress: {statusCounts['in-progress']}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1"
-              >
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                Completed: {statusCounts.completed}
-              </Badge>
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              {/* Create Request Button */}
+              <CreateRequestModal 
+                onRequestCreated={() => {
+                  refresh();
+                  toast({
+                    title: "Success",
+                    description: "Request created successfully and list refreshed!",
+                  });
+                }}
+              />
+
+              {/* Status Summary */}
+              <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
+                >
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                  Pending: {statusCounts.pending}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-orange-50 text-orange-700 border-orange-200 font-medium px-3 py-1"
+                >
+                  <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
+                  In Progress: {statusCounts['in-progress']}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1"
+                >
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  Completed: {statusCounts.completed}
+                </Badge>
+              </div>
             </div>
 
-            <Tabs
-              value={viewMode}
-              onValueChange={(value) => setViewMode(value as ViewMode)}
-            >
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100">
-                <TabsTrigger
-                  value="kanban"
-                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  <KanbanSquare className="h-4 w-4" />
-                  Kanban
-                </TabsTrigger>
-                <TabsTrigger
-                  value="table"
-                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  <List className="h-4 w-4" />
-                  Table
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center gap-4">
+              <Tabs
+                value={viewMode}
+                onValueChange={(value) => setViewMode(value as ViewMode)}
+              >
+                <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+                  <TabsTrigger
+                    value="kanban-status"
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+                    <KanbanSquare className="h-4 w-4" />
+                    Status
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="kanban-priority"
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    Priority
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="table"
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  >
+                    <List className="h-4 w-4" />
+                    Table
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              {/* Smart Filter Toggle for Kanban views */}
+              {(viewMode === "kanban-status" || viewMode === "kanban-priority") && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={smartFilter ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSmartFilter(!smartFilter)}
+                    className="h-8"
+                  >
+                    <Filter className="h-3 w-3 mr-1" />
+                    {smartFilter ? "Smart View" : "All Columns"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -206,10 +246,17 @@ export default function RequestManagement() {
 
       {/* Main Content */}
       <div className="flex-1 p-6 overflow-auto min-h-0">
-        {viewMode === "kanban" ? (
+        {viewMode === "kanban-status" ? (
           <RequestKanbanView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
+            showOnlyFilteredStatuses={smartFilter && Object.keys(filters).length > 0}
+          />
+        ) : viewMode === "kanban-priority" ? (
+          <RequestKanbanPriorityView
+            requests={processedRequests}
+            onRequestUpdate={handleRequestUpdate}
+            showOnlyFilteredPriorities={smartFilter && Object.keys(filters).length > 0}
           />
         ) : (
           <RequestTableView
