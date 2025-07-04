@@ -14,5 +14,6 @@ public interface IRequestManagementService {
     List<SeniorRequestDto> findRequests(SeniorRequestFilterDto filter);
     List<SeniorRequestView> findRequestsByStatus(RequestStatus status);
     SeniorRequestDto updateRequest(UpdateSeniorRequestDto updateSeniorRequestDto);
+    List<SeniorRequestDto> findRequestsBySenior(long id);
     void deleteRequest(long id);
 }

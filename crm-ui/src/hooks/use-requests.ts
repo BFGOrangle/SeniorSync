@@ -318,3 +318,51 @@ export function useRequestDashboard() {
     refresh: loadDashboardData,
   };
 }
+
+// Hook for managing requests for a specific senior
+export function useSeniorRequests(seniorId: number | null) {
+  const [requests, setRequests] = useState<SeniorRequestDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<RequestApiError | null>(null);
+  const { toast } = useToast();
+
+  const fetchRequests = useCallback(async () => {
+    if (!seniorId) {
+      setRequests([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await requestManagementApiService.getRequestsBySenior(seniorId);
+      setRequests(data);
+    } catch (err) {
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Unknown error');
+      setError(apiError);
+      toast({
+        title: 'Error Loading Requests',
+        description: apiError.errors[0]?.message || 'Failed to load requests for this senior.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [seniorId, toast]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  // Convert to display format for easier consumption by components
+  const displayRequests = requests.map(request => 
+    RequestUtils.fromDtoToDisplayView(request)
+  );
+
+  return {
+    requests: displayRequests,
+    loading,
+    error,
+    refetch: fetchRequests
+  };
+}
