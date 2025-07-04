@@ -122,6 +122,13 @@ public class RequestManagementService implements IRequestManagementService {
         return seniorRequestMapper.toDto(existingSeniorRequest);
     }
 
+    public List<SeniorRequestDto> findRequestsBySenior(long id) {
+        List<SeniorRequest> seniorRequests = seniorRequestRepository.findRequestsBySenior(id);
+        return seniorRequests.stream()
+                .map(seniorRequestMapper::toDto)
+                .toList();
+    }
+
     /**
      * Deletes a senior request by its ID.
      * If the request does not exist, an IllegalArgumentException is thrown.

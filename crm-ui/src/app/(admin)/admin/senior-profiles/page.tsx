@@ -56,6 +56,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SeniorDto, SeniorFilterDto } from "@/types/senior"
 import { useSeniorsPaginated, useSeniorForm, useLoadingStates } from "@/hooks/use-seniors"
 import { seniorUtils } from "@/services/senior-api"
+import { SeniorRequestsModal } from "@/components/senior-requests-modal"
 
 export default function SeniorProfilesPage() {
   // Backend integration hooks with pagination
@@ -86,6 +87,10 @@ export default function SeniorProfilesPage() {
   const [editingSenior, setEditingSenior] = useState<SeniorDto | null>(null);
   const [deletingSenior, setDeletingSenior] = useState<SeniorDto | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  
+  // State for senior requests modal
+  const [selectedSeniorForRequests, setSelectedSeniorForRequests] = useState<SeniorDto | null>(null);
+  const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
 
   // Local filter state (before applying to backend)
   const [localSearchTerm, setLocalSearchTerm] = useState("");
@@ -94,6 +99,18 @@ export default function SeniorProfilesPage() {
   // Form hooks
   const createForm = useSeniorForm();
   const editForm = useSeniorForm();
+
+  // Function to open requests modal for a senior
+  const handleViewRequests = (senior: SeniorDto) => {
+    setSelectedSeniorForRequests(senior);
+    setIsRequestsModalOpen(true);
+  };
+
+  // Function to close requests modal
+  const handleCloseRequestsModal = () => {
+    setIsRequestsModalOpen(false);
+    setSelectedSeniorForRequests(null);
+  };
 
   // Apply filters to backend
   const handleApplyFilters = () => {
@@ -549,7 +566,11 @@ export default function SeniorProfilesPage() {
         <TabsContent value="cards" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {seniors.map((senior) => (
-              <Card key={senior.id} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={senior.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => handleViewRequests(senior)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -563,7 +584,7 @@ export default function SeniorProfilesPage() {
                         )}
                       </CardDescription>
                     </div>
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="sm"
                         variant="outline"
@@ -607,8 +628,21 @@ export default function SeniorProfilesPage() {
 
                   <Separator />
 
-                  <div className="text-xs text-muted-foreground">
-                    Created: {seniorUtils.formatDateTime(senior.createdAt)}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      Created: {seniorUtils.formatDateTime(senior.createdAt)}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewRequests(senior);
+                      }}
+                    >
+                      View Requests
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -831,6 +865,13 @@ export default function SeniorProfilesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Senior Requests Modal */}
+      <SeniorRequestsModal
+        senior={selectedSeniorForRequests}
+        isOpen={isRequestsModalOpen}
+        onClose={handleCloseRequestsModal}
+      />
     </div>
   )
 }

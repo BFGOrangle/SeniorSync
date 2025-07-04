@@ -172,6 +172,14 @@ export class RequestManagementApiService {
   }
 
   /**
+   * Get requests by senior ID
+   */
+  async getRequestsBySenior(seniorId: number): Promise<SeniorRequestDto[]> {
+    const url = `${REQUESTS_ENDPOINT}/senior/${seniorId}`;
+    return this.client.get<SeniorRequestDto[]>(url);
+  }
+
+  /**
    * Update an existing request
    */
   async updateRequest(requestData: UpdateSeniorRequestDto): Promise<SeniorRequestDto> {

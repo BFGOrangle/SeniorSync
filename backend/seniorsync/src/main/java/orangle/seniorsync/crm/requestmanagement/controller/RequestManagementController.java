@@ -53,6 +53,13 @@ public class RequestManagementController {
         return ResponseEntity.ok().body(updatedSeniorRequest);
     }
 
+    @GetMapping("/senior/{id}")
+    public ResponseEntity<List<SeniorRequestDto>> getRequestsBySenior(@PathVariable long id) {
+        List<SeniorRequestDto> seniorRequests = requestManagementService.findRequestsBySenior(id);
+        log.info("Retrieved {} senior requests for senior ID: {}", seniorRequests.size(), id);
+        return ResponseEntity.ok().body(seniorRequests);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRequest(@PathVariable long id) {
         requestManagementService.deleteRequest(id);
