@@ -273,9 +273,7 @@ export class RequestManagementApiService {
   async getStatusCounts(): Promise<{
     pending: number;
     'in-progress': number;
-    'in-review': number;
     completed: number;
-    cancelled: number;
   }> {
     try {
       // Get all requests and count by status
@@ -284,9 +282,7 @@ export class RequestManagementApiService {
       const counts = {
         pending: 0,
         'in-progress': 0,
-        'in-review': 0,
         completed: 0,
-        cancelled: 0,
       };
 
       requests.forEach(request => {
@@ -301,9 +297,7 @@ export class RequestManagementApiService {
       return {
         pending: 0,
         'in-progress': 0,
-        'in-review': 0,
         completed: 0,
-        cancelled: 0,
       };
     }
   }
@@ -339,13 +333,11 @@ export const requestUtils = {
   /**
    * Get status display info
    */
-  getStatusInfo(status: 'pending' | 'in-progress' | 'in-review' | 'completed' | 'cancelled') {
+  getStatusInfo(status: 'pending' | 'in-progress'| 'completed' ) {
     const statusMap = {
       pending: { label: 'Pending', color: 'text-slate-700', bgColor: 'bg-slate-50' },
       'in-progress': { label: 'In Progress', color: 'text-blue-700', bgColor: 'bg-blue-50' },
-      'in-review': { label: 'In Review', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
-      completed: { label: 'Completed', color: 'text-green-700', bgColor: 'bg-green-50' },
-      cancelled: { label: 'Cancelled', color: 'text-gray-700', bgColor: 'bg-gray-50' },
+      completed: { label: 'Completed', color: 'text-green-700', bgColor: 'bg-green-50' }
     };
     return statusMap[status];
   },
@@ -357,7 +349,7 @@ export const requestUtils = {
     requests: SeniorRequestDisplayView[],
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
-      status?: ('pending' | 'in-progress' | 'in-review' | 'completed' | 'cancelled')[];
+      status?: ('pending' | 'in-progress'| 'completed' )[];
       requestType?: string[];
       assignedStaff?: string[];
       searchTerm?: string;
@@ -436,7 +428,7 @@ export const requestUtils = {
           comparison = priorityOrder[a.frontendPriority] - priorityOrder[b.frontendPriority];
           break;
         case 'status':
-          const statusOrder = { pending: 1, 'in-progress': 2, 'in-review': 3, completed: 4, cancelled: 5 };
+          const statusOrder = { pending: 1, 'in-progress': 2,  completed: 4 };
           comparison = statusOrder[a.frontendStatus] - statusOrder[b.frontendStatus];
           break;
         case 'seniorName':

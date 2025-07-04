@@ -19,7 +19,7 @@ import { RequestCard } from "@/components/request-card";
 import { DroppableColumn } from "@/components/ui/droppable-column";
 import { cn } from "@/lib/utils";
 
-type Status = "pending" | "in-progress" | "in-review" | "completed" | "cancelled";
+type Status = "pending" | "in-progress" | "completed";
 
 interface RequestKanbanViewProps {
   requests: SeniorRequestDisplayView[];

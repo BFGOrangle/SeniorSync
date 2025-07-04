@@ -189,8 +189,7 @@ export function StatusDistributionChart({ data, loading }: StatusDistributionCha
     value: count,
     color: status === 'Pending' ? 'bg-yellow-500' : 
            status === 'In Progress' ? 'bg-blue-500' : 
-           status === 'Completed' ? 'bg-green-500' : 
-           status === 'Cancelled' ? 'bg-red-500' : 'bg-gray-500'
+           status === 'Completed' ? 'bg-green-500' : 'bg-gray-400'
   })) : [];
 
   return (

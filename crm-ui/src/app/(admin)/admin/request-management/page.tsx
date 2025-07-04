@@ -19,7 +19,7 @@ type ViewMode = "kanban-status" | "kanban-priority" | "table";
 
 interface RequestFilterOptions {
   priority?: ("low" | "medium" | "high" | "urgent")[];
-  status?: ("pending" | "in-progress" | "in-review" | "completed" | "cancelled")[];
+  status?: ("pending" | "in-progress" | "completed")[];
   requestType?: string[];
   assignedStaff?: string[];
   searchTerm?: string;
