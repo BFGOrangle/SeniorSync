@@ -19,7 +19,7 @@ Each microservice that owns its database should include a dedicated migrations d
 
 ## Version Naming Convention
 
-We use a timestamp-based naming scheme with a `V` prefix in the format `Vyyyyddmmhhmm` to indicate when each migration was created. For example, `V202503031230__initial_setup.sql` indicates a migration created on March 3, 2025, at 12:30.
+We use a timestamp-based naming scheme with a `V` prefix in the format `Vyyyymmddhhmm` to indicate when each migration was created. For example, `V202503031230__initial_setup.sql` indicates a migration created on March 3, 2025, at 12:30.
 
 **Guidelines:**
 - **Prefix and Timestamp:** Use a `V` prefix followed by the timestamp (`yyyymmddhhmm`) to ensure that migrations are naturally ordered by creation time.
