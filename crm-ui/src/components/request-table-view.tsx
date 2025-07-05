@@ -31,7 +31,10 @@ interface RequestTableViewProps {
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
 }
 
-export function RequestTableView({ requests, onRequestUpdate }: RequestTableViewProps) {
+export function RequestTableView({
+  requests,
+  onRequestUpdate,
+}: RequestTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -85,33 +88,33 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
   };
 
   const columns: ColumnDef<SeniorRequestDisplayView>[] = [
-    {
-      accessorKey: "id",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 p-0 hover:bg-transparent font-semibold text-gray-900"
-        >
-          Request ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const request = row.original;
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              router.push(`/admin/requests/${request.id}`);
-            }}
-            className="h-auto p-0 font-mono text-blue-600 hover:text-blue-800 hover:bg-transparent underline"
-          >
-            {request.id}
-          </Button>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "id",
+    //   header: ({ column }) => (
+    //     <Button
+    //       variant="ghost"
+    //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //       className="h-8 p-0 hover:bg-transparent font-semibold text-gray-900"
+    //     >
+    //       Request ID
+    //       <ArrowUpDown className="ml-2 h-4 w-4" />
+    //     </Button>
+    //   ),
+    //   cell: ({ row }) => {
+    //     const request = row.original;
+    //     return (
+    //       <Button
+    //         variant="ghost"
+    //         onClick={() => {
+    //           router.push(`/admin/requests/${request.id}`);
+    //         }}
+    //         className="h-auto p-0 font-mono text-blue-600 hover:text-blue-800 hover:bg-transparent underline"
+    //       >
+    //         {request.id}
+    //       </Button>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "seniorName",
       header: ({ column }) => (
@@ -203,10 +206,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
         return (
           <Badge
             variant="outline"
-            className={cn(
-              "text-xs font-medium",
-              getPriorityColor(priority)
-            )}
+            className={cn("text-xs font-medium", getPriorityColor(priority))}
           >
             {priority?.charAt(0).toUpperCase() + priority?.slice(1)}
           </Badge>
@@ -252,11 +252,9 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
       cell: ({ row }) => {
         const request = row.original;
         const staffName = request.assignedStaffName;
-        
+
         if (!staffName) {
-          return (
-            <span className="text-gray-400 text-sm">Unassigned</span>
-          );
+          return <span className="text-gray-400 text-sm">Unassigned</span>;
         }
 
         return (
@@ -287,7 +285,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
       ),
       cell: ({ row }) => {
         const createdAt = row.getValue("createdAt") as string;
-        
+
         return (
           <div className="flex items-center gap-1 text-sm text-gray-700">
             <Clock className="h-4 w-4" />
@@ -322,7 +320,10 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-gray-200">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="bg-gray-50 font-semibold">
+                  <TableHead
+                    key={header.id}
+                    className="bg-gray-50 font-semibold"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -368,7 +369,6 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
           </TableBody>
         </Table>
       </div>
-
     </div>
   );
 }

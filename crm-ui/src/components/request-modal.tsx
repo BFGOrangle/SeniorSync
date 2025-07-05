@@ -53,7 +53,8 @@ export function RequestModal({
   children,
 }: RequestModalProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedRequest, setEditedRequest] = useState<SeniorRequestDisplayView>(request);
+  const [editedRequest, setEditedRequest] =
+    useState<SeniorRequestDisplayView>(request);
 
   // Update editedRequest when request prop changes
   useEffect(() => {
@@ -79,11 +80,7 @@ export function RequestModal({
   };
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
-  const statusOptions: Status[] = [
-    "pending",
-    "in-progress", 
-    "completed",
-  ];
+  const statusOptions: Status[] = ["pending", "in-progress", "completed"];
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
@@ -181,7 +178,10 @@ export function RequestModal({
                 <Select
                   value={editedRequest.frontendStatus}
                   onValueChange={(value: Status) =>
-                    setEditedRequest({ ...editedRequest, frontendStatus: value })
+                    setEditedRequest({
+                      ...editedRequest,
+                      frontendStatus: value,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -213,7 +213,10 @@ export function RequestModal({
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
-                    className={cn("capitalize", getStatusColor(request.frontendStatus))}
+                    className={cn(
+                      "capitalize",
+                      getStatusColor(request.frontendStatus)
+                    )}
                   >
                     {request.frontendStatus.replace("-", " ")}
                   </Badge>
@@ -227,7 +230,10 @@ export function RequestModal({
                 <Select
                   value={editedRequest.frontendPriority}
                   onValueChange={(value: Priority) =>
-                    setEditedRequest({ ...editedRequest, frontendPriority: value })
+                    setEditedRequest({
+                      ...editedRequest,
+                      frontendPriority: value,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -389,19 +395,14 @@ export function RequestModal({
                     {getInitials(request.assignedStaffName || "U")}
                   </AvatarFallback>
                 </Avatar>
-                <span>
-                  {request.assignedStaffName || "Unassigned"}
-                </span>
+                <span>{request.assignedStaffName || "Unassigned"}</span>
               </div>
             </div>
           </div>
 
           {/* Reminders */}
           <Separator />
-          <ReminderSection 
-            requestId={request.id} 
-            isEditing={isEditing}
-          />
+          <ReminderSection requestId={request.id} isEditing={isEditing} />
 
           {/* System Information */}
           <Separator />
