@@ -21,10 +21,8 @@ public class RequestComment {
     private Long id;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "request_id", nullable = false)
-    private SeniorRequest request;
+    @Column(name = "request_id", nullable = false)
+    private Long requestId;
 
     @NotNull
     @Column(name = "commenter_id", nullable = false)

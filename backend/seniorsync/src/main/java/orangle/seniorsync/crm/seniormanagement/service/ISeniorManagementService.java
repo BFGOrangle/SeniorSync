@@ -18,4 +18,5 @@ public interface ISeniorManagementService {
     SeniorDto updateSenior(UpdateSeniorDto updateSeniorDto);
     void deleteSenior(long id);
     List<SeniorDto> findSeniors(SeniorFilterDto filter);
+    SeniorDto findSeniorById(long id);
 }

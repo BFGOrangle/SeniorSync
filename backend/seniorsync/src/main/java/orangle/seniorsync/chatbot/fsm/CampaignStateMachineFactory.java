@@ -1,5 +1,7 @@
 package orangle.seniorsync.chatbot.fsm;
 
+import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.chatbot.fsm.common.action.FsmErrorHandlingAction;
 import orangle.seniorsync.chatbot.model.FsmTransition;
 import orangle.seniorsync.chatbot.repository.FsmTransitionRepository;
 import org.springframework.context.ApplicationContext;
@@ -14,6 +16,7 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 public class CampaignStateMachineFactory implements ICampaignStateMachineFactory {
     private final Map<String, StateMachineFactory<String,String>> factoryCache = new ConcurrentHashMap<>();
@@ -45,49 +48,70 @@ public class CampaignStateMachineFactory implements ICampaignStateMachineFactory
         allStates.addAll(transitionRepo.findAllDestStateNamesByCampaignName(campaignName));
         List<FsmTransition> transitions = transitionRepo.findAllByCampaignName(campaignName);
 
+        log.info("Building state machine for campaign: {}", campaignName);
+        log.info("All states: {}", allStates);
+        log.info("Total Transitions: {}", transitions.size());
+        for (FsmTransition transition : transitions) {
+            log.info("Transition: {} --[{}]--> {}",
+                    transition.getSourceState(),
+                    transition.getTrigger(),
+                    transition.getDestState());
+        }
+
         StateMachineBuilder.Builder<String, String> stateMachineBuilder = StateMachineBuilder.builder();
         stateMachineBuilder.configureStates()
                 .withStates()
-                .initial("START") // Assuming "START" is the initial state
+                .initial("START") // Where "START" is the initial state
                 .states(allStates);
-        var transitionConfigurer = stateMachineBuilder.configureTransitions().withExternal();
+
+        var transitionConfigurer = stateMachineBuilder.configureTransitions();
+
+        boolean hasTransitions = false;
         for (FsmTransition transition : transitions) {
             if (transition.getCampaignName().equals(campaignName)) {
-                transitionConfigurer
+                hasTransitions = true;
+                transitionConfigurer.withExternal()
                         .source(transition.getSourceState())
                         .target(transition.getDestState())
                         .event(transition.getTrigger())
-//                        .guard(lookupGuard(transition.getGuardName()))
-//                        .action(lookupAction(transition.getActionName()))
-                        .and().withExternal();
+                        .guard(lookupGuard(transition.getGuardName()))
+                        .action(lookupAction(transition.getActionName()), new FsmErrorHandlingAction());
             }
         }
+
+        if (!hasTransitions) {
+            throw new IllegalStateException("No transitions found for campaign: " + campaignName);
+        }
+
         return stateMachineBuilder.createFactory();
     }
 
     /**
-     * Spawn a fresh, isolated StateMachine instance for a given campaign and
-     * a unique processId (so you can persist and restore its state independently).
-     * Say for senior request lodging, processId is seniorId.
+     * Create a fresh, isolated StateMachine instance for a given campaign and a unique conversationId
      */
-    public StateMachine<String,String> getStateMachine(String campaignName, String processId) {
+    public StateMachine<String,String> getStateMachine(String campaignName, String conversationId) {
         StateMachineFactory<String,String> factory = factoryCache.get(campaignName);
         if (factory == null) {
             throw new IllegalArgumentException("Unknown campaign: " + campaignName);
         }
-        return factory.getStateMachine(processId);
+        return factory.getStateMachine(conversationId);
     }
 
-//    private Guard<String, String> lookupGuard(String name) {
-//        return StringUtils.hasText(name)
-//                ? ctx.getBean(name, Guard.class)
-//                : context -> true;
-//    }
-//
-//    private Action<String,String> lookupAction(String name) {
-//        if (!StringUtils.hasText(name)) {
-//            return context -> { /* no-op */ };
-//        }
-//        return ctx.getBean(name, Action.class);
-//    }
+    // Most versions of the Spring-StateMachine DSL will discard a transition whose guard or action is null (or blow up), effectively giving you zero outgoing edges.
+    // Hence, in our lookup methods we should return a no-op guard instead of null:
+    private Guard<String, String> lookupGuard(String name) {
+        if (!StringUtils.hasText(name) || !ctx.containsBean(name)) {
+            // No-op guard that always returns true
+            return (context) -> true;
+        }
+        return ctx.getBean(name, Guard.class);
+    }
+
+    private Action<String,String> lookupAction(String name) {
+        if (!StringUtils.hasText(name) || !ctx.containsBean(name)) {
+            // No-op action that does nothing
+            return (context) -> {};
+        }
+        return ctx.getBean(name, Action.class);
+    }
 }

@@ -81,6 +81,19 @@ public class SeniorManagementController {
         return ResponseEntity.ok(searchResults);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<SeniorDto> getSeniorById(@PathVariable long id) {
+        try {
+            // We'll need to add this method to the service
+            SeniorDto senior = seniorManagementService.findSeniorById(id);
+            log.info("Retrieved senior with ID: {}", id);
+            return ResponseEntity.ok(senior);
+        } catch (IllegalArgumentException e) {
+            log.warn("Senior not found with ID: {}", id);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     /**
      * Get count of seniors matching filter (for dashboard metrics)
      */

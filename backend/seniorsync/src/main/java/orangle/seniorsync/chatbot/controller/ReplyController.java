@@ -1,13 +1,14 @@
 package orangle.seniorsync.chatbot.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.chatbot.dto.IncomingMessageDto;
 import orangle.seniorsync.chatbot.dto.ReplyDto;
+import orangle.seniorsync.chatbot.dto.ReplyOption;
 import orangle.seniorsync.chatbot.service.IReplyService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -20,11 +21,23 @@ public class ReplyController {
         this.replyService = replyService;
     }
 
-    @PostMapping("/reply/{seniorId}")
-    public ResponseEntity<ReplyDto> replyMessage(@PathVariable long seniorId) {
-        String campaignName = "seniorRequestLodgingCampaign";
-        ReplyDto replyDto = replyService.replyMessage(campaignName, seniorId);
+    @PostMapping("/reply")
+    public ResponseEntity<ReplyDto> replyMessage(@RequestBody IncomingMessageDto incomingMessage) {
+        ReplyDto replyDto = replyService.replyMessage(
+                incomingMessage.campaignName(),
+                incomingMessage.seniorId(),
+                incomingMessage.replyOption()
+        );
         log.info("Replying with message to senior_id: {}", replyDto.senior_id());
         return ResponseEntity.ok(replyDto);
+    }
+
+    @GetMapping("/senior/{seniorId}/current-reply-options")
+    public ResponseEntity<List<ReplyOption>> getCurrentReplyOptions(
+            @PathVariable Long seniorId,
+            @RequestParam(defaultValue = "lodging_request") String campaignName) {
+        List<ReplyOption> replyOptions = replyService.getCurrentReplyOptions(campaignName, seniorId);
+        log.info("Retrieved {} current reply options for senior {} in campaign {}", replyOptions.size(), seniorId, campaignName);
+        return ResponseEntity.ok(replyOptions);
     }
 }
