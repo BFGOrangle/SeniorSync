@@ -3,14 +3,16 @@ package orangle.seniorsync.chatbot.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "messages", schema = "senior_sync")
 public class Message {
@@ -19,10 +21,8 @@ public class Message {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "conversation_id", nullable = false)
-    private Conversation conversation;
+    @Column(name = "conversation_id", nullable = false)
+    private Long conversationId;
 
     @Size(max = 10)
     @NotNull

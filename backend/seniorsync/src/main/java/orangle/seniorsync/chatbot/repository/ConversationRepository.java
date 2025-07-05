@@ -4,4 +4,5 @@ import orangle.seniorsync.chatbot.model.Conversation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
+    Conversation findByCampaignNameAndSeniorId(String campaignName, Long seniorId);
 }

@@ -6,6 +6,6 @@ public record ReplyDto(
         Long message_id,
         Long senior_id,
         String message_content,
-        List<String> replyOptions
+        List<ReplyOption> replyOptions
 ) {
 }
