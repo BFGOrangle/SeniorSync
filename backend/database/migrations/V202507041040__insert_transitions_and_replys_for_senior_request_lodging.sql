@@ -27,7 +27,10 @@ INSERT INTO senior_sync.fsm_transitions (
   ('lodging_request', 'CONFIRM_SUBMISSION',     'AWAITING_CONFIRMATION',   'COMPLETED',            NULL,                       'finalizeRequestAction'),
 
   -- If they want to restart and re-enter the title
-  ('lodging_request', 'RESTART',                'AWAITING_CONFIRMATION',   'AWAITING_TITLE',       NULL,                       NULL);
+  ('lodging_request', 'RESTART',                'AWAITING_CONFIRMATION',   'AWAITING_TITLE',       NULL,                       NULL),
+
+  -- Auto-transition from COMPLETED to START to allow new requests
+  ('lodging_request', 'AUTO_RESTART', 'COMPLETED', 'START', NULL, 'autoRestartAction');
 
 -- Every state must have a corresponding row here (event for user text inputs as we need the event — which are our triggers; see step 2 and 3)
 INSERT INTO senior_sync.fsm_state_reply_option (
@@ -52,4 +55,5 @@ INSERT INTO senior_sync.fsm_state_reply_option (
 
   -- Step 4: confirm or restart
   ('lodging_request', 'AWAITING_CONFIRMATION',   'Yes, submit',           'CONFIRM_SUBMISSION'),
-  ('lodging_request', 'AWAITING_CONFIRMATION',   'No—let me restart',        'RESTART');
+  ('lodging_request', 'AWAITING_CONFIRMATION',   'No—let me restart',        'RESTART'),
+    ('lodging_request', 'COMPLETED', 'Create Another Request', 'AUTO_RESTART');

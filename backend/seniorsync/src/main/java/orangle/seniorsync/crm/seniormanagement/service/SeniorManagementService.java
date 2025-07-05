@@ -211,4 +211,19 @@ public class SeniorManagementService implements ISeniorManagementService {
                 .orElseThrow(() -> new IllegalArgumentException("Senior not found with ID: " + id));
         seniorRepository.delete(existingSenior);
     }
+
+    /**
+     * Find a single senior by its ID.
+     * If the senior does not exist, an IllegalArgumentException is thrown.
+     *
+     * @param id the ID of the senior to find
+     * @return the SeniorDto
+     * @throws IllegalArgumentException if the senior with the specified ID is not found
+     */
+    @Override
+    public SeniorDto findSeniorById(long id) {
+        Senior senior = seniorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Senior not found with ID: " + id));
+        return seniorMapper.toDto(senior);
+    }
 }

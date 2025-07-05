@@ -72,7 +72,6 @@ public class ReplyService implements IReplyService {
         StateMachineEventResult<String, String> stateTransitionResult = stateMachineEventResultFlux.blockLast();
         verifyFsmStateEventAccepted(stateTransitionResult);
 
-
         // Verify that the state machine transitioned to a new state
         String newState = stateMachine.getState().getId();
         boolean isTransitioned = newState != null && !newState.equals(currentState);
@@ -82,6 +81,24 @@ public class ReplyService implements IReplyService {
         }
 
         log.info("Fsm transitioned successfully from: {} -> {}", currentState, newState);
+
+        // Check if we've reached COMPLETED state and auto-transition to START
+        if ("COMPLETED".equals(newState)) {
+            log.info("Reached COMPLETED state, auto-transitioning to START");
+
+            // Auto-trigger transition from COMPLETED to START
+            Flux<StateMachineEventResult<String, String>> autoRestartResultFlux = stateMachine.sendEvent(Mono.just(MessageBuilder.withPayload("AUTO_RESTART")
+                    .setHeader("conversationId", conversation.getId())
+                    .setHeader("seniorId", seniorId)
+                    .build()));
+
+            StateMachineEventResult<String, String> autoRestartResult = autoRestartResultFlux.blockLast();
+            verifyFsmStateEventAccepted(autoRestartResult);
+
+            // Update newState to reflect the auto-transition
+            newState = stateMachine.getState().getId();
+            log.info("Auto-transitioned from COMPLETED to: {}", newState);
+        }
 
         // Persist new FSM state after processing the event
         conversationStateMachinePersister.persist(stateMachine, conversation.getId());
@@ -105,6 +122,22 @@ public class ReplyService implements IReplyService {
                 replyMessagePrompt,
                 replyOptions
         );
+    }
+
+    @Override
+    public List<ReplyOption> getCurrentReplyOptions(String campaignName, Long seniorId) {
+        // Load existing conversation
+        Conversation conversation = conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId);
+        if (conversation == null) {
+            // No conversation exists, return START state options
+            return replyOptionStrategyContext.getReplyOptionContents(campaignName, "START");
+        }
+
+        String currentState = conversation.getCurrentState();
+        log.info("Getting current reply options for senior {} in state: {}", seniorId, currentState);
+
+        // Get reply options for the current state
+        return replyOptionStrategyContext.getReplyOptionContents(campaignName, currentState);
     }
 
     private Conversation loadExistingOrCreateNewConversation(String campaignName, Long seniorId) {
