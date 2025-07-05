@@ -67,8 +67,8 @@ public class RequestCommentService implements IRequestCommentService {
      * @param commentId the ID of the request comment to delete
      */
     public void deleteComment(Long commentId) {
-        RequestComment existingSeniorRequest = requestCommentRepository.findById(commentId)
+        RequestComment existingComment = requestCommentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + commentId));
-        requestCommentRepository.delete(existingSeniorRequest);
+        requestCommentRepository.delete(existingComment);
     }
 }

@@ -31,7 +31,7 @@ public class RequestCommentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<List<RequestCommentDto>> getCommentById(@PathVariable("id") Long id) {
+    public ResponseEntity<List<RequestCommentDto>> getCommentsById(@PathVariable("id") Long id) {
         List<RequestCommentDto> comments = requestCommentService.getCommentsByRequestId(id);
         log.info("Retrieved {} comments for request ID: {}", comments.size(), id);
         return ResponseEntity.ok().body(comments);
