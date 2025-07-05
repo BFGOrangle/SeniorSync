@@ -7,8 +7,10 @@ import orangle.seniorsync.crm.requestmanagement.mapper.RequestCommentMapper;
 import orangle.seniorsync.crm.requestmanagement.model.RequestComment;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import orangle.seniorsync.crm.requestmanagement.repository.RequestCommentRepository;
+import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,13 +18,15 @@ import java.util.stream.Collectors;
 public class RequestCommentService implements IRequestCommentService {
 
     private final RequestCommentRepository requestCommentRepository;
+    private final SeniorRequestRepository seniorRequestRepository;
     private final CreateCommentMapper createCommentMapper;
     private final RequestCommentMapper requestCommentMapper;
 
-    public RequestCommentService(RequestCommentRepository requestCommentRepository, CreateCommentMapper createCommentMapper, RequestCommentMapper requestCommentMapper) {
+    public RequestCommentService(RequestCommentRepository requestCommentRepository, SeniorRequestRepository seniorRequestRepository, CreateCommentMapper createCommentMapper, RequestCommentMapper requestCommentMapper) {
         this.createCommentMapper = createCommentMapper;
         this.requestCommentMapper = requestCommentMapper;
         this.requestCommentRepository = requestCommentRepository;
+        this.seniorRequestRepository = seniorRequestRepository;
     }
 
     /**
@@ -34,6 +38,11 @@ public class RequestCommentService implements IRequestCommentService {
      */
     public RequestCommentDto createComment(CreateCommentDto createCommentDto) {
         RequestComment requestComment = createCommentMapper.toEntity(createCommentDto);
+
+        SeniorRequest seniorRequest = seniorRequestRepository.findById(createCommentDto.requestId())
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + createCommentDto.requestId()));
+        requestComment.setRequest(seniorRequest);
+        requestComment.setCreatedAt(OffsetDateTime.now());
         RequestComment savedComment = requestCommentRepository.save(requestComment);
         return requestCommentMapper.toDto(savedComment);
     }

@@ -1,5 +1,6 @@
 package orangle.seniorsync.crm.requestmanagement.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import orangle.seniorsync.crm.requestmanagement.dto.CreateCommentDto;
 import orangle.seniorsync.crm.requestmanagement.dto.RequestCommentDto;
@@ -23,7 +24,7 @@ public class RequestCommentController {
     }
 
     @PostMapping
-    public ResponseEntity<RequestCommentDto> createComment(CreateCommentDto createCommentDto) {
+    public ResponseEntity<RequestCommentDto> createComment(@Valid @RequestBody CreateCommentDto createCommentDto) {
         RequestCommentDto createdCommentDto = requestCommentService.createComment(createCommentDto);
         log.info("Created comment with ID : {}", createdCommentDto.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCommentDto);

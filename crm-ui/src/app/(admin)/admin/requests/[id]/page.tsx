@@ -1,8 +1,19 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit3, Save, X, User, FileText, Phone, Mail, MapPin, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit3,
+  Save,
+  X,
+  User,
+  FileText,
+  Phone,
+  Mail,
+  MapPin,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { ReminderSection } from "@/components/reminder-section";
+import { CommentSection } from "@/components/comment-section";
 import { useRequestDetails } from "@/hooks/use-requests";
 import { cn } from "@/lib/utils";
 
@@ -30,15 +42,16 @@ export default function RequestDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const requestId = parseInt(params.id as string);
-  
+
   const [isEditing, setIsEditing] = useState(false);
-  const [editedRequest, setEditedRequest] = useState<SeniorRequestDisplayView | null>(null);
-  
-  const { 
-    request, 
-    loading, 
-    error: hookError, 
-    updateRequest 
+  const [editedRequest, setEditedRequest] =
+    useState<SeniorRequestDisplayView | null>(null);
+
+  const {
+    request,
+    loading,
+    error: hookError,
+    updateRequest,
   } = useRequestDetails(requestId || null);
 
   const error = hookError?.message || null;
@@ -78,11 +91,7 @@ export default function RequestDetailsPage() {
   };
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
-  const statusOptions: Status[] = [
-    "pending",
-    "in-progress", 
-    "completed",
-  ];
+  const statusOptions: Status[] = ["pending", "in-progress", "completed"];
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
@@ -141,7 +150,9 @@ export default function RequestDetailsPage() {
           <CardContent className="p-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold text-red-800">Error</h3>
-              <p className="text-red-600 mt-2">{error || "Request not found"}</p>
+              <p className="text-red-600 mt-2">
+                {error || "Request not found"}
+              </p>
               <Button onClick={() => router.back()} className="mt-4">
                 Go Back
               </Button>
@@ -218,7 +229,10 @@ export default function RequestDetailsPage() {
                 <Select
                   value={editedRequest.frontendStatus}
                   onValueChange={(value: Status) =>
-                    setEditedRequest({ ...editedRequest, frontendStatus: value })
+                    setEditedRequest({
+                      ...editedRequest,
+                      frontendStatus: value,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -250,7 +264,10 @@ export default function RequestDetailsPage() {
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
-                    className={cn("capitalize", getStatusColor(editedRequest.frontendStatus))}
+                    className={cn(
+                      "capitalize",
+                      getStatusColor(editedRequest.frontendStatus)
+                    )}
                   >
                     {editedRequest.frontendStatus.replace("-", " ")}
                   </Badge>
@@ -264,7 +281,10 @@ export default function RequestDetailsPage() {
                 <Select
                   value={editedRequest.frontendPriority}
                   onValueChange={(value: Priority) =>
-                    setEditedRequest({ ...editedRequest, frontendPriority: value })
+                    setEditedRequest({
+                      ...editedRequest,
+                      frontendPriority: value,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -377,7 +397,9 @@ export default function RequestDetailsPage() {
                     placeholder="Enter request title"
                   />
                 ) : (
-                  <span className="font-medium">{editedRequest.title || "N/A"}</span>
+                  <span className="font-medium">
+                    {editedRequest.title || "N/A"}
+                  </span>
                 )}
               </div>
 
@@ -426,18 +448,20 @@ export default function RequestDetailsPage() {
                     {getInitials(editedRequest.assignedStaffName || "U")}
                   </AvatarFallback>
                 </Avatar>
-                <span>
-                  {editedRequest.assignedStaffName || "Unassigned"}
-                </span>
+                <span>{editedRequest.assignedStaffName || "Unassigned"}</span>
               </div>
             </div>
           </div>
 
           {/* Reminders */}
           <Separator />
-          <ReminderSection 
+          <ReminderSection requestId={editedRequest.id} isEditing={isEditing} />
+
+          {/* Comments & Follow-ups */}
+          <Separator />
+          <CommentSection 
             requestId={editedRequest.id} 
-            isEditing={isEditing}
+            currentUserId={1} // TODO: Replace with actual logged-in user ID
           />
 
           {/* System Information */}
