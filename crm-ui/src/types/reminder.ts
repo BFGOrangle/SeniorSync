@@ -50,12 +50,14 @@ export class ReminderUtils {
   }
 
   // Convert frontend Reminder to CreateReminderDto
-  static toCreateDto(reminder: Partial<Reminder> & { requestId: number }): CreateReminderDto {
+  static toCreateDto(
+    reminder: Partial<Reminder> & { requestId: number }
+  ): CreateReminderDto {
     return {
-      title: reminder.title || '',
-      description: reminder.description || '',
+      title: reminder.title || "",
+      description: reminder.description || "",
       requestId: reminder.requestId,
-      reminderDate: reminder.reminderDateTime || '',
+      reminderDate: reminder.reminderDateTime || "",
     };
   }
 
@@ -64,7 +66,7 @@ export class ReminderUtils {
     return {
       id: reminder.id,
       title: reminder.title,
-      description: reminder.description || '',
+      description: reminder.description || "",
       reminderDate: reminder.reminderDateTime,
     };
   }

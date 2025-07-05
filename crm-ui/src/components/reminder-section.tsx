@@ -23,7 +23,11 @@ interface ReminderSectionProps {
   className?: string;
 }
 
-export function ReminderSection({ requestId, isEditing, className }: ReminderSectionProps) {
+export function ReminderSection({
+  requestId,
+  isEditing,
+  className,
+}: ReminderSectionProps) {
   const {
     reminders,
     isLoading,
@@ -35,16 +39,16 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
 
   const [isAddingReminder, setIsAddingReminder] = useState(false);
   const [newReminder, setNewReminder] = useState<Partial<CreateReminderDto>>({
-    title: '',
-    description: '',
-    reminderDate: '',
+    title: "",
+    description: "",
+    reminderDate: "",
   });
 
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid date";
-      
+
       return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -61,14 +65,14 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
     try {
       const date = new Date(isoString);
       if (isNaN(date.getTime())) return "";
-      
+
       // Convert to YYYY-MM-DDTHH:MM format for datetime-local input
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     } catch {
       return "";
@@ -90,22 +94,22 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
     try {
       // Convert datetime-local format to ISO string
       const reminderDateTime = new Date(newReminder.reminderDate).toISOString();
-      
+
       await createReminder({
         title: newReminder.title,
-        description: newReminder.description || '',
+        description: newReminder.description || "",
         reminderDate: reminderDateTime,
       });
 
       // Reset form
       setNewReminder({
-        title: '',
-        description: '',
-        reminderDate: '',
+        title: "",
+        description: "",
+        reminderDate: "",
       });
       setIsAddingReminder(false);
     } catch (error) {
-      console.error('Failed to add reminder:', error);
+      console.error("Failed to add reminder:", error);
     }
   };
 
@@ -113,7 +117,7 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
     try {
       await deleteReminder(reminderId);
     } catch (error) {
-      console.error('Failed to delete reminder:', error);
+      console.error("Failed to delete reminder:", error);
     }
   };
 
@@ -162,7 +166,7 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
               <Label htmlFor="reminderTitle">Title</Label>
               <Input
                 id="reminderTitle"
-                value={newReminder.title || ''}
+                value={newReminder.title || ""}
                 onChange={(e) =>
                   setNewReminder({ ...newReminder, title: e.target.value })
                 }
@@ -175,9 +179,12 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
               <Input
                 id="reminderDate"
                 type="datetime-local"
-                value={newReminder.reminderDate || ''}
+                value={newReminder.reminderDate || ""}
                 onChange={(e) =>
-                  setNewReminder({ ...newReminder, reminderDate: e.target.value })
+                  setNewReminder({
+                    ...newReminder,
+                    reminderDate: e.target.value,
+                  })
                 }
               />
             </div>
@@ -187,7 +194,7 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
             <Label htmlFor="reminderDescription">Description</Label>
             <Textarea
               id="reminderDescription"
-              value={newReminder.description || ''}
+              value={newReminder.description || ""}
               onChange={(e) =>
                 setNewReminder({ ...newReminder, description: e.target.value })
               }
@@ -223,7 +230,7 @@ export function ReminderSection({ requestId, isEditing, className }: ReminderSec
         <div className="space-y-2">
           {reminders.map((reminder) => {
             const overdue = isOverdue(reminder.reminderDateTime);
-            
+
             return (
               <div
                 key={reminder.id}

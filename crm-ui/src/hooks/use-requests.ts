@@ -11,6 +11,7 @@ import {
   SeniorRequestDisplayView,
   SeniorRequestFilterDto,
   UpdateSeniorRequestDto,
+  SeniorRequestDto,
   RequestUtils
 } from '@/types/request';
 
@@ -366,3 +367,111 @@ export function useSeniorRequests(seniorId: number | null) {
     refetch: fetchRequests
   };
 }
+
+// Hook for managing a single request (for details page)
+export function useRequest(requestId: number | null) {
+  const [request, setRequest] = useState<SeniorRequestDisplayView | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<RequestApiError | null>(null);
+  const { toast } = useToast();
+
+  const fetchRequest = useCallback(async () => {
+    if (!requestId) {
+      setRequest(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await requestManagementApiService.getRequestById(requestId);
+      setRequest(data);
+    } catch (err) {
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Unknown error');
+      setError(apiError);
+      toast({
+        title: 'Error Loading Request',
+        description: apiError.errors[0]?.message || 'Failed to load request details.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [requestId, toast]);
+
+  const updateRequest = useCallback(async (updatedRequest: SeniorRequestDisplayView): Promise<boolean> => {
+    try {
+      setLoading(true);
+
+      // Convert SeniorRequestDisplayView back to UpdateSeniorRequestDto
+      const updateDto: UpdateSeniorRequestDto = {
+        id: updatedRequest.id,
+        title: updatedRequest.title,
+        description: updatedRequest.description,
+        priority: RequestUtils.frontendToBackendPriority(updatedRequest.frontendPriority),
+        status: RequestUtils.frontendToBackendStatus(updatedRequest.frontendStatus),
+        assignedStaffId: updatedRequest.assignedStaffId,
+        requestTypeId: updatedRequest.requestTypeId,
+      };
+
+      const updated = await requestManagementApiService.updateRequest(updateDto);
+      
+      // Update local state with enhanced request
+      const enhancedUpdated = RequestUtils.fromDtoToDisplayView(updated, {
+        seniorName: updatedRequest.seniorName,
+        seniorPhone: updatedRequest.seniorPhone,
+        seniorEmail: updatedRequest.seniorEmail,
+        seniorAddress: updatedRequest.seniorAddress,
+        assignedStaffName: updatedRequest.assignedStaffName,
+        requestTypeName: updatedRequest.requestTypeName,
+      });
+
+      setRequest(enhancedUpdated);
+
+      toast({
+        title: 'Request Updated',
+        description: `Request ${updated.id} has been updated successfully.`,
+      });
+
+      return true;
+    } catch (err) {
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to update request');
+      setError(apiError);
+      
+      if (err instanceof RequestValidationError) {
+        const validationMessages = err.validationErrors.map(e => e.message).join(', ');
+        toast({
+          title: 'Validation Error',
+          description: validationMessages,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error Updating Request',
+          description: apiError.errors[0]?.message || 'Failed to update request. Please try again.',
+          variant: 'destructive',
+        });
+      }
+
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchRequest();
+  }, [fetchRequest]);
+
+  return {
+    request,
+    loading,
+    error,
+    updateRequest,
+    refetch: fetchRequest
+  };
+}
+
+// Export useRequest as the main hook for the details page
+export const useRequests = () => useRequestManagement();
+export { useRequest as useRequestDetails };

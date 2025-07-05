@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,8 @@ import {
   User,
   Loader2,
   RefreshCw,
-  X
+  X,
+  ExternalLink
 } from "lucide-react";
 import { SeniorDto } from "@/types/senior";
 import { SeniorRequestDisplayView } from "@/types/request";
@@ -37,6 +39,7 @@ interface SeniorRequestsModalProps {
 
 export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsModalProps) {
   const { requests, loading, error, refetch } = useSeniorRequests(senior?.id || null);
+  const router = useRouter();
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -209,7 +212,21 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
 
                         <div className="flex justify-between items-center text-xs text-gray-500 pt-2">
                           <span>Request ID: {request.id}</span>
-                          <span>Last updated: {formatDateTime(request.updatedAt)}</span>
+                          <div className="flex items-center gap-2">
+                            <span>Last updated: {formatDateTime(request.updatedAt)}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                router.push(`/admin/requests/${request.id}`);
+                                onClose();
+                              }}
+                              className="h-6 text-xs"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View Details
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

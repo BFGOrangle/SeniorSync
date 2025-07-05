@@ -1,11 +1,19 @@
+"use client";
+
 import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ArrowLeft,
+  Edit3,
+  Save,
+  X,
+  User,
+  FileText,
+  Phone,
+  Mail,
+  MapPin,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,55 +28,58 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Save,
-  X,
-  Edit3,
-  User,
-  FileText,
-  Phone,
-  Mail,
-  MapPin,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { ReminderSection } from "@/components/reminder-section";
+import { CommentSection } from "@/components/comment-section";
+import { useRequestDetails } from "@/hooks/use-requests";
 import { cn } from "@/lib/utils";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "pending" | "in-progress" | "completed";
 
-interface RequestModalProps {
-  request: SeniorRequestDisplayView;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpdate: (updatedRequest: SeniorRequestDisplayView) => void;
-  children?: React.ReactNode;
-}
+export default function RequestDetailsPage() {
+  const params = useParams();
+  const router = useRouter();
+  const requestId = parseInt(params.id as string);
 
-export function RequestModal({
-  request,
-  isOpen,
-  onOpenChange,
-  onUpdate,
-  children,
-}: RequestModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedRequest, setEditedRequest] =
-    useState<SeniorRequestDisplayView>(request);
+    useState<SeniorRequestDisplayView | null>(null);
 
-  // Update editedRequest when request prop changes
+  const {
+    request,
+    loading,
+    error: hookError,
+    updateRequest,
+  } = useRequestDetails(requestId || null);
+
+  const error = hookError?.message || null;
+
+  // Update local state when request loads
   useEffect(() => {
-    setEditedRequest(request);
+    if (request) {
+      setEditedRequest(request);
+    }
   }, [request]);
 
-  const handleSave = () => {
-    onUpdate(editedRequest);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!editedRequest) return;
+
+    try {
+      await updateRequest(editedRequest);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to update request:", err);
+      // Handle error - maybe show a toast notification
+    }
   };
 
   const handleCancel = () => {
-    setEditedRequest(request);
-    setIsEditing(false);
+    if (request) {
+      setEditedRequest(request);
+      setIsEditing(false);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -121,55 +132,95 @@ export function RequestModal({
     });
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <DialogTitle className="text-xl font-semibold">
-                {isEditing ? "Edit Request" : "Request Details"}
-              </DialogTitle>
-              <Badge
-                variant="secondary"
-                className="text-xs font-mono bg-gray-50 text-gray-600"
-              >
-                {request.id}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              {!isEditing ? (
-                <Button
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  className="h-8"
-                >
-                  <Edit3 className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSave} className="h-8">
-                    <Save className="h-4 w-4 mr-1" />
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCancel}
-                    className="h-8"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </DialogHeader>
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading request details...</span>
+        </div>
+      </div>
+    );
+  }
 
-        <div className="space-y-6 mt-6">
+  if (error || !editedRequest) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-red-800">Error</h3>
+              <p className="text-red-600 mt-2">
+                {error || "Request not found"}
+              </p>
+              <Button onClick={() => router.back()} className="mt-4">
+                Go Back
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="h-8"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">
+              {isEditing ? "Edit Request" : "Request Details"}
+            </h1>
+            <Badge
+              variant="secondary"
+              className="text-xs font-mono bg-gray-50 text-gray-600"
+            >
+              {editedRequest.id}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <Button
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="h-8"
+            >
+              <Edit3 className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleSave} className="h-8">
+                <Save className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCancel}
+                className="h-8"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-6 space-y-6">
           {/* Request Status & Priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -215,10 +266,10 @@ export function RequestModal({
                     variant="outline"
                     className={cn(
                       "capitalize",
-                      getStatusColor(request.frontendStatus)
+                      getStatusColor(editedRequest.frontendStatus)
                     )}
                   >
-                    {request.frontendStatus.replace("-", " ")}
+                    {editedRequest.frontendStatus.replace("-", " ")}
                   </Badge>
                 </div>
               )}
@@ -261,10 +312,10 @@ export function RequestModal({
                     variant="outline"
                     className={cn(
                       "capitalize",
-                      getPriorityColor(request.frontendPriority)
+                      getPriorityColor(editedRequest.frontendPriority)
                     )}
                   >
-                    {request.frontendPriority}
+                    {editedRequest.frontendPriority}
                   </Badge>
                 </div>
               )}
@@ -286,11 +337,11 @@ export function RequestModal({
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs">
-                      {getInitials(request.seniorName || "N/A")}
+                      {getInitials(editedRequest.seniorName || "N/A")}
                     </AvatarFallback>
                   </Avatar>
                   <span className="font-medium">
-                    {request.seniorName || "N/A"}
+                    {editedRequest.seniorName || "N/A"}
                   </span>
                 </div>
               </div>
@@ -299,7 +350,7 @@ export function RequestModal({
                 <Label htmlFor="phoneNumber">Phone Number</Label>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" />
-                  <span>{request.seniorPhone || "N/A"}</span>
+                  <span>{editedRequest.seniorPhone || "N/A"}</span>
                 </div>
               </div>
 
@@ -307,7 +358,7 @@ export function RequestModal({
                 <Label htmlFor="email">Email</Label>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-gray-500" />
-                  <span>{request.seniorEmail || "N/A"}</span>
+                  <span>{editedRequest.seniorEmail || "N/A"}</span>
                 </div>
               </div>
 
@@ -315,7 +366,7 @@ export function RequestModal({
                 <Label htmlFor="address">Address</Label>
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 mt-1" />
-                  <span>{request.seniorAddress || "N/A"}</span>
+                  <span>{editedRequest.seniorAddress || "N/A"}</span>
                 </div>
               </div>
             </div>
@@ -346,14 +397,16 @@ export function RequestModal({
                     placeholder="Enter request title"
                   />
                 ) : (
-                  <span className="font-medium">{request.title || "N/A"}</span>
+                  <span className="font-medium">
+                    {editedRequest.title || "N/A"}
+                  </span>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="requestType">Request Type</Label>
                 <Badge variant="secondary">
-                  {request.requestTypeName || "N/A"}
+                  {editedRequest.requestTypeName || "N/A"}
                 </Badge>
               </div>
 
@@ -374,7 +427,7 @@ export function RequestModal({
                   />
                 ) : (
                   <p className="text-gray-700 leading-relaxed">
-                    {request.description || "No description provided."}
+                    {editedRequest.description || "No description provided."}
                   </p>
                 )}
               </div>
@@ -392,40 +445,47 @@ export function RequestModal({
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-xs">
-                    {getInitials(request.assignedStaffName || "U")}
+                    {getInitials(editedRequest.assignedStaffName || "U")}
                   </AvatarFallback>
                 </Avatar>
-                <span>{request.assignedStaffName || "Unassigned"}</span>
+                <span>{editedRequest.assignedStaffName || "Unassigned"}</span>
               </div>
             </div>
           </div>
 
           {/* Reminders */}
           <Separator />
-          <ReminderSection requestId={request.id} isEditing={isEditing} />
+          <ReminderSection requestId={editedRequest.id} isEditing={isEditing} />
+
+          {/* Comments & Follow-ups */}
+          <Separator />
+          <CommentSection 
+            requestId={editedRequest.id} 
+            currentUserId={1} // TODO: Replace with actual logged-in user ID
+          />
 
           {/* System Information */}
           <Separator />
           <div className="space-y-2 text-sm text-gray-500">
             <div className="flex justify-between">
               <span>Created:</span>
-              <span>{formatDate(request.createdAt)}</span>
+              <span>{formatDate(editedRequest.createdAt)}</span>
             </div>
-            {request.updatedAt && (
+            {editedRequest.updatedAt && (
               <div className="flex justify-between">
                 <span>Last Updated:</span>
-                <span>{formatDate(request.updatedAt)}</span>
+                <span>{formatDate(editedRequest.updatedAt)}</span>
               </div>
             )}
-            {request.completedAt && (
+            {editedRequest.completedAt && (
               <div className="flex justify-between">
                 <span>Completed:</span>
-                <span>{formatDate(request.completedAt)}</span>
+                <span>{formatDate(editedRequest.completedAt)}</span>
               </div>
             )}
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

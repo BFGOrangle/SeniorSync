@@ -4,19 +4,33 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
 import { CreateSeniorRequestDto } from "@/types/request";
@@ -26,21 +40,85 @@ import { seniorApiService } from "@/services/senior-api";
 
 // Hardcoded request types from database migration
 const REQUEST_TYPES = [
-  { id: 1, name: 'Reading Assistance', description: 'Help with reading books, mail, documents, or digital content' },
-  { id: 2, name: 'Physical Item Moving', description: 'Assistance with moving, lifting, or rearranging furniture and belongings' },
-  { id: 3, name: 'Transportation', description: 'Help with transportation to appointments, shopping, or social activities' },
-  { id: 4, name: 'Medication Reminders', description: 'Reminders and assistance with medication schedules' },
-  { id: 5, name: 'Grocery Shopping', description: 'Shopping for groceries and household necessities' },
-  { id: 6, name: 'Meal Preparation', description: 'Assistance with preparing nutritious meals' },
-  { id: 7, name: 'Housekeeping', description: 'Help with light cleaning, laundry, and household chores' },
-  { id: 8, name: 'Technology Support', description: 'Assistance with computers, phones, tablets, or other digital devices' },
-  { id: 9, name: 'Social Visit', description: 'Friendly visits for companionship and social interaction' },
-  { id: 10, name: 'Wellness Check', description: 'Regular check-ins to ensure health and safety' },
-  { id: 11, name: 'Outdoor Assistance', description: 'Help with gardening, yard work, or outdoor maintenance' },
-  { id: 12, name: 'Administrative Help', description: 'Assistance with paperwork, bills, forms, or applications' },
-  { id: 13, name: 'Personal Care', description: 'Help with hygiene, dressing, or other personal care tasks' },
-  { id: 14, name: 'Exercise Support', description: 'Assistance with prescribed exercises or physical activity routines' },
-  { id: 15, name: 'Errands', description: 'Help with miscellaneous errands outside the home' },
+  {
+    id: 1,
+    name: "Reading Assistance",
+    description: "Help with reading books, mail, documents, or digital content",
+  },
+  {
+    id: 2,
+    name: "Physical Item Moving",
+    description:
+      "Assistance with moving, lifting, or rearranging furniture and belongings",
+  },
+  {
+    id: 3,
+    name: "Transportation",
+    description:
+      "Help with transportation to appointments, shopping, or social activities",
+  },
+  {
+    id: 4,
+    name: "Medication Reminders",
+    description: "Reminders and assistance with medication schedules",
+  },
+  {
+    id: 5,
+    name: "Grocery Shopping",
+    description: "Shopping for groceries and household necessities",
+  },
+  {
+    id: 6,
+    name: "Meal Preparation",
+    description: "Assistance with preparing nutritious meals",
+  },
+  {
+    id: 7,
+    name: "Housekeeping",
+    description: "Help with light cleaning, laundry, and household chores",
+  },
+  {
+    id: 8,
+    name: "Technology Support",
+    description:
+      "Assistance with computers, phones, tablets, or other digital devices",
+  },
+  {
+    id: 9,
+    name: "Social Visit",
+    description: "Friendly visits for companionship and social interaction",
+  },
+  {
+    id: 10,
+    name: "Wellness Check",
+    description: "Regular check-ins to ensure health and safety",
+  },
+  {
+    id: 11,
+    name: "Outdoor Assistance",
+    description: "Help with gardening, yard work, or outdoor maintenance",
+  },
+  {
+    id: 12,
+    name: "Administrative Help",
+    description: "Assistance with paperwork, bills, forms, or applications",
+  },
+  {
+    id: 13,
+    name: "Personal Care",
+    description: "Help with hygiene, dressing, or other personal care tasks",
+  },
+  {
+    id: 14,
+    name: "Exercise Support",
+    description:
+      "Assistance with prescribed exercises or physical activity routines",
+  },
+  {
+    id: 15,
+    name: "Errands",
+    description: "Help with miscellaneous errands outside the home",
+  },
 ];
 
 // Form validation schema matching backend API
@@ -48,8 +126,13 @@ const createRequestSchema = z.object({
   seniorId: z.number({ required_error: "Please select a senior" }),
   requestTypeId: z.number({ required_error: "Please select a request type" }),
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  priority: z.number().min(1).max(5, { message: "Priority must be between 1 and 5" }),
+  description: z
+    .string()
+    .min(10, { message: "Description must be at least 10 characters" }),
+  priority: z
+    .number()
+    .min(1)
+    .max(5, { message: "Priority must be between 1 and 5" }),
 });
 
 type CreateRequestFormData = z.infer<typeof createRequestSchema>;
@@ -59,14 +142,15 @@ interface CreateRequestModalProps {
   trigger?: React.ReactNode;
 }
 
-export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestModalProps) {
+export function CreateRequestModal({
+  onRequestCreated,
+  trigger,
+}: CreateRequestModalProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [seniors, setSeniors] = useState<SeniorDto[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [seniorSearchTerm, setSeniorSearchTerm] = useState("");
-  const [filteredSeniors, setFilteredSeniors] = useState<SeniorDto[]>([]);
-  
+
   const { toast } = useToast();
   const requestApi = new RequestManagementApiService();
 
@@ -81,11 +165,13 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
     setLoadingData(true);
     try {
       // Load initial seniors
-      const seniorsData = await seniorApiService.getSeniorsPaginated({ page: 0, size: 50 });
+      const seniorsData = await seniorApiService.getSeniorsPaginated({
+        page: 0,
+        size: 50,
+      });
       setSeniors(seniorsData.content);
-      setFilteredSeniors(seniorsData.content);
     } catch (error) {
-      console.error('Error loading initial data:', error);
+      console.error("Error loading initial data:", error);
       toast({
         title: "Error",
         description: "Failed to load seniors. Please try again.",
@@ -103,22 +189,6 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
     }
   }, [open, loadInitialData]);
 
-  // Filter seniors based on search term
-  useEffect(() => {
-    if (!seniorSearchTerm.trim()) {
-      setFilteredSeniors(seniors);
-      return;
-    }
-
-    const searchLower = seniorSearchTerm.toLowerCase();
-    const filtered = seniors.filter(senior => 
-      `${senior.firstName} ${senior.lastName}`.toLowerCase().includes(searchLower) ||
-      senior.contactPhone?.includes(seniorSearchTerm) ||
-      senior.contactEmail?.toLowerCase().includes(searchLower)
-    );
-    setFilteredSeniors(filtered);
-  }, [seniorSearchTerm, seniors]);
-
   const onSubmit = async (data: CreateRequestFormData) => {
     setIsLoading(true);
     try {
@@ -131,7 +201,7 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
       };
 
       await requestApi.createRequest(createDto);
-      
+
       toast({
         title: "Success",
         description: "Request created successfully!",
@@ -141,7 +211,7 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
       setOpen(false);
       onRequestCreated();
     } catch (error) {
-      console.error('Error creating request:', error);
+      console.error("Error creating request:", error);
       toast({
         title: "Error",
         description: "Failed to create request. Please try again.",
@@ -172,14 +242,13 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Request</DialogTitle>
           <DialogDescription>
-            Create a new senior care request. Fill in all required information below.
+            Create a new senior care request. Fill in all required information
+            below.
           </DialogDescription>
         </DialogHeader>
 
@@ -198,45 +267,25 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select Senior</FormLabel>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Search seniors by name, phone, or email..."
-                        value={seniorSearchTerm}
-                        onChange={(e) => setSeniorSearchTerm(e.target.value)}
-                      />
-                      <Select 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                    <FormControl>
+                      <SearchableSelect
+                        options={seniors.map((senior) => ({
+                          value: senior.id.toString(),
+                          label: `${senior.firstName} ${senior.lastName}`,
+                          subtitle:
+                            senior.contactPhone ||
+                            senior.contactEmail ||
+                            undefined,
+                        }))}
                         value={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a senior from the filtered list..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {filteredSeniors.length > 0 ? (
-                            filteredSeniors.map((senior) => (
-                              <SelectItem key={senior.id} value={senior.id.toString()}>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">
-                                    {senior.firstName} {senior.lastName}
-                                  </span>
-                                  {senior.contactPhone && (
-                                    <span className="text-sm text-gray-500">
-                                      {senior.contactPhone}
-                                    </span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <div className="px-2 py-4 text-sm text-gray-500 text-center">
-                              {seniorSearchTerm ? 'No seniors found matching search' : 'No seniors available'}
-                            </div>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        onValueChange={(value) =>
+                          field.onChange(value ? parseInt(value) : undefined)
+                        }
+                        placeholder="Select a senior..."
+                        searchPlaceholder="Search seniors by name, phone, or email..."
+                        emptyMessage="No seniors found matching your search"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -249,28 +298,22 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Request Type</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(parseInt(value))} 
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select request type..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {REQUEST_TYPES.map((type) => (
-                          <SelectItem key={type.id} value={type.id.toString()}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{type.name}</span>
-                              <span className="text-sm text-gray-500">
-                                {type.description}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        options={REQUEST_TYPES.map((type) => ({
+                          value: type.id.toString(),
+                          label: type.name,
+                          subtitle: type.description,
+                        }))}
+                        value={field.value?.toString()}
+                        onValueChange={(value) =>
+                          field.onChange(value ? parseInt(value) : undefined)
+                        }
+                        placeholder="Select request type..."
+                        searchPlaceholder="Search request types..."
+                        emptyMessage="No request types found matching your search"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -284,9 +327,9 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                   <FormItem>
                     <FormLabel>Request Title</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         placeholder="Brief title for the request..."
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -302,10 +345,10 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                   <FormItem>
                     <FormLabel>Detailed Description</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Provide detailed information about the assistance needed..."
                         rows={4}
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -320,8 +363,8 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Priority Level (1-5)</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(parseInt(value))} 
+                    <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
                       value={field.value?.toString()}
                     >
                       <FormControl>
@@ -333,7 +376,10 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                         {[1, 2, 3, 4, 5].map((priority) => {
                           const info = getPriorityLabel(priority);
                           return (
-                            <SelectItem key={priority} value={priority.toString()}>
+                            <SelectItem
+                              key={priority}
+                              value={priority.toString()}
+                            >
                               <span className={info.color}>
                                 {priority} - {info.label}
                               </span>
@@ -357,8 +403,8 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
@@ -368,7 +414,7 @@ export function CreateRequestModal({ onRequestCreated, trigger }: CreateRequestM
                       Creating...
                     </>
                   ) : (
-                    'Create Request'
+                    "Create Request"
                   )}
                 </Button>
               </div>

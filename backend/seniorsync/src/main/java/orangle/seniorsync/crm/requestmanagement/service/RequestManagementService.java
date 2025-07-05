@@ -140,4 +140,10 @@ public class RequestManagementService implements IRequestManagementService {
                 .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + id));
         seniorRequestRepository.delete(existingSeniorRequest);
     }
+
+    public SeniorRequestDto findRequestById(long id) {
+        SeniorRequest seniorRequest = seniorRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + id));
+        return seniorRequestMapper.toDto(seniorRequest);
+    }
 }

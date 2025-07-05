@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -21,9 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, Clock, Phone } from "lucide-react";
+import { ArrowUpDown, Clock, Phone, ExternalLink } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
-import { RequestModal } from "@/components/request-modal";
 import { cn } from "@/lib/utils";
 
 interface RequestTableViewProps {
@@ -31,12 +31,14 @@ interface RequestTableViewProps {
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
 }
 
-export function RequestTableView({ requests, onRequestUpdate }: RequestTableViewProps) {
+export function RequestTableView({
+  requests,
+  onRequestUpdate,
+}: RequestTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [selectedRequest, setSelectedRequest] = useState<SeniorRequestDisplayView | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   const getInitials = (name: string) => {
     return name
@@ -86,34 +88,33 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
   };
 
   const columns: ColumnDef<SeniorRequestDisplayView>[] = [
-    {
-      accessorKey: "id",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-8 p-0 hover:bg-transparent font-semibold text-gray-900"
-        >
-          Request ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const request = row.original;
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSelectedRequest(request);
-              setIsModalOpen(true);
-            }}
-            className="h-auto p-0 font-mono text-blue-600 hover:text-blue-800 hover:bg-transparent underline"
-          >
-            {request.id}
-          </Button>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "id",
+    //   header: ({ column }) => (
+    //     <Button
+    //       variant="ghost"
+    //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //       className="h-8 p-0 hover:bg-transparent font-semibold text-gray-900"
+    //     >
+    //       Request ID
+    //       <ArrowUpDown className="ml-2 h-4 w-4" />
+    //     </Button>
+    //   ),
+    //   cell: ({ row }) => {
+    //     const request = row.original;
+    //     return (
+    //       <Button
+    //         variant="ghost"
+    //         onClick={() => {
+    //           router.push(`/admin/requests/${request.id}`);
+    //         }}
+    //         className="h-auto p-0 font-mono text-blue-600 hover:text-blue-800 hover:bg-transparent underline"
+    //       >
+    //         {request.id}
+    //       </Button>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "seniorName",
       header: ({ column }) => (
@@ -205,10 +206,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
         return (
           <Badge
             variant="outline"
-            className={cn(
-              "text-xs font-medium",
-              getPriorityColor(priority)
-            )}
+            className={cn("text-xs font-medium", getPriorityColor(priority))}
           >
             {priority?.charAt(0).toUpperCase() + priority?.slice(1)}
           </Badge>
@@ -254,11 +252,9 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
       cell: ({ row }) => {
         const request = row.original;
         const staffName = request.assignedStaffName;
-        
+
         if (!staffName) {
-          return (
-            <span className="text-gray-400 text-sm">Unassigned</span>
-          );
+          return <span className="text-gray-400 text-sm">Unassigned</span>;
         }
 
         return (
@@ -289,7 +285,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
       ),
       cell: ({ row }) => {
         const createdAt = row.getValue("createdAt") as string;
-        
+
         return (
           <div className="flex items-center gap-1 text-sm text-gray-700">
             <Clock className="h-4 w-4" />
@@ -324,7 +320,10 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-gray-200">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="bg-gray-50 font-semibold">
+                  <TableHead
+                    key={header.id}
+                    className="bg-gray-50 font-semibold"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -344,8 +343,7 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
                   data-state={row.getIsSelected() && "selected"}
                   className="border-gray-100 hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    setSelectedRequest(row.original);
-                    setIsModalOpen(true);
+                    router.push(`/admin/requests/${row.original.id}`);
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -371,19 +369,6 @@ export function RequestTableView({ requests, onRequestUpdate }: RequestTableView
           </TableBody>
         </Table>
       </div>
-
-      {/* Request Modal */}
-      {selectedRequest && (
-        <RequestModal
-          request={selectedRequest}
-          isOpen={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onUpdate={(updatedRequest) => {
-            onRequestUpdate(updatedRequest);
-            setIsModalOpen(false);
-          }}
-        />
-      )}
     </div>
   );
 }

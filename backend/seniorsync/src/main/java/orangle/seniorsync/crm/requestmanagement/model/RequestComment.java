@@ -31,8 +31,8 @@ public class RequestComment {
     private Long commenterId;
 
     @NotNull
-    @Column(name = "commenter_type", nullable = false, length = Integer.MAX_VALUE)
-    private String commenterType;
+    @Column(name = "comment_type", nullable = false, length = Integer.MAX_VALUE)
+    private String commentType;
 
     @NotNull
     @Column(name = "comment", nullable = false, length = Integer.MAX_VALUE)
