@@ -74,11 +74,16 @@ const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub
+        session.user.id = token.sub as string
         session.user.role = token.role as string
         session.user.jobTitle = token.jobTitle as string
         session.user.firstName = token.firstName as string
         session.user.lastName = token.lastName as string
+        
+        // Add JWT token for API calls
+        if (token.sub && token.role) {
+          session.accessToken = `nextauth.${token.sub}.${token.role}`
+        }
       }
       return session
     },

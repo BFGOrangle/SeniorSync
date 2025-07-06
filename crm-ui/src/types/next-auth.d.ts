@@ -11,6 +11,7 @@ declare module 'next-auth' {
       firstName: string
       lastName: string
     }
+    accessToken?: string
   }
 
   interface User {

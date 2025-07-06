@@ -1,3 +1,4 @@
+import { AuthenticatedApiClient, BaseApiError } from './authenticated-api-client';
 import {
   ReminderDto,
   CreateReminderDto,
@@ -11,19 +12,19 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8088";
 const REMINDERS_ENDPOINT = `${API_BASE_URL}/api/reminders`;
 
-// Custom error classes
-export class ReminderApiError extends Error {
+// Service-specific error classes (extending base)
+export class ReminderApiError extends BaseApiError {
   constructor(
-    public status: number,
-    public statusText: string,
-    public errors: Array<{
+    status: number,
+    statusText: string,
+    errors: Array<{
       message: string;
       timestamp: string;
       field?: string;
       rejectedValue?: any;
     }> = []
   ) {
-    super(`Reminder API Error: ${status} ${statusText}`);
+    super(status, statusText, errors);
     this.name = "ReminderApiError";
   }
 }
@@ -42,69 +43,38 @@ export class ReminderValidationError extends ReminderApiError {
   }
 }
 
-// HTTP client for reminder management
-class ReminderApiClient {
-  private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const defaultHeaders = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
-
+// HTTP client for reminder management extending authenticated base
+class ReminderApiClient extends AuthenticatedApiClient {
+  // Override error handling for reminder-specific errors
+  protected async handleErrorResponse(response: Response): Promise<never> {
+    let errorData: any;
+    
     try {
-      const response = await fetch(url, config);
+      errorData = await response.json();
+    } catch {
+      throw new ReminderApiError(
+        response.status,
+        response.statusText,
+        [{ message: 'An unexpected error occurred', timestamp: new Date().toISOString() }]
+      );
+    }
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+    // Handle validation errors
+    if (response.status === 400 && errorData.errors) {
+      throw new ReminderValidationError(errorData.errors);
+    }
 
-        // Handle validation errors
-        if (response.status === 400 && errorData.errors) {
-          throw new ReminderValidationError(errorData.errors);
-        }
-
-        // Handle other errors
-        throw new ReminderApiError(
-          response.status,
-          response.statusText,
-          errorData.errors || [
-            {
-              message: errorData.message || "Unknown error",
-              timestamp: new Date().toISOString(),
-            },
-          ]
-        );
-      }
-
-      // Handle empty responses
-      if (
-        response.status === 204 ||
-        response.headers.get("content-length") === "0"
-      ) {
-        return null as T;
-      }
-
-      return await response.json();
-    } catch (error) {
-      if (error instanceof ReminderApiError) {
-        throw error;
-      }
-
-      // Handle network errors and other unexpected errors
-      throw new ReminderApiError(0, "Network Error", [
+    // Handle other errors
+    throw new ReminderApiError(
+      response.status,
+      response.statusText,
+      errorData.errors || [
         {
-          message:
-            error instanceof Error ? error.message : "Network request failed",
+          message: errorData.message || "Unknown error",
           timestamp: new Date().toISOString(),
         },
-      ]);
-    }
+      ]
+    );
   }
 
   // Get all reminders or reminders for a specific request
@@ -112,33 +82,25 @@ class ReminderApiClient {
     const url = requestId
       ? `${REMINDERS_ENDPOINT}/request/${requestId}`
       : `${REMINDERS_ENDPOINT}`;
-    const reminderDtos = await this.request<ReminderDto[]>(url);
+    const reminderDtos = await this.get<ReminderDto[]>(url);
     return reminderDtos.map((dto) => ReminderUtils.fromDto(dto));
   }
 
   // Create a new reminder
   async createReminder(reminderData: CreateReminderDto): Promise<Reminder> {
-    const reminderDto = await this.request<ReminderDto>(REMINDERS_ENDPOINT, {
-      method: "POST",
-      body: JSON.stringify(reminderData),
-    });
+    const reminderDto = await this.post<ReminderDto>(REMINDERS_ENDPOINT, reminderData);
     return ReminderUtils.fromDto(reminderDto);
   }
 
   // Update an existing reminder
   async updateReminder(reminderData: UpdateReminderDto): Promise<Reminder> {
-    const reminderDto = await this.request<ReminderDto>(REMINDERS_ENDPOINT, {
-      method: "PUT",
-      body: JSON.stringify(reminderData),
-    });
+    const reminderDto = await this.put<ReminderDto>(REMINDERS_ENDPOINT, reminderData);
     return ReminderUtils.fromDto(reminderDto);
   }
 
   // Delete a reminder
   async deleteReminder(reminderId: number): Promise<void> {
-    await this.request<void>(`${REMINDERS_ENDPOINT}/${reminderId}`, {
-      method: "DELETE",
-    });
+    await this.delete<void>(`${REMINDERS_ENDPOINT}/${reminderId}`);
   }
 }
 

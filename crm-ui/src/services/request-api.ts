@@ -1,3 +1,4 @@
+import { AuthenticatedApiClient } from './authenticated-api-client';
 import {
   SeniorRequestDto,
   CreateSeniorRequestDto,
@@ -37,51 +38,10 @@ export class RequestValidationError extends RequestApiError {
   }
 }
 
-// HTTP client for request management
-class RequestApiClient {
-  private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        await this.handleErrorResponse(response);
-      }
-
-      // Handle empty responses (204 No Content)
-      if (response.status === 204) {
-        return null as T;
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      if (error instanceof RequestApiError) {
-        throw error;
-      }
-      
-      // Network or other errors
-      throw new RequestApiError(
-        0,
-        'Network Error',
-        [{ message: 'Failed to connect to the server', timestamp: new Date().toISOString() }]
-      );
-    }
-  }
-
-  private async handleErrorResponse(response: Response): Promise<never> {
+// HTTP client for request management with JWT authentication
+class RequestApiClient extends AuthenticatedApiClient {
+  // Override error handling for request-specific errors
+  protected async handleErrorResponse(response: Response): Promise<never> {
     let errorData: any;
     
     try {

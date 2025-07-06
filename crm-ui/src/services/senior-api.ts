@@ -1,3 +1,4 @@
+import { AuthenticatedApiClient, BaseApiError, BaseValidationError } from './authenticated-api-client';
 import {
   SeniorDto,
   CreateSeniorDto,
@@ -18,15 +19,15 @@ const SENIORS_ENDPOINT = `${API_BASE_URL}/api/seniors`;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
-// Custom error classes following big tech practices
-export class SeniorApiError extends Error {
+// Service-specific error classes (extending base)
+export class SeniorApiError extends BaseApiError {
   constructor(
-    public status: number,
-    public statusText: string,
-    public errors?: ApiError[],
-    public timestamp?: string
+    status: number,
+    statusText: string,
+    errors?: ApiError[],
+    timestamp?: string
   ) {
-    super(`API Error ${status}: ${statusText}`);
+    super(status, statusText, errors || [], timestamp);
     this.name = 'SeniorApiError';
   }
 }
@@ -42,54 +43,10 @@ export class SeniorValidationError extends SeniorApiError {
   }
 }
 
-// HTTP client with error handling and type safety
-class ApiClient {
-  private async request<T>(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        await this.handleErrorResponse(response);
-      }
-
-      // Handle empty responses (204 No Content)
-      if (response.status === 204) {
-        return null as T;
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      if (error instanceof SeniorApiError) {
-        throw error;
-      }
-      
-      // Network or other errors
-      throw new SeniorApiError(
-        0,
-        'Network Error',
-        [{ message: 'Failed to connect to the server', timestamp: new Date().toISOString() }]
-      );
-    }
-  }
-
-  private async handleErrorResponse(response: Response): Promise<never> {
+// HTTP client for senior management extending authenticated base
+class ApiClient extends AuthenticatedApiClient {
+  // Override error handling for senior-specific errors
+  protected async handleErrorResponse(response: Response): Promise<never> {
     let errorData: any;
     
     try {
@@ -124,28 +81,6 @@ class ApiClient {
         timestamp: errorData.timestamp || new Date().toISOString() 
       }]
     );
-  }
-
-  async get<T>(url: string): Promise<T> {
-    return this.request<T>(url, { method: 'GET' });
-  }
-
-  async post<T>(url: string, data: any): Promise<T> {
-    return this.request<T>(url, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async put<T>(url: string, data: any): Promise<T> {
-    return this.request<T>(url, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async delete<T>(url: string): Promise<T> {
-    return this.request<T>(url, { method: 'DELETE' });
   }
 }
 
