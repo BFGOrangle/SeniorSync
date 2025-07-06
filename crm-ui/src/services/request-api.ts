@@ -15,8 +15,8 @@ import { PaginatedResponse } from '@/types/common';
 // Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8088';
 const REQUESTS_ENDPOINT = `${API_BASE_URL}/api/requests`;
-const REQUEST_TYPES_ENDPOINT = `${API_BASE_URL}/api/request-types`;
-const STAFF_ENDPOINT = `${API_BASE_URL}/api/staff`;
+const REQUEST_TYPES_ENDPOINT = `${API_BASE_URL}/api/dashboard/request-types`;
+const STAFF_ENDPOINT = `${API_BASE_URL}/api/dashboard/staff-workload`;
 
 // Custom error classes
 export class RequestApiError extends Error {
