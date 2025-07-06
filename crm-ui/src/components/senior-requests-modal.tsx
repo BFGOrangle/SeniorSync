@@ -66,13 +66,13 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
     }
   };
 
-  const getStatusIcon = (status: 'pending' | 'in-progress' | 'completed') => {
+  const getStatusIcon = (status: 'todo' | 'in-progress' | 'completed') => {
     switch (status) {
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'in-progress':
         return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'pending':
+      case 'todo':
         return <FileText className="h-4 w-4 text-gray-500" />;
       default:
         return <FileText className="h-4 w-4 text-gray-500" />;

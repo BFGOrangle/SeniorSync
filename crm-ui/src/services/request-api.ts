@@ -279,7 +279,7 @@ export class RequestManagementApiService {
    * Get counts by status for dashboard
    */
   async getStatusCounts(): Promise<{
-    pending: number;
+    todo: number;
     'in-progress': number;
     completed: number;
   }> {
@@ -288,7 +288,7 @@ export class RequestManagementApiService {
       const requests = await this.getRequests();
       
       const counts = {
-        pending: 0,
+        todo: 0,
         'in-progress': 0,
         completed: 0,
       };
@@ -303,7 +303,7 @@ export class RequestManagementApiService {
       console.error('Error getting status counts:', error);
       // Return empty counts on error
       return {
-        pending: 0,
+        todo: 0,
         'in-progress': 0,
         completed: 0,
       };
@@ -384,9 +384,9 @@ export const requestUtils = {
   /**
    * Get status display info
    */
-  getStatusInfo(status: 'pending' | 'in-progress'| 'completed' ) {
+  getStatusInfo(status: 'todo' | 'in-progress'| 'completed' ) {
     const statusMap = {
-      pending: { label: 'Pending', color: 'text-slate-700', bgColor: 'bg-slate-50' },
+      todo: { label: 'TODO', color: 'text-slate-700', bgColor: 'bg-slate-50' },
       'in-progress': { label: 'In Progress', color: 'text-blue-700', bgColor: 'bg-blue-50' },
       completed: { label: 'Completed', color: 'text-green-700', bgColor: 'bg-green-50' }
     };
@@ -400,7 +400,7 @@ export const requestUtils = {
     requests: SeniorRequestDisplayView[],
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
-      status?: ('pending' | 'in-progress'| 'completed' )[];
+      status?: ('todo' | 'in-progress'| 'completed' )[];
       requestType?: string[];
       assignedStaff?: string[];
       searchTerm?: string;
@@ -479,7 +479,7 @@ export const requestUtils = {
           comparison = priorityOrder[a.frontendPriority] - priorityOrder[b.frontendPriority];
           break;
         case 'status':
-          const statusOrder = { pending: 1, 'in-progress': 2,  completed: 4 };
+          const statusOrder = { todo: 1, 'in-progress': 2,  completed: 4 };
           comparison = statusOrder[a.frontendStatus] - statusOrder[b.frontendStatus];
           break;
         case 'seniorName':

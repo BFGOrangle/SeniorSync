@@ -11,6 +11,5 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CreateCommentMapper {
-    @Mapping(target = "request", ignore = true)
     RequestComment toEntity(CreateCommentDto createCommentDto);
 }

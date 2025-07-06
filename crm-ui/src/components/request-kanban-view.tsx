@@ -19,7 +19,7 @@ import { RequestCard } from "@/components/request-card";
 import { DroppableColumn } from "@/components/ui/droppable-column";
 import { cn } from "@/lib/utils";
 
-type Status = "pending" | "in-progress" | "completed";
+type Status = "todo" | "in-progress" | "completed";
 
 interface RequestKanbanViewProps {
   requests: SeniorRequestDisplayView[];
@@ -36,8 +36,8 @@ interface Column {
 
 const allColumns: Column[] = [
   {
-    id: "pending",
-    title: "Pending",
+    id: "todo",
+    title: "TODO",
     color: "bg-blue-50 border-blue-200",
     description: "Awaiting assignment",
   },

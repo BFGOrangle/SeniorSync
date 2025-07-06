@@ -38,10 +38,6 @@ public class RequestCommentService implements IRequestCommentService {
      */
     public RequestCommentDto createComment(CreateCommentDto createCommentDto) {
         RequestComment requestComment = createCommentMapper.toEntity(createCommentDto);
-
-        SeniorRequest seniorRequest = seniorRequestRepository.findById(createCommentDto.requestId())
-                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + createCommentDto.requestId()));
-        requestComment.setRequest(seniorRequest);
         requestComment.setCreatedAt(OffsetDateTime.now());
         RequestComment savedComment = requestCommentRepository.save(requestComment);
         return requestCommentMapper.toDto(savedComment);

@@ -25,7 +25,7 @@ export interface SeniorRequest {
   
   // System fields
   createdAt?: string;
-  status?: 'pending' | 'in-progress' | 'completed';
+  status?: 'todo' | 'in-progress' | 'completed';
 }
 
 export interface ApiResponse<T> {

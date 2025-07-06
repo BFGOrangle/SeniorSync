@@ -19,11 +19,11 @@ import {
 } from "lucide-react";
 import { RequestComment, CommentType, CommentUtils, COMMENT_TYPE_CONFIG } from "@/types/comment";
 import { useRequestComments } from "@/hooks/use-comments";
+import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
 
 interface CommentSectionProps {
   requestId: number;
-  currentUserId: number; // The ID of the currently logged-in staff member
   className?: string;
 }
 
@@ -37,7 +37,9 @@ const iconMap = {
   Lock,
 };
 
-export function CommentSection({ requestId, currentUserId, className }: CommentSectionProps) {
+export function CommentSection({ requestId, className }: CommentSectionProps) {
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser?.id || 1; // Fallback to 1 if no user
   const {
     comments,
     isLoading,
