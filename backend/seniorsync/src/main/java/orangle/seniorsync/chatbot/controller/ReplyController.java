@@ -6,6 +6,7 @@ import orangle.seniorsync.chatbot.dto.ReplyDto;
 import orangle.seniorsync.chatbot.dto.ReplyOption;
 import orangle.seniorsync.chatbot.service.IReplyService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class ReplyController {
     }
 
     @PostMapping("/reply")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<ReplyDto> replyMessage(@RequestBody IncomingMessageDto incomingMessage) {
         ReplyDto replyDto = replyService.replyMessage(
                 incomingMessage.campaignName(),
@@ -33,6 +35,7 @@ public class ReplyController {
     }
 
     @GetMapping("/senior/{seniorId}/current-reply-options")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<ReplyOption>> getCurrentReplyOptions(
             @PathVariable Long seniorId,
             @RequestParam(defaultValue = "lodging_request") String campaignName) {

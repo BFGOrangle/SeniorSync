@@ -8,6 +8,7 @@ import orangle.seniorsync.crm.requestmanagement.mapper.RequestCommentMapper;
 import orangle.seniorsync.crm.requestmanagement.service.IRequestCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class RequestCommentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<RequestCommentDto> createComment(@Valid @RequestBody CreateCommentDto createCommentDto) {
         RequestCommentDto createdCommentDto = requestCommentService.createComment(createCommentDto);
         log.info("Created comment with ID : {}", createdCommentDto.id());
@@ -31,6 +33,7 @@ public class RequestCommentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<RequestCommentDto>> getCommentsById(@PathVariable("id") Long id) {
         List<RequestCommentDto> comments = requestCommentService.getCommentsByRequestId(id);
         log.info("Retrieved {} comments for request ID: {}", comments.size(), id);
@@ -38,6 +41,7 @@ public class RequestCommentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Void> deleteComment(@PathVariable("id") Long id) {
         requestCommentService.deleteComment(id);
         log.info("Deleted comment with ID: {}", id);
