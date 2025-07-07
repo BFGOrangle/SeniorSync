@@ -12,7 +12,7 @@ on:
 
 jobs:
   frontend-ci:
-    name: Frontend Tests and Build
+    name: Frontend Type Check and Build
     runs-on: ubuntu-latest
     
     defaults:

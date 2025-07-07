@@ -1,0 +1,41 @@
+name: Database CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/database/migrations/**'
+      - '.github/workflows/db-cd.yml'
+  workflow_dispatch:
+
+jobs:
+  migrate-database:
+    name: Run Flyway migrations
+    runs-on: ubuntu-20.04
+    env:
+      SUPABASE_HOST: db.hztrudndwrildnalbcvw.supabase.co
+      SUPABASE_PORT: 5432
+      SUPABASE_USER: postgres
+      SUPABASE_DB: postgres
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Create migrations directory structure
+        run: |
+          mkdir -p flyway-migrations
+          # Copy only production migrations (exclude _local_seeding_data)
+          find backend/database/migrations -name "*.sql" -not -path "*/_local_seeding_data/*" -exec cp {} flyway-migrations/ \;
+          ls -la flyway-migrations/
+      
+      - name: Run Flyway migrations
+        run: >-
+          docker run --rm
+          --volume ${{ github.workspace }}/flyway-migrations:/flyway/sql:ro
+          flyway/flyway:7.12.1-alpine
+          -url="jdbc:postgresql://${{ env.SUPABASE_HOST }}:${{ env.SUPABASE_PORT }}/${{ env.SUPABASE_DB }}?sslmode=require"
+          -user="${{ env.SUPABASE_USER }}"
+          -password="${{ secrets.SUPABASE_PASS }}"
+          -schemas=senior_sync
+          migrate
