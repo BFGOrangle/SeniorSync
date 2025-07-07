@@ -1,0 +1,45 @@
+name: Backend Spring Boot App CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    paths:
+      - "backend/seniorsync/**"
+
+env:
+  JAVA_VERSION: 21
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+          cache: maven
+
+      - name: Compile application
+        working-directory: ./backend/seniorsync
+        run: mvn compile
+
+      # Skip tests for now as we don't have unit tests and the postgres setup for tests
+      #   - name: Run tests
+      #     working-directory: ./backend/seniorsync
+      #     run: mvn test
+      #     env:
+      #       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/seniorsync_test
+      #       SPRING_DATASOURCE_USERNAME: postgres
+      #       SPRING_DATASOURCE_PASSWORD: test
+
+      - name: Package application
+        working-directory: ./backend/seniorsync
+        # Like above, we skip tests for now as we don't have unit tests and the postgres setup for tests
+        run: mvn package -DskipTests

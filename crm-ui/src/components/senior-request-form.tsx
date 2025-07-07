@@ -38,7 +38,7 @@ const formSchema = z.object({
   // Medical Information
   medicalConditions: z.string().optional(),
   medications: z.string().optional(),
-  mobilityAssistance: z.boolean().default(false),
+  mobilityAssistance: z.boolean(),
   
   // Agent Information
   agentName: z.string().min(2, { message: "Agent name is required." }),
@@ -558,4 +558,4 @@ export function SeniorRequestForm() {
       </Form>
     </div>
   );
-} 
+}

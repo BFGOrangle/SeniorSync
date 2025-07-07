@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ChatContainer, ChatMessages } from '@/components/ui/chat'
 import { SeniorDetailsHeader } from '@/components/senior-details-header'
 import { useSeniorChatbot } from '@/hooks/use-senior-chatbot'
-import { ReplyOption } from '@/types/chatbot'
+import { ReplyOption, ChatMessage } from '@/types/chatbot'
 
 interface SeniorChatbotProps {
   seniorId: number
@@ -114,6 +114,11 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
     handleOptionClick(startOption)
   }
 
+  // Convert ChatMessage to Message format for UI components
+  const convertToUIMessage = (chatMessage: ChatMessage) => ({
+    ...chatMessage,
+    id: chatMessage.id.toString()
+  })
 
   // Filter out empty text options for button display
   const buttonOptions = currentReplyOptions.filter(opt => opt.text !== '')
@@ -154,7 +159,7 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
 
           <div className="space-y-6">
             <ChatContainer className="h-[500px] md:h-[600px] border rounded-lg bg-gray-50">
-              <ChatMessages messages={messages}>
+              <ChatMessages messages={messages.map(convertToUIMessage)}>
                 <div className="space-y-4 p-4">
                   {messages.map((message) => (
                     <div

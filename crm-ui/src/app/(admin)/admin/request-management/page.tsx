@@ -19,7 +19,7 @@ type ViewMode = "kanban-status" | "kanban-priority" | "table";
 
 interface RequestFilterOptions {
   priority?: ("low" | "medium" | "high" | "urgent")[];
-  status?: ("pending" | "in-progress" | "completed")[];
+  status?: ("todo" | "in-progress" | "completed")[];
   requestType?: string[];
   assignedStaff?: string[];
   searchTerm?: string;
@@ -166,7 +166,7 @@ export default function RequestManagement() {
                   className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
                 >
                   <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  Pending: {statusCounts.pending}
+                  TODO: {statusCounts.todo}
                 </Badge>
                 <Badge
                   variant="outline"
