@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'backend/database/migrations/**'
-      - '.github/workflows/db-cd.yml'
+      - "backend/database/migrations/**"
+      - ".github/workflows/db-cd.yml"
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Create migrations directory structure
         run: |
           mkdir -p flyway-migrations
@@ -30,7 +30,7 @@ jobs:
           find backend/database/migrations -name "*.sql" -not -path "*/_local_seeding_data/*" -exec cp {} flyway-migrations/ \;
           echo "Migration files found:"
           ls -la flyway-migrations/
-      
+
       - name: Run Flyway migrations
         run: >-
           docker run --rm
