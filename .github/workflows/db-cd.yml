@@ -38,6 +38,6 @@ jobs:
           flyway/flyway:9.22.3-alpine
           -url="jdbc:postgresql://${{ env.SUPABASE_HOST }}:${{ env.SUPABASE_PORT }}/${{ env.SUPABASE_DB }}?sslmode=require"
           -user="${{ env.SUPABASE_USER }}"
-          -password="${{ secrets.SUPABASE_PASS }}"
+          -password="${{ secrets.SUPABASE_PASSWORD }}"
           -schemas=senior_sync
           migrate
