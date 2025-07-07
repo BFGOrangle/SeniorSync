@@ -3,13 +3,20 @@ package orangle.seniorsync.common.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.common.config.JwtConfig;
 import orangle.seniorsync.common.dto.LoginRequest;
 import orangle.seniorsync.common.dto.LoginResponse;
 import orangle.seniorsync.common.model.Staff;
+import orangle.seniorsync.common.security.JwtAuthenticationToken;
 import orangle.seniorsync.common.service.AuthenticationService;
+import orangle.seniorsync.common.util.JwtUtil;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -59,14 +66,5 @@ public class AuthenticationController {
                 LoginResponse.error("Internal server error")
             );
         }
-    }
-    
-    /**
-     * Check if staff member is admin
-     */
-    @GetMapping("/test/check-role/{staffId}")
-    public ResponseEntity<String> checkRole(@PathVariable Long staffId) {
-        // This would need additional service method
-        return ResponseEntity.ok("Test endpoint");
     }
 } 

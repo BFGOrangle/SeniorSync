@@ -55,10 +55,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - no authentication required
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // Protected endpoints - require authentication
+                // Protected endpoints - require authentication (including auth test endpoints)
                 .requestMatchers("/api/**").hasAnyRole("ADMIN", "STAFF")
                 .anyRequest().authenticated()
             )

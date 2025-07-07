@@ -1,28 +1,41 @@
 package orangle.seniorsync.common.util;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.util.Date;
 import java.util.Optional;
 
 /**
- * JWT Utility class for handling NextAuth JWT tokens
+ * JWT Utility class for handling both secure JWT tokens and legacy NextAuth tokens
  * 
- * NextAuth tokens have the format: "nextauth.{userId}.{userRole}"
- * This utility parses and validates these tokens for backend authentication.
+ * Supports two token formats:
+ * 1. Secure JWT tokens (recommended): Standard RFC 7519 JWT format
+ * 2. Legacy tokens (deprecated): "nextauth.{userId}.{userRole}" format
+ * 
+ * The utility attempts to parse as secure JWT first, then falls back to legacy format
+ * for backward compatibility during migration.
  */
 @Component
 public class JwtUtil {
     
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
     
-    private static final String TOKEN_PREFIX = "nextauth.";
+    private static final String LEGACY_TOKEN_PREFIX = "nextauth.";
     private static final String BEARER_PREFIX = "Bearer ";
     
     @Value("${security.jwt.enabled:true}")
     private boolean jwtEnabled;
+    
+    @Value("${security.jwt.secret:#{null}}")
+    private String jwtSecret;
     
     /**
      * Extract JWT token from Authorization header
@@ -52,12 +65,12 @@ public class JwtUtil {
     }
     
     /**
-     * Parse NextAuth JWT token and extract user information
+     * Parse JWT token - attempts secure JWT first, then falls back to legacy format
      * 
      * @param token The JWT token to parse
      * @return Optional containing parsed token data
      */
-    public Optional<NextAuthTokenData> parseNextAuthToken(String token) {
+    public Optional<NextAuthTokenData> parseToken(String token) {
         if (!jwtEnabled) {
             log.debug("JWT authentication is disabled");
             return Optional.empty();
@@ -68,18 +81,108 @@ public class JwtUtil {
             return Optional.empty();
         }
         
-        if (!token.startsWith(TOKEN_PREFIX)) {
-            log.debug("Token does not start with expected prefix: {}", TOKEN_PREFIX);
+        // Try to parse as secure JWT first
+        Optional<NextAuthTokenData> secureJwtResult = parseSecureJwt(token);
+        if (secureJwtResult.isPresent()) {
+            return secureJwtResult;
+        }
+        
+        // Fallback to legacy format for backward compatibility
+        log.debug("Secure JWT parsing failed, attempting legacy format");
+        return parseLegacyToken(token);
+    }
+    
+    /**
+     * Parse secure JWT token with cryptographic validation
+     * 
+     * @param token The JWT token to parse
+     * @return Optional containing parsed token data
+     */
+    private Optional<NextAuthTokenData> parseSecureJwt(String token) {
+        try {
+            if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+                log.debug("JWT secret not configured, skipping secure JWT parsing");
+                return Optional.empty();
+            }
+            
+            // Create signing key from secret
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+            
+            // Parse and validate JWT
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .requireIssuer("seniorsync-crm")
+                    .requireAudience("seniorsync-api")
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            
+            // Extract user information
+            String userIdStr = claims.getSubject();
+            String userRole = claims.get("role", String.class);
+            String userEmail = claims.get("email", String.class);
+            String userName = claims.get("name", String.class);
+            
+            // Validate required fields
+            if (userIdStr == null || userRole == null) {
+                log.debug("JWT missing required fields: sub or role");
+                return Optional.empty();
+            }
+            
+            // Validate user ID format
+            Long userId;
+            try {
+                userId = Long.parseLong(userIdStr);
+            } catch (NumberFormatException e) {
+                log.debug("Invalid user ID format in JWT: {}", userIdStr);
+                return Optional.empty();
+            }
+            
+            // Validate user role
+            if (!isValidUserRole(userRole)) {
+                log.debug("Invalid user role in JWT: {}", userRole);
+                return Optional.empty();
+            }
+            
+            // Check expiration (additional safety check)
+            Date expiration = claims.getExpiration();
+            if (expiration != null && expiration.before(new Date())) {
+                log.debug("JWT token expired at: {}", expiration);
+                return Optional.empty();
+            }
+            
+            log.debug("Successfully parsed secure JWT for user: {} with role: {}", userId, userRole);
+            
+            return Optional.of(new NextAuthTokenData(userId, userRole, userEmail, userName, true));
+            
+        } catch (JwtException e) {
+            log.debug("JWT parsing failed: {}", e.getMessage());
+            return Optional.empty();
+        } catch (Exception e) {
+            log.debug("Unexpected error parsing JWT: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Parse legacy NextAuth token format (deprecated)
+     * 
+     * @param token The legacy token to parse
+     * @return Optional containing parsed token data
+     */
+    private Optional<NextAuthTokenData> parseLegacyToken(String token) {
+        if (!token.startsWith(LEGACY_TOKEN_PREFIX)) {
+            log.debug("Token does not start with legacy prefix: {}", LEGACY_TOKEN_PREFIX);
             return Optional.empty();
         }
         
         try {
             // Remove prefix and split by dots
-            String tokenContent = token.substring(TOKEN_PREFIX.length());
+            String tokenContent = token.substring(LEGACY_TOKEN_PREFIX.length());
             String[] parts = tokenContent.split("\\.");
             
             if (parts.length < 2) {
-                log.debug("Token does not have enough parts. Expected at least 2, got: {}", parts.length);
+                log.debug("Legacy token does not have enough parts. Expected at least 2, got: {}", parts.length);
                 return Optional.empty();
             }
             
@@ -88,24 +191,24 @@ public class JwtUtil {
             
             // Validate userId (should be numeric)
             if (!isValidUserId(userId)) {
-                log.debug("Invalid user ID format: {}", userId);
+                log.debug("Invalid user ID format in legacy token: {}", userId);
                 return Optional.empty();
             }
             
             // Validate userRole (should be ADMIN or STAFF)
             if (!isValidUserRole(userRole)) {
-                log.debug("Invalid user role: {}", userRole);
+                log.debug("Invalid user role in legacy token: {}", userRole);
                 return Optional.empty();
             }
             
             Long userIdLong = Long.parseLong(userId);
             
-            log.debug("Successfully parsed NextAuth token for user: {} with role: {}", userIdLong, userRole);
+            log.warn("Using deprecated legacy token format for user: {} with role: {}. Please upgrade to secure JWT tokens.", userIdLong, userRole);
             
-            return Optional.of(new NextAuthTokenData(userIdLong, userRole));
+            return Optional.of(new NextAuthTokenData(userIdLong, userRole, null, null, false));
             
         } catch (Exception e) {
-            log.debug("Error parsing NextAuth token: {}", e.getMessage());
+            log.debug("Error parsing legacy token: {}", e.getMessage());
             return Optional.empty();
         }
     }
@@ -142,7 +245,7 @@ public class JwtUtil {
      */
     public Optional<NextAuthTokenData> extractAndParseToken(String authorizationHeader) {
         return extractTokenFromHeader(authorizationHeader)
-                .flatMap(this::parseNextAuthToken);
+                .flatMap(this::parseToken);
     }
     
     /**
@@ -153,15 +256,26 @@ public class JwtUtil {
     }
     
     /**
-     * Data class for parsed NextAuth token information
+     * Enhanced data class for parsed token information
      */
     public static class NextAuthTokenData {
         private final Long userId;
         private final String userRole;
+        private final String userEmail;
+        private final String userName;
+        private final boolean isSecureJwt;
         
-        public NextAuthTokenData(Long userId, String userRole) {
+        public NextAuthTokenData(Long userId, String userRole, String userEmail, String userName, boolean isSecureJwt) {
             this.userId = userId;
             this.userRole = userRole;
+            this.userEmail = userEmail;
+            this.userName = userName;
+            this.isSecureJwt = isSecureJwt;
+        }
+        
+        // Backward compatibility constructor
+        public NextAuthTokenData(Long userId, String userRole) {
+            this(userId, userRole, null, null, false);
         }
         
         public Long getUserId() {
@@ -170,6 +284,18 @@ public class JwtUtil {
         
         public String getUserRole() {
             return userRole;
+        }
+        
+        public String getUserEmail() {
+            return userEmail;
+        }
+        
+        public String getUserName() {
+            return userName;
+        }
+        
+        public boolean isSecureJwt() {
+            return isSecureJwt;
         }
         
         public boolean isAdmin() {
@@ -182,7 +308,8 @@ public class JwtUtil {
         
         @Override
         public String toString() {
-            return String.format("NextAuthTokenData{userId=%d, userRole='%s'}", userId, userRole);
+            return String.format("NextAuthTokenData{userId=%d, userRole='%s', isSecureJwt=%s}", 
+                               userId, userRole, isSecureJwt);
         }
     }
 } 

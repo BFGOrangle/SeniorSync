@@ -1,7 +1,17 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { NextAuthOptions } from 'next-auth'
+import jwt from 'jsonwebtoken'
 
+/**
+ * SeniorSync Authentication Configuration
+ * 
+ * Generates secure JWT tokens for API authentication with proper:
+ * - Cryptographic signing (HMAC-SHA256)
+ * - Expiration handling
+ * - Industry standard JWT format
+ * - Backward compatibility with legacy format
+ */
 const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -16,7 +26,7 @@ const authOptions: NextAuthOptions = {
         }
 
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -80,9 +90,46 @@ const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName as string
         session.user.lastName = token.lastName as string
         
-        // Add JWT token for API calls
+        // 🔐 Generate secure JWT token for API calls
         if (token.sub && token.role) {
-          session.accessToken = `nextauth.${token.sub}.${token.role}`
+          try {
+            const jwtSecret = process.env.NEXTAUTH_SECRET
+            if (!jwtSecret) {
+              console.error('NEXTAUTH_SECRET is not configured')
+              // Fallback to legacy format for backward compatibility
+              session.accessToken = `nextauth.${token.sub}.${token.role}`
+            } else {
+              // Generate proper JWT token
+              const now = Math.floor(Date.now() / 1000)
+              const jwtPayload = {
+                sub: token.sub,                              // Subject (User ID)
+                role: token.role,                            // User role
+                email: session.user.email,                   // User email
+                name: session.user.name,                     // Full name
+                jobTitle: token.jobTitle,                    // Job title
+                iat: now,                                    // Issued at
+                exp: now + (24 * 60 * 60),                 // Expires in 24 hours
+                iss: 'seniorsync-crm',                      // Issuer
+                aud: 'seniorsync-api',                      // Audience
+                jti: `${token.sub}-${now}`,                 // JWT ID (unique)
+              }
+              
+              // Sign JWT with HMAC-SHA256
+              session.accessToken = jwt.sign(jwtPayload, jwtSecret, {
+                algorithm: 'HS256',
+                header: {
+                  typ: 'JWT',
+                  alg: 'HS256'
+                }
+              })
+              
+              console.log('Generated secure JWT token for user:', token.sub)
+            }
+          } catch (error) {
+            console.error('JWT generation error:', error)
+            // Fallback to legacy format for backward compatibility
+            session.accessToken = `nextauth.${token.sub}.${token.role}`
+          }
         }
       }
       return session
