@@ -176,7 +176,7 @@ export function RequestCard({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={(e) => {
+                    onPointerDown={(e) => {
                       e.stopPropagation();
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
