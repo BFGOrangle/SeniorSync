@@ -3,10 +3,13 @@ package orangle.seniorsync.common.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+
+import orangle.seniorsync.common.converter.StringArrayConverter;
 
 @Getter
 @Setter
@@ -36,6 +39,16 @@ public class Senior {
     @Column(name = "address", length = Integer.MAX_VALUE)
     private String address;
 
+    @Column(name = "care_level")
+    private String careLevel;
+
+    @Column(name = "care_level_color", length = 7)
+    private String careLevelColor;
+
+    @Convert(converter = StringArrayConverter.class)
+    @Column(name = "characteristics", columnDefinition = "jsonb")
+    private String[] characteristics;
+
     @ColumnDefault("now()")
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -43,5 +56,7 @@ public class Senior {
     @ColumnDefault("now()")
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
+
+
 
 }
