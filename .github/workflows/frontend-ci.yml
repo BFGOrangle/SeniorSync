@@ -2,9 +2,8 @@ name: Frontend CI
 
 on:
   pull_request:
-    paths:
-      - 'crm-ui/**'
-      - '.github/workflows/frontend-ci.yml'
+    branches:
+      - main
   push:
     paths:
       - 'crm-ui/**'
