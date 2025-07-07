@@ -1,15 +1,45 @@
 "use client";
 
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/app-sidebar";
 import { UserProvider } from "@/contexts/user-context";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated or not an admin (will redirect)
+  if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "ADMIN")) {
+    return null;
+  }
+
   return (
     <UserProvider>
       <SidebarProvider defaultOpen={true}>

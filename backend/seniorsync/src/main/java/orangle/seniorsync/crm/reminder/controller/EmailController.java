@@ -2,6 +2,7 @@ package orangle.seniorsync.crm.reminder.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import orangle.seniorsync.crm.reminder.service.EmailService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -15,6 +16,7 @@ public class EmailController {
     }
 
     @PostMapping("/test")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public String testEmail(@RequestBody String email) {
         log.info("Received email for testing: {}", email);
         try {
