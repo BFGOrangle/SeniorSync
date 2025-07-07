@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { Search, Filter, SortAsc, SortDesc, ChevronDown } from "lucide-react";
 
 type Priority = "low" | "medium" | "high" | "urgent";
-type Status = "pending" | "in-progress" | "completed";
+type Status = "todo" | "in-progress" | "completed";
 
 interface RequestFilterOptions {
   priority?: Priority[];
@@ -52,7 +52,7 @@ export function RequestFilters({
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
   const statusOptions: Status[] = [
-    "pending",
+    "todo",
     "in-progress",
     "completed"
   ];
