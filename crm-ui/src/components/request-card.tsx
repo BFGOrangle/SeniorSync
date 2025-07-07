@@ -6,8 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Clock, Eye } from "lucide-react";
+import { Clock, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SeniorRequestDisplayView } from "@/types/request";
+import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
 
 interface RequestCardProps {
@@ -23,6 +30,7 @@ export function RequestCard({
 }: RequestCardProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
+  const { currentUser } = useCurrentUser();
 
   const {
     attributes,
@@ -39,6 +47,28 @@ export function RequestCard({
   const handleViewDetails = () => {
     setIsNavigating(true);
     router.push(`/admin/requests/${request.id}`);
+  };
+
+  const handleAssignToMe = async () => {
+    if (!currentUser) {
+      console.error('No current user available for assignment');
+      return;
+    }
+
+    try {
+      // Update the request with current user assignment
+      const updatedRequest = {
+        ...request,
+        assignedStaffId: currentUser.id,
+        assignedStaffName: currentUser.fullName,
+      };
+      
+      if (onUpdate) {
+        onUpdate(updatedRequest);
+      }
+    } catch (error) {
+      console.error('Failed to assign request to current user:', error);
+    }
   };
 
   const style = {
@@ -71,7 +101,7 @@ export function RequestCard({
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "pending":
+      case "todo":
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "in-progress":
         return "text-orange-600 bg-orange-50 border-orange-200";
@@ -141,18 +171,41 @@ export function RequestCard({
               )}
             </div>
             <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewDetails();
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
-                title="View Details"
-              >
-                <Eye className="h-3 w-3" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
+                    title="More Actions"
+                  >
+                    <MoreHorizontal className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewDetails();
+                    }}
+                  >
+                    View Details
+                  </DropdownMenuItem>
+                  {currentUser && request.assignedStaffId !== currentUser.id && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAssignToMe();
+                      }}
+                    >
+                      Assign to Me
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

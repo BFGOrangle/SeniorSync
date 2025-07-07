@@ -35,7 +35,7 @@ import { ReminderSection } from "@/components/reminder-section";
 import { cn } from "@/lib/utils";
 
 type Priority = "low" | "medium" | "high" | "urgent";
-type Status = "pending" | "in-progress" | "completed";
+type Status = "todo" | "in-progress" | "completed";
 
 interface RequestModalProps {
   request: SeniorRequestDisplayView;
@@ -80,7 +80,7 @@ export function RequestModal({
   };
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
-  const statusOptions: Status[] = ["pending", "in-progress", "completed"];
+  const statusOptions: Status[] = ["todo", "in-progress", "completed"];
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
@@ -99,7 +99,7 @@ export function RequestModal({
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "pending":
+      case "todo":
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "in-progress":
         return "text-orange-600 bg-orange-50 border-orange-200";

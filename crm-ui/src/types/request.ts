@@ -76,7 +76,7 @@ export interface SeniorRequestDisplayView extends SeniorRequestView {
   requestTypeName?: string;
 
   // Frontend compatibility fields (computed from backend data)
-  frontendStatus: "pending" | "in-progress" | "completed";
+  frontendStatus: "todo" | "in-progress" | "completed";
   frontendPriority: "low" | "medium" | "high" | "urgent";
 
   // Reminder information
@@ -107,25 +107,25 @@ export const RequestUtils = {
   // Convert backend status to frontend status
   backendToFrontendStatus(
     status: RequestStatus
-  ): "pending" | "in-progress" | "completed" {
+  ): "todo" | "in-progress" | "completed" {
     switch (status) {
       case "TODO":
-        return "pending";
+        return "todo";
       case "IN_PROGRESS":
         return "in-progress";
       case "COMPLETED":
         return "completed";
       default:
-        return "pending";
+        return "todo";
     }
   },
 
   // Convert frontend status to backend status
   frontendToBackendStatus(
-    status: "pending" | "in-progress" | "completed"
+    status: "todo" | "in-progress" | "completed"
   ): RequestStatus {
     switch (status) {
-      case "pending":
+      case "todo":
         return "TODO";
       case "in-progress":
         return "IN_PROGRESS";

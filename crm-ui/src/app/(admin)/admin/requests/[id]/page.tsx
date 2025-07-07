@@ -36,7 +36,7 @@ import { useRequestDetails } from "@/hooks/use-requests";
 import { cn } from "@/lib/utils";
 
 type Priority = "low" | "medium" | "high" | "urgent";
-type Status = "pending" | "in-progress" | "completed";
+type Status = "todo" | "in-progress" | "completed";
 
 export default function RequestDetailsPage() {
   const params = useParams();
@@ -91,7 +91,7 @@ export default function RequestDetailsPage() {
   };
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
-  const statusOptions: Status[] = ["pending", "in-progress", "completed"];
+  const statusOptions: Status[] = ["todo", "in-progress", "completed"];
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
@@ -110,7 +110,7 @@ export default function RequestDetailsPage() {
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "pending":
+      case "todo":
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "in-progress":
         return "text-orange-600 bg-orange-50 border-orange-200";
@@ -397,7 +397,7 @@ export default function RequestDetailsPage() {
                     placeholder="Enter request title"
                   />
                 ) : (
-                  <span className="font-medium">
+                  <span className="font-medium px-2">
                     {editedRequest.title || "N/A"}
                   </span>
                 )}
@@ -405,7 +405,7 @@ export default function RequestDetailsPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="requestType">Request Type</Label>
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="px-2">
                   {editedRequest.requestTypeName || "N/A"}
                 </Badge>
               </div>
@@ -461,7 +461,6 @@ export default function RequestDetailsPage() {
           <Separator />
           <CommentSection 
             requestId={editedRequest.id} 
-            currentUserId={1} // TODO: Replace with actual logged-in user ID
           />
 
           {/* System Information */}

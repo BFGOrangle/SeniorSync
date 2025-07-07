@@ -8,6 +8,5 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface RequestCommentMapper {
-    @Mapping(target = "requestId", source = "request.id")
     RequestCommentDto toDto(RequestComment requestComment);
 }

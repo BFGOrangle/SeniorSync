@@ -12,7 +12,7 @@ export class SeniorRequestAPI {
     const fullRequest: SeniorRequest = {
       ...request,
       createdAt: new Date().toISOString(),
-      status: 'pending'
+      status: 'todo'
     };
     
     // Simulate successful submission
