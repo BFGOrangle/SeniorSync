@@ -1,9 +1,6 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
-import orangle.seniorsync.crm.requestmanagement.dto.CreateSeniorRequestDto;
-import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestDto;
-import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestFilterDto;
-import orangle.seniorsync.crm.requestmanagement.dto.UpdateSeniorRequestDto;
+import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
 import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestView;
 
@@ -17,4 +14,5 @@ public interface IRequestManagementService {
     SeniorRequestDto updateRequest(UpdateSeniorRequestDto updateSeniorRequestDto);
     List<SeniorRequestDto> findRequestsBySenior(long id);
     void deleteRequest(long id);
+    DashboardDto getDashboard();
 }

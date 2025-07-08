@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { 
+import { Button } from "@/components/ui/button";
+import {
   TotalRequestsCard,
   PendingRequestsCard,
   CompletedThisMonthCard,
   AverageCompletionTimeCard,
-} from '@/components/dashboard-stats-card';
+} from "@/components/dashboard-stats-card";
 import {
   StatusDistributionChart,
   PriorityDistributionChart,
@@ -14,10 +14,10 @@ import {
   MonthlyTrendChart,
   StaffWorkloadChart,
   RequestTypeDetails,
-} from '@/components/dashboard-charts';
-import { useDashboard } from '@/hooks/use-dashboard';
-import { RefreshCw, Calendar, Download } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/dashboard-charts";
+import { useDashboard } from "@/hooks/use-dashboard";
+import { RefreshCw, Calendar, Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
   const {
@@ -31,11 +31,12 @@ export default function DashboardPage() {
     error,
     lastUpdated,
     refreshAll,
+    forceRefresh,
     clearError,
   } = useDashboard();
 
   const handleRefresh = async () => {
-    await refreshAll();
+    await forceRefresh();
   };
 
   return (
@@ -48,7 +49,7 @@ export default function DashboardPage() {
             Overview of senior request management system
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {lastUpdated && (
             <Badge variant="secondary" className="text-xs">
@@ -56,17 +57,19 @@ export default function DashboardPage() {
               Updated {lastUpdated.toLocaleTimeString()}
             </Badge>
           )}
-          
-          <Button 
-            onClick={handleRefresh} 
+
+          <Button
+            onClick={handleRefresh}
             disabled={loading}
             variant="outline"
             size="sm"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            {loading ? "Refreshing..." : "Refresh"}
           </Button>
-          
+
           <Button variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -86,9 +89,9 @@ export default function DashboardPage() {
                 {error.message}. Please try refreshing the page.
               </p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={clearError}
               className="text-red-600 hover:text-red-800"
             >
@@ -100,19 +103,19 @@ export default function DashboardPage() {
 
       {/* Key Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <TotalRequestsCard 
+        <TotalRequestsCard
           value={dashboardStats?.totalRequests || 0}
           loading={loading}
         />
-        <PendingRequestsCard 
+        <PendingRequestsCard
           value={dashboardStats?.totalPendingRequests || 0}
           loading={loading}
         />
-        <CompletedThisMonthCard 
+        <CompletedThisMonthCard
           value={dashboardStats?.totalCompletedThisMonth || 0}
           loading={loading}
         />
-        <AverageCompletionTimeCard 
+        <AverageCompletionTimeCard
           value={dashboardStats?.averageCompletionTime || 0}
           loading={loading}
         />
@@ -120,35 +123,20 @@ export default function DashboardPage() {
 
       {/* Charts Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-        <StatusDistributionChart 
-          data={statusDistribution}
-          loading={loading}
-        />
-        <PriorityDistributionChart 
+        <StatusDistributionChart data={statusDistribution} loading={loading} />
+        <PriorityDistributionChart
           data={priorityDistribution}
           loading={loading}
         />
-        <RequestTypesChart 
-          data={requestTypeSummaries}
-          loading={loading}
-        />
-        <MonthlyTrendChart 
-          data={monthlyTrend}
-          loading={loading}
-        />
+        <RequestTypesChart data={requestTypeSummaries} loading={loading} />
+        <MonthlyTrendChart data={monthlyTrend} loading={loading} />
       </div>
 
       {/* Staff Workload and Request Details */}
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <StaffWorkloadChart 
-          data={staffWorkload}
-          loading={loading}
-        />
-        <RequestTypeDetails 
-          data={requestTypeSummaries}
-          loading={loading}
-        />
+        <StaffWorkloadChart data={staffWorkload} loading={loading} />
+        <RequestTypeDetails data={requestTypeSummaries} loading={loading} />
       </div>
     </div>
   );
-} 
+}
