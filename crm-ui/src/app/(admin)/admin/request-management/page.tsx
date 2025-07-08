@@ -245,7 +245,7 @@ export default function RequestManagement() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-auto min-h-0">
+      <div className="p-6">
         {viewMode === "kanban-status" ? (
           <RequestKanbanView
             requests={processedRequests}

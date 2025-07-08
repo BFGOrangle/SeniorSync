@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/seniors")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class SeniorManagementController {
 
     private final ISeniorManagementService seniorManagementService;
@@ -28,6 +30,10 @@ public class SeniorManagementController {
         this.seniorManagementService = seniorManagementService;
     }
 
+    /**
+     * Create a new senior profile
+     * Both ADMIN and STAFF can create seniors
+     */
     @PostMapping
     public ResponseEntity<SeniorDto> createSenior(@Valid @RequestBody CreateSeniorDto createSeniorDto) {
         SeniorDto createdSenior = seniorManagementService.createSenior(createSeniorDto);
@@ -38,6 +44,7 @@ public class SeniorManagementController {
     /**
      * Get paginated seniors with filtering
      * This endpoint uses pagination and does not fetch all records.
+     * Both ADMIN and STAFF can view seniors
      */
     @PostMapping("/paginated")
     public ResponseEntity<Page<SeniorDto>> getSeniorsPaginated(
@@ -118,7 +125,12 @@ public class SeniorManagementController {
         return ResponseEntity.ok(updatedSenior);
     }
 
+    /**
+     * Delete a senior profile
+     * Only ADMIN users can delete seniors
+     */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Overrides class level pre-authorization
     public ResponseEntity<Void> deleteSenior(@PathVariable long id) {
         seniorManagementService.deleteSenior(id);
         log.info("Deleted senior with ID: {}", id);

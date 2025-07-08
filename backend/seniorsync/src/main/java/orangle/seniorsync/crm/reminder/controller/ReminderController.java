@@ -8,6 +8,7 @@ import orangle.seniorsync.crm.reminder.dto.UpdateReminderDto;
 import orangle.seniorsync.crm.reminder.service.ReminderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/reminders")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class ReminderController {
     private final ReminderService reminderService;
 

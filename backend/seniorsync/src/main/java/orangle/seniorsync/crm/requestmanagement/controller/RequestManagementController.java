@@ -9,6 +9,7 @@ import orangle.seniorsync.crm.requestmanagement.dto.UpdateSeniorRequestDto;
 import orangle.seniorsync.crm.requestmanagement.service.IRequestManagementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/requests")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class RequestManagementController {
 
     private final IRequestManagementService requestManagementService;
@@ -54,6 +56,7 @@ public class RequestManagementController {
     }
 
     @GetMapping("/senior/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<SeniorRequestDto>> getRequestsBySenior(@PathVariable long id) {
         List<SeniorRequestDto> seniorRequests = requestManagementService.findRequestsBySenior(id);
         log.info("Retrieved {} senior requests for senior ID: {}", seniorRequests.size(), id);

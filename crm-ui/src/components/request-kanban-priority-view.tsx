@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import {
   DndContext,
@@ -7,6 +8,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -18,6 +22,7 @@ import { SeniorRequestDisplayView } from "@/types/request";
 import { RequestCard } from "@/components/request-card";
 import { DroppableColumn } from "@/components/ui/droppable-column";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Priority = "urgent" | "high" | "medium" | "low";
 
@@ -84,11 +89,40 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
 
   const visibleColumns = getVisibleColumns();
 
+  // Custom collision detection that prioritizes droppable columns
+  const collisionDetectionStrategy = (args: any) => {
+    // First try to find intersecting droppable areas
+    const pointerIntersections = pointerWithin(args);
+    const droppableIntersections = pointerIntersections.filter((intersection: any) => {
+      return visibleColumns.some(col => col.id === intersection.id);
+    });
+
+    if (droppableIntersections.length > 0) {
+      return droppableIntersections;
+    }
+
+    // Fallback to rect intersection for droppable areas only
+    const rectIntersections = rectIntersection(args);
+    const droppableRectIntersections = rectIntersections.filter((intersection: any) => {
+      return visibleColumns.some(col => col.id === intersection.id);
+    });
+
+    if (droppableRectIntersections.length > 0) {
+      return droppableRectIntersections;
+    }
+
+    // Last resort: closest center for droppable areas only
+    const allIntersections = closestCenter(args);
+    return allIntersections.filter((intersection: any) => {
+      return visibleColumns.some(col => col.id === intersection.id);
+    });
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const request = requests.find((r) => r.id === active.id);
     setActiveRequest(request || null);
-  };
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -99,7 +133,22 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
     }
 
     const requestId = active.id as number;
-    const newPriority = over.id as Priority;
+    let newPriority: Priority | null = null;
+
+    // Check if dropped directly on a column
+    if (visibleColumns.some(col => col.id === over.id)) {
+      newPriority = over.id as Priority;
+    } else {
+      // If dropped on a card, find which column it belongs to
+      const droppedOnRequest = requests.find(r => r.id === over.id);
+      if (droppedOnRequest) {
+        newPriority = droppedOnRequest.frontendPriority;
+      }
+    }
+
+    if (!newPriority) {
+      return;
+    }
 
     const request = requests.find((r) => r.id === requestId);
 
@@ -155,22 +204,19 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={collisionDetectionStrategy}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-6 h-full overflow-x-auto pb-6">
         {visibleColumns.map((column) => {
-          const columnRequests = getRequestsForPriority(column.id);
-          
+          const columnRequests = getRequestsForPriority(column.id);          
           return (
             <Card
               key={column.id}
-              className={cn(
-                "flex-shrink-0 w-80 border shadow-sm",
-                column.color
-              )}
+              className={cn("min-w-80 border shadow-sm flex flex-col", column.color)}
             >
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{getPriorityIcon(column.id)}</span>
@@ -191,30 +237,37 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 flex-1 flex flex-col min-h-0">
                 <SortableContext
                   items={columnRequests.map((r) => r.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <DroppableColumn id={column.id} className={cn(column.color)}>
-                    {columnRequests.map((request) => (
-                      <RequestCard
-                        key={request.id}
-                        request={request}
-                        isKanban
-                        onUpdate={onRequestUpdate}
-                      />
-                    ))}
-                    {columnRequests.length === 0 && (
-                      <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
-                        <div className="text-center">
-                          <div className="text-2xl mb-2 opacity-50">
-                            {getPriorityIcon(column.id)}
+                  <DroppableColumn
+                    id={column.id}
+                    className={cn("rounded flex-1 min-h-0 p-2", column.color)}
+                  >
+                    <ScrollArea className="h-full">
+                      <div className="space-y-2">
+                        {columnRequests.map((request) => (
+                          <RequestCard
+                            key={request.id}
+                            request={request}
+                            isKanban
+                            onUpdate={onRequestUpdate}
+                          />
+                        ))}
+                        {columnRequests.length === 0 && (
+                          <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
+                            <div className="text-center">
+                              <div className="text-2xl mb-2 opacity-50">
+                                {getPriorityIcon(column.id)}
+                              </div>
+                              <div>Drop requests here</div>
+                            </div>
                           </div>
-                          <div>Drop requests here</div>
-                        </div>
+                        )}
                       </div>
-                    )}
+                    </ScrollArea>
                   </DroppableColumn>
                 </SortableContext>
               </CardContent>

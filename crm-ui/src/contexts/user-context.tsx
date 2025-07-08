@@ -1,12 +1,15 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export interface CurrentUser {
   id: number;
   firstName: string;
   lastName: string;
   role: string;
+  jobTitle: string;
+  email: string;
   fullName: string;
 }
 
@@ -20,25 +23,25 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
+  const isLoading = status === 'loading';
 
   useEffect(() => {
-    // TODO: Replace this with actual authentication logic
-    // For now, we'll simulate a logged-in user
-    const mockUser: CurrentUser = {
-      id: 1,
-      firstName: 'Sarah',
-      lastName: 'Johnson',
-      role: 'Care Coordinator',
-      fullName: 'Sarah Johnson'
-    };
-
-    // Simulate loading delay
-    setTimeout(() => {
-      setCurrentUser(mockUser);
-      setIsLoading(false);
-    }, 100);
-  }, []);
+    if (session?.user) {
+      const user: CurrentUser = {
+        id: parseInt(session.user.id),
+        firstName: session.user.firstName,
+        lastName: session.user.lastName,
+        role: session.user.role,
+        jobTitle: session.user.jobTitle,
+        email: session.user.email,
+        fullName: `${session.user.firstName} ${session.user.lastName}`
+      };
+      setCurrentUser(user);
+    } else if (status === 'unauthenticated') {
+      setCurrentUser(null);
+    }
+  }, [session, status]);
 
   return (
     <UserContext.Provider value={{ currentUser, setCurrentUser, isLoading }}>

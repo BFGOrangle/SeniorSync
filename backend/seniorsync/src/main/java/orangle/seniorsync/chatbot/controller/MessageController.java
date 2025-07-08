@@ -5,6 +5,7 @@ import orangle.seniorsync.chatbot.dto.ConversationDto;
 import orangle.seniorsync.chatbot.dto.MessageDto;
 import orangle.seniorsync.chatbot.service.MessageService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequestMapping("/api/chatbot/messages")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class MessageController {
 
     private final MessageService messageService;

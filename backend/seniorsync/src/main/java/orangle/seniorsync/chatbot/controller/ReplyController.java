@@ -6,6 +6,7 @@ import orangle.seniorsync.chatbot.dto.ReplyDto;
 import orangle.seniorsync.chatbot.dto.ReplyOption;
 import orangle.seniorsync.chatbot.service.IReplyService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/chatbot")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class ReplyController {
 
     private final IReplyService replyService;

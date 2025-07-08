@@ -58,6 +58,7 @@ import { useSeniorsPaginated, useSeniorForm, useLoadingStates } from "@/hooks/us
 import { seniorUtils } from "@/services/senior-api"
 import { SeniorRequestsModal } from "@/components/senior-requests-modal"
 import { Badge } from "@/components/ui/badge"
+import InitialsAvatar from "@/components/initials-avatar"
 
 export default function SeniorProfilesPage() {
   // Backend integration hooks with pagination
@@ -989,7 +990,10 @@ export default function SeniorProfilesPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{seniorUtils.getFullName(senior)}</CardTitle>
+                      <div className="flex gap-3 pb-2">
+                        <InitialsAvatar name={seniorUtils.getFullName(senior)}/>
+                        <CardTitle className="text-lg">{seniorUtils.getFullName(senior)}</CardTitle>
+                      </div>
                       <CardDescription className="flex items-center gap-2 text-base">
                         <Calendar className="h-4 w-4" />
                         {senior.dateOfBirth ? (
@@ -1076,7 +1080,7 @@ export default function SeniorProfilesPage() {
                       Created: {seniorUtils.formatDateTime(senior.createdAt)}
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                       onClick={(e) => {
