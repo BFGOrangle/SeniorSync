@@ -320,6 +320,9 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
     contactPhone: initialData?.contactPhone || '',
     contactEmail: initialData?.contactEmail || '',
     address: initialData?.address || '',
+    careLevel: initialData?.careLevel || '',
+    careLevelColor: initialData?.careLevelColor || '#6b7280',
+    characteristics: initialData?.characteristics || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -369,21 +372,24 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
       contactPhone: newData?.contactPhone || '',
       contactEmail: newData?.contactEmail || '',
       address: newData?.address || '',
+      careLevel: newData?.careLevel || '',
+      careLevelColor: newData?.careLevelColor || '#6b7280',
+      characteristics: newData?.characteristics || '',
     });
     setErrors({});
     setTouched({});
   }, []);
 
-  const toCreateDto = useCallback((): CreateSeniorDto => {
-    return seniorUtils.formDataToCreateDto(formData);
-  }, [formData]);
+const toCreateDto = useCallback((characteristicsTags: string[] = []): CreateSeniorDto => {
+  return seniorUtils.formDataToCreateDto(formData, characteristicsTags);
+}, [formData]);
 
-  const toUpdateDto = useCallback((id: number): UpdateSeniorDto => {
-    return {
-      id,
-      ...seniorUtils.formDataToCreateDto(formData)
-    };
-  }, [formData]);
+const toUpdateDto = useCallback((id: number, characteristicsTags: string[] = []): UpdateSeniorDto => {
+  return {
+    id,
+    ...seniorUtils.formDataToCreateDto(formData, characteristicsTags)
+  };
+}, [formData]);
 
   return {
     formData,

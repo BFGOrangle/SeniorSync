@@ -300,6 +300,9 @@ export class SeniorApiService {
     if (filter.contactEmail) body.contactEmail = filter.contactEmail;
     if (filter.minDateOfBirth) body.minDateOfBirth = filter.minDateOfBirth;
     if (filter.maxDateOfBirth) body.maxDateOfBirth = filter.maxDateOfBirth;
+    if (filter.characteristics) body.characteristics = filter.characteristics;
+    if (filter.careLevel) body.careLevel = filter.careLevel;
+    if (filter.careLevelColor) body.careLevelColor = filter.careLevelColor;
     
     return body;
   }
@@ -313,14 +316,20 @@ export const seniorUtils = {
   /**
    * Transform form data to CreateSeniorDto
    */
-  formDataToCreateDto(formData: {
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    contactPhone: string;
-    contactEmail: string;
-    address: string;
-  }): CreateSeniorDto {
+  formDataToCreateDto(
+    formData: {
+      firstName: string;
+      lastName: string;
+      dateOfBirth: string;
+      contactPhone: string;
+      contactEmail: string;
+      address: string;
+      careLevel: string;
+      careLevelColor: string;
+      characteristics: string;
+    },
+    characteristicsTags: string[] = [] // Add this parameter
+  ): CreateSeniorDto {
     return {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
@@ -328,6 +337,43 @@ export const seniorUtils = {
       contactPhone: formData.contactPhone.trim() || null,
       contactEmail: formData.contactEmail.trim() || null,
       address: formData.address.trim() || null,
+      careLevel: formData.careLevel.trim() || null,
+      careLevelColor: formData.careLevelColor || null,
+      // Use the characteristicsTags parameter instead of parsing the string
+      characteristics: characteristicsTags.length > 0 ? characteristicsTags : null,
+    };
+  },
+
+  /**
+   * Transform form data to UpdateSeniorDto with characteristics as array
+   */
+  formDataToUpdateDto(
+    formData: {
+      firstName: string;
+      lastName: string;
+      dateOfBirth: string;
+      contactPhone: string;
+      contactEmail: string;
+      address: string;
+      careLevel: string;
+      careLevelColor: string;
+      characteristics: string;
+    },
+    id: number,
+    characteristicsTags: string[] = [] // Add this parameter
+  ): UpdateSeniorDto {
+    return {
+      id,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      dateOfBirth: formData.dateOfBirth || null,
+      contactPhone: formData.contactPhone.trim() || null,
+      contactEmail: formData.contactEmail.trim() || null,
+      address: formData.address.trim() || null,
+      careLevel: formData.careLevel.trim() || null,
+      careLevelColor: formData.careLevelColor || null,
+      // Use the characteristicsTags parameter instead of parsing the string
+      characteristics: characteristicsTags.length > 0 ? characteristicsTags : null,
     };
   },
 
@@ -341,6 +387,9 @@ export const seniorUtils = {
     contactPhone: string;
     contactEmail: string;
     address: string;
+    careLevel: string;
+    careLevelColor: string;
+    characteristics: string;
   } {
     return {
       firstName: senior.firstName,
@@ -349,6 +398,9 @@ export const seniorUtils = {
       contactPhone: senior.contactPhone || '',
       contactEmail: senior.contactEmail || '',
       address: senior.address || '',
+      careLevel: senior.careLevel || '',
+      careLevelColor: senior.careLevelColor || '#6b7280',
+      characteristics: senior.characteristics?.join(', ') || '',
     };
   },
 

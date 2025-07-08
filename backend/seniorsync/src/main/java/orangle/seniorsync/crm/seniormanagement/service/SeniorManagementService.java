@@ -69,7 +69,10 @@ public class SeniorManagementService implements ISeniorManagementService {
                     SeniorSpecs.hasLastNameLike(filter.lastName()),
                     SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
                     SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
-                    SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth())
+                    SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
+                    SeniorSpecs.hasCareLevel(filter.careLevel()),           // ADD THIS
+                    SeniorSpecs.hasCareLevelColor(filter.careLevelColor()), // ADD THIS
+                    SeniorSpecs.hasCharacteristics(filter.characteristics()) // ADD THIS
             );
             seniorsPage = seniorRepository.findAll(spec, pageable);
         }
@@ -118,7 +121,10 @@ public class SeniorManagementService implements ISeniorManagementService {
                 SeniorSpecs.hasLastNameLike(filter.lastName()),
                 SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
                 SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
-                SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth())
+                SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
+                SeniorSpecs.hasCareLevel(filter.careLevel()),
+                SeniorSpecs.hasCareLevelColor(filter.careLevelColor()),
+                SeniorSpecs.hasCharacteristics(filter.characteristics())
         );
 
         return seniorRepository.count(spec);
@@ -133,7 +139,10 @@ public class SeniorManagementService implements ISeniorManagementService {
                 (filter.contactPhone() == null || filter.contactPhone().trim().isEmpty()) &&
                 (filter.contactEmail() == null || filter.contactEmail().trim().isEmpty()) &&
                 filter.minDateOfBirth() == null &&
-                filter.maxDateOfBirth() == null;
+                filter.maxDateOfBirth() == null &&
+                (filter.careLevel() == null || filter.careLevel().trim().isEmpty()) &&
+                (filter.careLevelColor() == null || filter.careLevelColor().trim().isEmpty()) &&
+                (filter.characteristics() == null || filter.characteristics().length == 0);
     }
 
     /**

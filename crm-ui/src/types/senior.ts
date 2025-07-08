@@ -8,6 +8,9 @@ export interface SeniorFilterDto extends Pageable {
   maxDateOfBirth?: string | null; // ISO date string
   contactPhone?: string | null;
   contactEmail?: string | null;
+  characteristics?: string[] | null;
+  careLevel?: string | null;
+  careLevelColor?: string | null;
 }
 
 // Search parameters with pagination
@@ -27,6 +30,9 @@ export interface SeniorDto {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
+  careLevel: string | null;
+  careLevelColor: string | null;
+  characteristics: string[] | null;
   createdAt: string; // ISO datetime string
   updatedAt: string; // ISO datetime string
 }
@@ -38,6 +44,9 @@ export interface CreateSeniorDto {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
+  careLevel: string | null;
+  careLevelColor: string | null;
+  characteristics: string[] | null;
 }
 
 export interface UpdateSeniorDto {
@@ -48,6 +57,9 @@ export interface UpdateSeniorDto {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
+  careLevel: string | null;
+  careLevelColor: string | null;
+  characteristics: string[] | null;
 }
 
 // Senior projection for high-performance read operations
@@ -64,8 +76,9 @@ export interface SeniorView {
 }
 
 // Form state interface for UI
-export interface SeniorFormData extends Omit<CreateSeniorDto, 'dateOfBirth'> {
+export interface SeniorFormData extends Omit<CreateSeniorDto, 'dateOfBirth' | 'characteristics'> {
   dateOfBirth: string; // Form date input value
+  characteristics: string; // Keep as string for form internal handling, convert on submit
 }
 
 // Error types

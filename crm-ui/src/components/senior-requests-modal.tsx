@@ -107,13 +107,13 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </DialogHeader>

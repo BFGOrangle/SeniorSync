@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -45,8 +47,9 @@ public class Senior {
     @Column(name = "care_level_color", length = 7)
     private String careLevelColor;
 
+    @Column(name = "characteristics")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Convert(converter = StringArrayConverter.class)
-    @Column(name = "characteristics", columnDefinition = "jsonb")
     private String[] characteristics;
 
     @ColumnDefault("now()")
