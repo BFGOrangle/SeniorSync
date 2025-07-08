@@ -15,8 +15,11 @@ import {
   StaffWorkloadChart,
   RequestTypeDetails,
 } from "@/components/dashboard-charts";
+
+import { CreateRequestModal } from "@/components/create-request-modal";
+import { RefreshCw, Calendar, Download, Plus } from "lucide-react";
 import { useDashboard } from "@/hooks/use-dashboard";
-import { RefreshCw, Calendar, Download } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
@@ -37,10 +40,16 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     await forceRefresh();
+
+  };
+
+  const handleRequestCreated = () => {
+    // Refresh dashboard data when a new request is created
+    forceRefresh();
   };
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 relative">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
@@ -137,6 +146,20 @@ export default function DashboardPage() {
         <StaffWorkloadChart data={staffWorkload} loading={loading} />
         <RequestTypeDetails data={requestTypeSummaries} loading={loading} />
       </div>
+
+      {/* Floating Create Request Button */}
+      <CreateRequestModal
+        onRequestCreated={handleRequestCreated}
+        trigger={
+          <Button
+            size="sm"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-blue-600 hover:bg-blue-700 z-50"
+            title="Create New Request"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        }
+      />
     </div>
   );
 }
