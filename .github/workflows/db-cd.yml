@@ -16,7 +16,7 @@ jobs:
     env:
       # Use Supabase pooler instead of direct connection for IPv4 compatibility
       SUPABASE_HOST: aws-0-ap-southeast-1.pooler.supabase.com
-      SUPABASE_PORT: 6543
+      SUPABASE_PORT: 5432
       SUPABASE_USER: postgres.hztrudndwrildnalbcvw
       SUPABASE_DB: postgres
     steps:
