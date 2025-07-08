@@ -1,7 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -10,24 +9,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Calendar, 
-  Clock, 
-  AlertCircle, 
-  CheckCircle, 
-  FileText, 
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Calendar,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  FileText,
   User,
   Loader2,
   RefreshCw,
-  X,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { SeniorDto } from "@/types/senior";
-import { SeniorRequestDisplayView } from "@/types/request";
 import { useSeniorRequests } from "@/hooks/use-requests";
 import { requestUtils } from "@/services/request-api";
 
@@ -37,42 +40,48 @@ interface SeniorRequestsModalProps {
   onClose: () => void;
 }
 
-export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsModalProps) {
-  const { requests, loading, error, refetch } = useSeniorRequests(senior?.id || null);
+export function SeniorRequestsModal({
+  senior,
+  isOpen,
+  onClose,
+}: SeniorRequestsModalProps) {
+  const { requests, loading, error, refetch } = useSeniorRequests(
+    senior?.id || null
+  );
   const router = useRouter();
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const getPriorityIcon = (priority: 'low' | 'medium' | 'high' | 'urgent') => {
+  const getPriorityIcon = (priority: "low" | "medium" | "high" | "urgent") => {
     switch (priority) {
-      case 'urgent':
+      case "urgent":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'high':
+      case "high":
         return <AlertCircle className="h-4 w-4 text-orange-500" />;
-      case 'medium':
+      case "medium":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'low':
+      case "low":
         return <Clock className="h-4 w-4 text-green-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getStatusIcon = (status: 'todo' | 'in-progress' | 'completed') => {
+  const getStatusIcon = (status: "todo" | "in-progress" | "completed") => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'in-progress':
+      case "in-progress":
         return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'todo':
+      case "todo":
         return <FileText className="h-4 w-4 text-gray-500" />;
       default:
         return <FileText className="h-4 w-4 text-gray-500" />;
@@ -83,7 +92,7 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-8">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -104,15 +113,10 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                 onClick={refetch}
                 disabled={loading}
               >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
                 Refresh
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-              >
-                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -137,14 +141,21 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
               <span className="text-sm">No requests found for this senior</span>
             </div>
           ) : (
-            <ScrollArea className="h-full">
-              <div className="space-y-4 p-1">
+            <ScrollArea className="h-72 md:h-80 lg:h-96 rounded-md">
+              <div className="space-y-4 p-1 px-3">
                 {requests.map((request) => {
-                  const priorityInfo = requestUtils.getPriorityInfo(request.frontendPriority);
-                  const statusInfo = requestUtils.getStatusInfo(request.frontendStatus);
+                  const priorityInfo = requestUtils.getPriorityInfo(
+                    request.frontendPriority
+                  );
+                  const statusInfo = requestUtils.getStatusInfo(
+                    request.frontendStatus
+                  );
 
                   return (
-                    <Card key={request.id} className="transition-all hover:shadow-md">
+                    <Card
+                      key={request.id}
+                      className="transition-all hover:shadow-md"
+                    >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -160,14 +171,15 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                               {request.completedAt && (
                                 <span className="flex items-center gap-1 text-green-600">
                                   <CheckCircle className="h-3 w-3" />
-                                  Completed {formatDateTime(request.completedAt)}
+                                  Completed{" "}
+                                  {formatDateTime(request.completedAt)}
                                 </span>
                               )}
                             </CardDescription>
                           </div>
                           <div className="flex gap-2">
-                            <Badge 
-                              variant="outline" 
+                            <Badge
+                              variant="outline"
                               className={`${priorityInfo.bgColor} ${priorityInfo.color} border-current`}
                             >
                               <span className="flex items-center gap-1">
@@ -175,7 +187,7 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                                 {priorityInfo.label}
                               </span>
                             </Badge>
-                            <Badge 
+                            <Badge
                               variant="outline"
                               className={`${statusInfo.bgColor} ${statusInfo.color} border-current`}
                             >
@@ -184,7 +196,7 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                           </div>
                         </div>
                       </CardHeader>
-                      
+
                       <CardContent className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-700 leading-relaxed">
@@ -192,18 +204,23 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                           </p>
                         </div>
 
-                        {(request.requestTypeName || request.assignedStaffName) && (
+                        {(request.requestTypeName ||
+                          request.assignedStaffName) && (
                           <>
                             <Separator />
                             <div className="flex gap-6 text-sm text-gray-600">
                               {request.requestTypeName && (
                                 <div>
-                                  <span className="font-medium">Type:</span> {request.requestTypeName}
+                                  <span className="font-medium">Type:</span>{" "}
+                                  {request.requestTypeName}
                                 </div>
                               )}
                               {request.assignedStaffName && (
                                 <div>
-                                  <span className="font-medium">Assigned to:</span> {request.assignedStaffName}
+                                  <span className="font-medium">
+                                    Assigned to:
+                                  </span>{" "}
+                                  {request.assignedStaffName}
                                 </div>
                               )}
                             </div>
@@ -212,8 +229,10 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
 
                         <div className="flex justify-between items-center text-xs text-gray-500 pt-2">
                           <span>Request ID: {request.id}</span>
-                          <div className="flex items-center gap-2">
-                            <span>Last updated: {formatDateTime(request.updatedAt)}</span>
+                          <div className="flex items-center gap-3">
+                            <span>
+                              Last updated: {formatDateTime(request.updatedAt)}
+                            </span>
                             <Button
                               size="sm"
                               variant="outline"
@@ -221,7 +240,7 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                                 router.push(`/admin/requests/${request.id}`);
                                 onClose();
                               }}
-                              className="h-6 text-xs"
+                              className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
                               View Details
@@ -233,20 +252,20 @@ export function SeniorRequestsModal({ senior, isOpen, onClose }: SeniorRequestsM
                   );
                 })}
               </div>
+              <ScrollBar />
             </ScrollArea>
           )}
         </div>
 
         <Separator />
-        
+
         <div className="flex-shrink-0 flex items-center justify-between text-sm text-gray-600 pt-2">
           <span>
-            {requests.length} {requests.length === 1 ? 'request' : 'requests'} found
+            {requests.length} {requests.length === 1 ? "request" : "requests"}{" "}
+            found
           </span>
           <span>
-            {senior.contactPhone && (
-              <>Contact: {senior.contactPhone}</>
-            )}
+            {senior.contactPhone && <>Contact: {senior.contactPhone}</>}
           </span>
         </div>
       </DialogContent>

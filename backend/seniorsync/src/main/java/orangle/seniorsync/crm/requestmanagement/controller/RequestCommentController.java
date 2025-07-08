@@ -16,6 +16,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/comments")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class RequestCommentController {
 
     private final IRequestCommentService requestCommentService;
@@ -25,7 +26,6 @@ public class RequestCommentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<RequestCommentDto> createComment(@Valid @RequestBody CreateCommentDto createCommentDto) {
         RequestCommentDto createdCommentDto = requestCommentService.createComment(createCommentDto);
         log.info("Created comment with ID : {}", createdCommentDto.id());
@@ -33,7 +33,6 @@ public class RequestCommentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<RequestCommentDto>> getCommentsById(@PathVariable("id") Long id) {
         List<RequestCommentDto> comments = requestCommentService.getCommentsByRequestId(id);
         log.info("Retrieved {} comments for request ID: {}", comments.size(), id);
@@ -41,7 +40,6 @@ public class RequestCommentController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Void> deleteComment(@PathVariable("id") Long id) {
         requestCommentService.deleteComment(id);
         log.info("Deleted comment with ID: {}", id);

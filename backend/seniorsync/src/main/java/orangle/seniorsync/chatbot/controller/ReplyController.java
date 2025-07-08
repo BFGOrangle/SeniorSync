@@ -14,6 +14,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/chatbot")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class ReplyController {
 
     private final IReplyService replyService;
@@ -23,7 +24,6 @@ public class ReplyController {
     }
 
     @PostMapping("/reply")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<ReplyDto> replyMessage(@RequestBody IncomingMessageDto incomingMessage) {
         ReplyDto replyDto = replyService.replyMessage(
                 incomingMessage.campaignName(),
@@ -35,7 +35,6 @@ public class ReplyController {
     }
 
     @GetMapping("/senior/{seniorId}/current-reply-options")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<ReplyOption>> getCurrentReplyOptions(
             @PathVariable Long seniorId,
             @RequestParam(defaultValue = "lodging_request") String campaignName) {

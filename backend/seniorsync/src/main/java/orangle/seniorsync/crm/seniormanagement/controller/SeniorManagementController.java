@@ -21,6 +21,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/seniors")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class SeniorManagementController {
 
     private final ISeniorManagementService seniorManagementService;
@@ -34,7 +35,6 @@ public class SeniorManagementController {
      * Both ADMIN and STAFF can create seniors
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<SeniorDto> createSenior(@Valid @RequestBody CreateSeniorDto createSeniorDto) {
         SeniorDto createdSenior = seniorManagementService.createSenior(createSeniorDto);
         log.info("Created new senior with ID: {}", createdSenior.id());
@@ -47,7 +47,6 @@ public class SeniorManagementController {
      * Both ADMIN and STAFF can view seniors
      */
     @PostMapping("/paginated")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Page<SeniorDto>> getSeniorsPaginated(
             @RequestBody(required = false) SeniorFilterDto filter,
             @PageableDefault(sort = {"lastName", "firstName"}) Pageable pageable) {
@@ -65,7 +64,6 @@ public class SeniorManagementController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Page<SeniorDto>> searchSeniorsByName(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
@@ -91,7 +89,6 @@ public class SeniorManagementController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<SeniorDto> getSeniorById(@PathVariable long id) {
         try {
             // We'll need to add this method to the service
@@ -108,7 +105,6 @@ public class SeniorManagementController {
      * Get count of seniors matching filter (for dashboard metrics)
      */
     @PostMapping("/count")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Long> getSeniorsCount(@RequestBody(required = false) SeniorFilterDto filter) {
         long count = seniorManagementService.countSeniors(filter);
         return ResponseEntity.ok(count);
@@ -116,7 +112,6 @@ public class SeniorManagementController {
 
     @Deprecated
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<SeniorDto>> getAllSeniors(@RequestBody(required = false) SeniorFilterDto filter) {
         List<SeniorDto> allSeniors = seniorManagementService.findSeniors(filter);
         log.info("Retrieved all {} seniors", allSeniors.size());
@@ -124,7 +119,6 @@ public class SeniorManagementController {
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<SeniorDto> updateSenior(@Valid @RequestBody UpdateSeniorDto updateSeniorDto) {
         SeniorDto updatedSenior = seniorManagementService.updateSenior(updateSeniorDto);
         log.info("Updated senior with ID: {}", updatedSenior.id());
@@ -136,7 +130,7 @@ public class SeniorManagementController {
      * Only ADMIN users can delete seniors
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // Overrides class level pre-authorization
     public ResponseEntity<Void> deleteSenior(@PathVariable long id) {
         seniorManagementService.deleteSenior(id);
         log.info("Deleted senior with ID: {}", id);
