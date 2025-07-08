@@ -91,5 +91,12 @@ export interface ApiError {
 
 export interface ValidationError extends ApiError {
   field: string;
-  rejectedValue?: any;
+  rejectedValue?: unknown;
+}
+
+// Interface for API error responses
+export interface ErrorResponse {
+  errors?: ApiError[];
+  message?: string;
+  timestamp?: string;
 }

@@ -1,4 +1,4 @@
-import { AuthenticatedApiClient, BaseApiError, BaseValidationError } from './authenticated-api-client';
+import { AuthenticatedApiClient, BaseApiError } from './authenticated-api-client';
 import {
   SeniorDto,
   CreateSeniorDto,
@@ -7,7 +7,8 @@ import {
   SeniorView,
   SeniorSearchParams,
   ApiError,
-  ValidationError
+  ValidationError,
+  ErrorResponse
 } from '@/types/senior';
 import { PaginatedResponse } from "@/types/common";
 
@@ -18,6 +19,8 @@ const SENIORS_ENDPOINT = `${API_BASE_URL}/api/seniors`;
 // Default pagination settings following big tech practices
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+
+
 
 // Service-specific error classes (extending base)
 export class SeniorApiError extends BaseApiError {
@@ -47,7 +50,7 @@ export class SeniorValidationError extends SeniorApiError {
 class ApiClient extends AuthenticatedApiClient {
   // Override error handling for senior-specific errors
   protected async handleErrorResponse(response: Response): Promise<never> {
-    let errorData: any;
+    let errorData: unknown;
     
     try {
       errorData = await response.json();
@@ -60,13 +63,16 @@ class ApiClient extends AuthenticatedApiClient {
       );
     }
 
+    // Type assertion to ErrorResponse for safe property access
+    const errorResponse = errorData as ErrorResponse;
+
     // Handle validation errors (400)
-    if (response.status === 400 && errorData.errors) {
-      const validationErrors: ValidationError[] = errorData.errors.map((error: any) => ({
+    if (response.status === 400 && errorResponse.errors) {
+      const validationErrors: ValidationError[] = errorResponse.errors.map((error: ApiError) => ({
         message: error.message || 'Validation error',
         field: error.field || '',
-        rejectedValue: error.rejectedValue,
-        timestamp: errorData.timestamp || new Date().toISOString()
+        rejectedValue: undefined,
+        timestamp: errorResponse.timestamp || new Date().toISOString()
       }));
       
       throw new SeniorValidationError(validationErrors);
@@ -76,9 +82,9 @@ class ApiClient extends AuthenticatedApiClient {
     throw new SeniorApiError(
       response.status,
       response.statusText,
-      errorData.errors || [{ 
-        message: errorData.message || 'An error occurred', 
-        timestamp: errorData.timestamp || new Date().toISOString() 
+      errorResponse.errors || [{ 
+        message: errorResponse.message || 'An error occurred', 
+        timestamp: errorResponse.timestamp || new Date().toISOString() 
       }]
     );
   }
@@ -227,7 +233,7 @@ export class SeniorApiService {
    * Build filter body for POST requests
    */
   private buildFilterBody(filter: Omit<SeniorFilterDto, 'page' | 'size' | 'sort'>): object {
-    const body: any = {};
+    const body: Record<string, unknown> = {};
     
     if (filter.firstName) body.firstName = filter.firstName;
     if (filter.lastName) body.lastName = filter.lastName;
@@ -401,7 +407,7 @@ export const seniorUtils = {
   /**
    * Create pagination info for UI display
    */
-  getPaginationInfo(response: PaginatedResponse<any>): {
+  getPaginationInfo<T>(response: PaginatedResponse<T>): {
     currentPage: number; // 1-based for display
     totalPages: number;
     totalItems: number;

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import {
   Search,
   Calendar,
@@ -267,13 +267,7 @@ export default function SeniorProfilesPage() {
       applyFilter(filter);
     };
 
-  // Create a useMemo to extract unique characteristics from all seniors
-  const uniqueCharacteristics = useMemo(() => {
-    const allCharacteristics = seniors.flatMap(senior => 
-      senior.characteristics || []
-    );
-    return [...new Set(allCharacteristics)].sort();
-  }, [seniors]);
+  // (Removed unused uniqueCharacteristics variable)
 
   // Care levels
   const CARE_LEVEL = [
