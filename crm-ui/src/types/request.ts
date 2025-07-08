@@ -16,6 +16,7 @@ export interface SeniorRequestDto {
   updatedAt: string; // ISO string
   completedAt?: string; // ISO string
   status: RequestStatus;
+  assignedStaffName?: string; // Added to match backend DTO
 }
 
 export interface CreateSeniorRequestDto {
@@ -81,25 +82,6 @@ export interface SeniorRequestDisplayView extends SeniorRequestView {
 
   // Reminder information
   reminders?: Reminder[];
-}
-
-// Request types from backend
-export interface RequestTypeDto {
-  id: number;
-  name: string;
-  description?: string;
-}
-
-// Staff DTO for assignment
-export interface StaffDto {
-  id: number;
-  firstName: string;
-  lastName: string;
-  role: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 // Utility functions for converting between backend and frontend formats
@@ -199,6 +181,8 @@ export const RequestUtils = {
     return {
       ...request,
       ...additionalInfo,
+      // Use assignedStaffName from the DTO if available, otherwise from additionalInfo
+      assignedStaffName: request.assignedStaffName || additionalInfo?.assignedStaffName,
       frontendStatus: this.backendToFrontendStatus(request.status),
       frontendPriority: this.backendToFrontendPriority(request.priority),
     };

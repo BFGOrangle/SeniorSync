@@ -12,8 +12,7 @@ import {
   SeniorRequestFilterDto,
   UpdateSeniorRequestDto,
   SeniorRequestDto,
-  RequestUtils,
-  StaffDto
+  RequestUtils
 } from '@/types/request';
 
 // Hook for managing requests with full CRUD operations
@@ -22,7 +21,6 @@ export function useRequestManagement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<RequestApiError | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [staffCache, setStaffCache] = useState<StaffDto[]>([]);
   
   const { toast } = useToast();
 
@@ -32,14 +30,10 @@ export function useRequestManagement() {
       setLoading(true);
       setError(null);
       
-      // Load staff data and enhanced requests in parallel
-      const [enhancedRequests, staff] = await Promise.all([
-        requestManagementApiService.getEnhancedRequests(filter),
-        requestManagementApiService.getStaff().catch(() => [] as StaffDto[])
-      ]);
+      // Load enhanced requests
+      const enhancedRequests = await requestManagementApiService.getEnhancedRequests(filter);
       
       setRequests(enhancedRequests);
-      setStaffCache(staff);
       setLastUpdated(new Date());
       
       console.log(`Loaded ${enhancedRequests.length} requests`);
@@ -81,14 +75,8 @@ export function useRequestManagement() {
 
       const updated = await requestManagementApiService.updateRequest(updateDto);
       
-      // Resolve staff name from cache if assignedStaffId changed
-      let assignedStaffName = updatedRequest.assignedStaffName;
-      if (updated.assignedStaffId) {
-        const assignedStaff = staffCache.find(s => s.id === updated.assignedStaffId);
-        assignedStaffName = assignedStaff ? `${assignedStaff.firstName} ${assignedStaff.lastName}` : undefined;
-      } else {
-        assignedStaffName = undefined; // Unassigned
-      }
+      // Use the assignedStaffName from the response, or from the original request
+      const assignedStaffName = updated.assignedStaffName || updatedRequest.assignedStaffName;
       
       // Update local state
       setRequests(prev => 
@@ -138,7 +126,7 @@ export function useRequestManagement() {
     } finally {
       setLoading(false);
     }
-  }, [toast, staffCache]);
+  }, [toast]);
 
   // Delete a request
   const deleteRequest = useCallback(async (requestId: number): Promise<boolean> => {
@@ -223,75 +211,6 @@ export function useRequestManagement() {
     refresh,
     filterAndSortRequests,
     getStatusCounts,
-  };
-}
-
-// Hook for loading reference data (request types, staff, etc.)
-export function useRequestReferenceData() {
-  const [requestTypes, setRequestTypes] = useState<{ id: number; name: string; description?: string }[]>([]);
-  const [staff, setStaff] = useState<{ id: number; firstName: string; lastName: string; role: string }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<RequestApiError | null>(null);
-
-  const { toast } = useToast();
-
-  const loadReferenceData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [requestTypesData, staffData] = await Promise.allSettled([
-        requestManagementApiService.getRequestTypes(),
-        requestManagementApiService.getStaff(),
-      ]);
-
-      // Handle request types
-      if (requestTypesData.status === 'fulfilled') {
-        setRequestTypes(requestTypesData.value);
-      } else {
-        console.warn('Failed to load request types:', requestTypesData.reason);
-        // Provide fallback data
-        setRequestTypes([
-          { id: 1, name: 'Medical Assistance' },
-          { id: 2, name: 'Transportation' },
-          { id: 3, name: 'Home Care' },
-          { id: 4, name: 'Emergency Support' },
-          { id: 5, name: 'Other' },
-        ]);
-      }
-
-      // Handle staff
-      if (staffData.status === 'fulfilled') {
-        setStaff(staffData.value);
-      } else {
-        console.warn('Failed to load staff:', staffData.reason);
-        // Provide fallback data
-        setStaff([
-          { id: 1, firstName: 'Sarah', lastName: 'Johnson', role: 'Care Coordinator' },
-          { id: 2, firstName: 'Michael', lastName: 'Chen', role: 'Social Worker' },
-          { id: 3, firstName: 'Emily', lastName: 'Rodriguez', role: 'Nurse' },
-        ]);
-      }
-
-    } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to load reference data');
-      setError(apiError);
-      console.error('Error loading reference data:', apiError);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadReferenceData();
-  }, [loadReferenceData]);
-
-  return {
-    requestTypes,
-    staff,
-    loading,
-    error,
-    refresh: loadReferenceData,
   };
 }
 
@@ -390,7 +309,6 @@ export function useRequest(requestId: number | null) {
   const [request, setRequest] = useState<SeniorRequestDisplayView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<RequestApiError | null>(null);
-  const [staffCache, setStaffCache] = useState<StaffDto[]>([]);
   const { toast } = useToast();
 
   const fetchRequest = useCallback(async () => {
@@ -403,14 +321,10 @@ export function useRequest(requestId: number | null) {
       setLoading(true);
       setError(null);
       
-      // Load request and staff data in parallel
-      const [data, staff] = await Promise.all([
-        requestManagementApiService.getRequestById(requestId),
-        requestManagementApiService.getStaff().catch(() => [] as StaffDto[])
-      ]);
+      // Load request data
+      const data = await requestManagementApiService.getRequestById(requestId);
       
       setRequest(data);
-      setStaffCache(staff);
     } catch (err) {
       const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Unknown error');
       setError(apiError);
@@ -441,14 +355,8 @@ export function useRequest(requestId: number | null) {
 
       const updated = await requestManagementApiService.updateRequest(updateDto);
       
-      // Resolve staff name from cache if assignedStaffId changed
-      let assignedStaffName = updatedRequest.assignedStaffName;
-      if (updated.assignedStaffId) {
-        const assignedStaff = staffCache.find(s => s.id === updated.assignedStaffId);
-        assignedStaffName = assignedStaff ? `${assignedStaff.firstName} ${assignedStaff.lastName}` : undefined;
-      } else {
-        assignedStaffName = undefined; // Unassigned
-      }
+      // Use the assignedStaffName from the response, or from the original request
+      const assignedStaffName = updated.assignedStaffName || updatedRequest.assignedStaffName;
       
       // Update local state with enhanced request
       const enhancedUpdated = RequestUtils.fromDtoToDisplayView(updated, {
@@ -491,7 +399,7 @@ export function useRequest(requestId: number | null) {
     } finally {
       setLoading(false);
     }
-  }, [toast, staffCache]);
+  }, [toast]);
 
   useEffect(() => {
     fetchRequest();

@@ -6,8 +6,6 @@ import {
   SeniorRequestFilterDto,
   SeniorRequestView,
   SeniorRequestDisplayView,
-  RequestTypeDto,
-  StaffDto,
   RequestUtils
 } from '@/types/request';
 import { SeniorDto } from '@/types/senior';
@@ -16,8 +14,6 @@ import { PaginatedResponse } from '@/types/common';
 // Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8088';
 const REQUESTS_ENDPOINT = `${API_BASE_URL}/api/requests`;
-const REQUEST_TYPES_ENDPOINT = `${API_BASE_URL}/api/dashboard/request-types`;
-const STAFF_ENDPOINT = `${API_BASE_URL}/api/dashboard/staff-workload`;
 
 // Custom error classes
 export class RequestApiError extends Error {
@@ -154,53 +150,29 @@ export class RequestManagementApiService {
   }
 
   /**
-   * Get all request types
-   */
-  async getRequestTypes(): Promise<RequestTypeDto[]> {
-    return this.client.get<RequestTypeDto[]>(REQUEST_TYPES_ENDPOINT);
-  }
-
-  /**
-   * Get all staff members
-   */
-  async getStaff(): Promise<StaffDto[]> {
-    return this.client.get<StaffDto[]>(STAFF_ENDPOINT);
-  }
-
-  /**
    * Enhanced method to get requests with full details
-   * This method combines request data with senior and staff information
+   * This method combines request data with senior information
    */
   async getEnhancedRequests(filter?: SeniorRequestFilterDto): Promise<SeniorRequestDisplayView[]> {
     try {
       // Get basic request data
       const requests = await this.getRequests(filter);
       
-      // Get reference data in parallel
-      const [seniors, staff, requestTypes] = await Promise.all([
-        this.getSeniorsForRequests(requests),
-        this.getStaff().catch(() => [] as StaffDto[]), // Gracefully handle if staff endpoint doesn't exist yet
-        this.getRequestTypes().catch(() => [] as RequestTypeDto[]) // Gracefully handle if request types endpoint doesn't exist yet
-      ]);
+      // Get senior data
+      const seniors = await this.getSeniorsForRequests(requests);
 
-      // Create lookup maps for performance
+      // Create lookup map for performance
       const seniorMap = new Map(seniors.map(s => [s.id, s]));
-      const staffMap = new Map(staff.map(s => [s.id, s]));
-      const requestTypeMap = new Map(requestTypes.map(rt => [rt.id, rt]));
 
       // Enhance requests with additional information
       return requests.map(request => {
         const senior = seniorMap.get(request.seniorId);
-        const assignedStaff = request.assignedStaffId ? staffMap.get(request.assignedStaffId) : undefined;
-        const requestType = request.requestTypeId ? requestTypeMap.get(request.requestTypeId) : undefined;
 
         return RequestUtils.fromDtoToDisplayView(request, {
           seniorName: senior ? `${senior.firstName} ${senior.lastName}` : `Senior ID ${request.seniorId}`,
           seniorPhone: senior?.contactPhone || undefined,
           seniorEmail: senior?.contactEmail || undefined,
           seniorAddress: senior?.address || undefined,
-          assignedStaffName: assignedStaff ? `${assignedStaff.firstName} ${assignedStaff.lastName}` : undefined,
-          requestTypeName: requestType?.name,
         });
       });
     } catch (error) {
@@ -282,30 +254,20 @@ export class RequestManagementApiService {
         return null;
       }
 
-      // Get reference data in parallel
-      const [seniors, staff, requestTypes] = await Promise.all([
-        this.getSeniorsForRequests([request]),
-        this.getStaff().catch(() => [] as StaffDto[]),
-        this.getRequestTypes().catch(() => [] as RequestTypeDto[])
-      ]);
+      // Get senior data
+      const seniors = await this.getSeniorsForRequests([request]);
 
-      // Create lookup maps for performance
+      // Create lookup map for performance
       const seniorMap = new Map(seniors.map(s => [s.id, s]));
-      const staffMap = new Map(staff.map(s => [s.id, s]));
-      const requestTypeMap = new Map(requestTypes.map(rt => [rt.id, rt]));
 
       // Enhance request with additional information
       const senior = seniorMap.get(request.seniorId);
-      const assignedStaff = request.assignedStaffId ? staffMap.get(request.assignedStaffId) : undefined;
-      const requestType = request.requestTypeId ? requestTypeMap.get(request.requestTypeId) : undefined;
 
       return RequestUtils.fromDtoToDisplayView(request, {
         seniorName: senior ? `${senior.firstName} ${senior.lastName}` : `Senior ID ${request.seniorId}`,
         seniorPhone: senior?.contactPhone || undefined,
         seniorEmail: senior?.contactEmail || undefined,
         seniorAddress: senior?.address || undefined,
-        assignedStaffName: assignedStaff ? `${assignedStaff.firstName} ${assignedStaff.lastName}` : undefined,
-        requestTypeName: requestType?.name,
       });
     } catch (error) {
       console.error('Error getting request by ID:', error);
@@ -323,9 +285,8 @@ export const requestUtils = {
    * Format request for display
    */
   formatRequestTitle(request: SeniorRequestDisplayView): string {
-    const typeName = request.requestTypeName || 'Request';
     const seniorName = request.seniorName || `Senior ${request.seniorId}`;
-    return `${typeName} for ${seniorName}`;
+    return `Request for ${seniorName}`;
   },
 
   /**
@@ -361,7 +322,6 @@ export const requestUtils = {
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
       status?: ('todo' | 'in-progress'| 'completed' )[];
-      requestType?: string[];
       assignedStaff?: string[];
       searchTerm?: string;
     }
@@ -381,13 +341,6 @@ export const requestUtils = {
         }
       }
 
-      // Request type filter
-      if (filters.requestType && filters.requestType.length > 0) {
-        if (!filters.requestType.includes(request.requestTypeName || '')) {
-          return false;
-        }
-      }
-
       // Assigned staff filter
       if (filters.assignedStaff && filters.assignedStaff.length > 0) {
         if (!filters.assignedStaff.includes(request.assignedStaffName || '')) {
@@ -402,7 +355,6 @@ export const requestUtils = {
           request.title,
           request.description,
           request.seniorName,
-          request.requestTypeName,
           request.assignedStaffName,
         ]
           .filter(Boolean)
