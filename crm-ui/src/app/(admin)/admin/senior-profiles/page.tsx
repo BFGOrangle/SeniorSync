@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Search,
   Calendar,
@@ -57,6 +57,8 @@ import { SeniorDto, SeniorFilterDto } from "@/types/senior"
 import { useSeniorsPaginated, useSeniorForm, useLoadingStates } from "@/hooks/use-seniors"
 import { seniorUtils } from "@/services/senior-api"
 import { SeniorRequestsModal } from "@/components/senior-requests-modal"
+import { Badge } from "@/components/ui/badge"
+import InitialsAvatar from "@/components/initials-avatar"
 
 export default function SeniorProfilesPage() {
   // Backend integration hooks with pagination
@@ -96,9 +98,102 @@ export default function SeniorProfilesPage() {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   const [localAgeFilter, setLocalAgeFilter] = useState<string>("all");
 
+  // Add these state variables to your component:
+  const [selectedCharacteristics, setSelectedCharacteristics] = useState<string[]>([]);
+  const [selectedCareLevel, setSelectedCareLevel] = useState<string>("all");
+  const [selectedCareLevelColor, setSelectedCareLevelColor] = useState<string>("all");
+
   // Form hooks
   const createForm = useSeniorForm();
   const editForm = useSeniorForm();
+
+  const [characteristicsTags, setCharacteristicsTags] = useState<string[]>([]);
+  const [currentCharacteristicInput, setCurrentCharacteristicInput] = useState("");
+
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editInput, setEditInput] = useState("");
+
+  const [characteristicInput, setCharacteristicInput] = useState<string>('');
+
+  // Add these states at the top of your component:
+  const [selectedSeniorForTags, setSelectedSeniorForTags] = useState<SeniorDto | null>(null);
+  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+
+
+  // useEffect(() => {
+  //   if (createForm.formData.characteristics) {
+  //     const tags = createForm.formData.characteristics
+  //       .split(",")
+  //       .map(tag => tag.trim())
+  //       .filter(tag => tag.length > 0);
+  //     setCharacteristicsTags(tags);
+  //   }
+  // }, []);
+
+  const startEdit = (senior: SeniorDto) => {
+    setEditingSenior(senior);
+    editForm.reset(seniorUtils.dtoToFormData(senior));
+
+    // Extract characteristics from the DTO array
+    if (senior.characteristics && senior.characteristics.length > 0) {
+      setEditTags([...senior.characteristics]);
+    } else {
+      setEditTags([]);
+    }
+    setEditInput("");
+  };
+
+  const handleCreateSenior = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.isValid) return;
+
+    setLoading('create', true);
+    // Pass the characteristics tags array to the conversion function
+    const result = await createSenior(createForm.toCreateDto(characteristicsTags));
+    setLoading('create', false);
+
+    if (result) {
+      createForm.reset();
+      setCharacteristicsTags([]);
+      setCurrentCharacteristicInput("");
+      setIsCreateDialogOpen(false);
+    }
+  };
+
+  const handleEditSenior = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editForm.isValid || !editingSenior) return;
+
+    setLoading('update', true);
+    // Pass the characteristics tags array to the conversion function
+    const result = await updateSenior(editForm.toUpdateDto(editingSenior.id, editTags));
+    setLoading('update', false);
+
+    if (result) {
+      setEditingSenior(null);
+      editForm.reset();
+      setEditTags([]);
+      setEditInput("");
+    }
+  };
+
+  // Add state for managing custom care levels
+  const [customCareLevels, setCustomCareLevels] = useState<Array<{ name: string; color: string }>>([]);
+  const [isAddingCustomCareLevel, setIsAddingCustomCareLevel] = useState(false);
+  const [newCareLevelName, setNewCareLevelName] = useState("");
+  const [newCareLevelColor, setNewCareLevelColor] = useState("#6b7280");
+
+  useEffect(() => {
+  const savedCareLevels = localStorage.getItem("customCareLevels");
+  if (savedCareLevels) {
+    try {
+      setCustomCareLevels(JSON.parse(savedCareLevels));
+    } catch (e) {
+      console.error("Failed to parse custom care levels from localStorage", e);
+    }
+  }
+}, []);
+
 
   // Function to open requests modal for a senior
   const handleViewRequests = (senior: SeniorDto) => {
@@ -154,46 +249,47 @@ export default function SeniorProfilesPage() {
           break;
       }
     }
+      // Add characteristics filter
+    if (selectedCharacteristics.length > 0) {
+      filter.characteristics = selectedCharacteristics;
+    }
+    
+    // Add care level filter
+    if (selectedCareLevel !== "all") {
+      filter.careLevel = selectedCareLevel;
+    }
+    
+    // Add care level color filter (if needed)
+    if (selectedCareLevelColor !== "all") {
+      filter.careLevelColor = selectedCareLevelColor;
+    }
 
-    applyFilter(filter);
-  };
+      applyFilter(filter);
+    };
+
+  // (Removed unused uniqueCharacteristics variable)
+
+  // Care levels
+  const CARE_LEVEL = [
+    { name: 'LOW', color: '#22c55e' },
+    { name: 'MEDIUM', color: '#eab308' },
+    { name: 'HIGH', color: '#f97316' },
+    { name: 'CRITICAL', color: '#ef4444' },
+    { name: 'INDEPENDENT', color: '#3b82f6' },
+    { name: 'SUPERVISED', color: '#8b5cf6' }
+  ];
 
   // Clear all filters
   const handleClearFilters = () => {
     setLocalSearchTerm("");
     setLocalAgeFilter("all");
+    setSelectedCharacteristics([]);
+    setCharacteristicInput(''); // Add this line
+    setSelectedCareLevel("all");
+    setSelectedCareLevelColor("all");
     clearFilter();
   };
 
-  // Handle create senior
-  const handleCreateSenior = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!createForm.isValid) return;
-
-    setLoading('create', true);
-    const result = await createSenior(createForm.toCreateDto());
-    setLoading('create', false);
-
-    if (result) {
-      createForm.reset();
-      setIsCreateDialogOpen(false);
-    }
-  };
-
-  // Handle edit senior
-  const handleEditSenior = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editForm.isValid || !editingSenior) return;
-
-    setLoading('update', true);
-    const result = await updateSenior(editForm.toUpdateDto(editingSenior.id));
-    setLoading('update', false);
-
-    if (result) {
-      setEditingSenior(null);
-      editForm.reset();
-    }
-  };
 
   // Handle delete senior
   const handleDeleteSenior = async () => {
@@ -208,17 +304,47 @@ export default function SeniorProfilesPage() {
     }
   };
 
-  // Start editing a senior
-  const startEdit = (senior: SeniorDto) => {
-    setEditingSenior(senior);
-    editForm.reset(seniorUtils.dtoToFormData(senior));
-  };
+  // // Start editing a senior
+  // const startEdit = (senior: SeniorDto) => {
+  //   setEditingSenior(senior);
+  //   editForm.reset(seniorUtils.dtoToFormData(senior));
+  // };
 
   // Cancel editing
   const cancelEdit = () => {
     setEditingSenior(null);
     editForm.reset();
   };
+
+  const removeCharacteristic = (charToRemove: string) => {
+    setSelectedCharacteristics(prev => prev.filter(char => char !== charToRemove));
+  };
+
+  // Function to add custom care level
+  const addCustomCareLevel = () => {
+    const trimmedName = newCareLevelName.trim().toUpperCase();
+
+    const exists = CARE_LEVEL.some(level => level.name === trimmedName) ||
+                  customCareLevels.some(level => level.name === trimmedName);
+
+    if (trimmedName && !exists) {
+      const newLevel = { name: trimmedName, color: newCareLevelColor };
+      const updatedLevels = [...customCareLevels, newLevel];
+      setCustomCareLevels(updatedLevels);
+      localStorage.setItem("customCareLevels", JSON.stringify(updatedLevels));
+
+      setNewCareLevelName("");
+      setNewCareLevelColor("#6b7280");
+      setIsAddingCustomCareLevel(false);
+
+      createForm.updateField("careLevel", newLevel.name);
+      createForm.updateField("careLevelColor", newLevel.color);
+    }
+  };
+
+
+  // Combined care levels (default + custom)
+  const allCareLevels = [...CARE_LEVEL, ...customCareLevels];
 
   // Pagination component
   const PaginationControls = () => {
@@ -334,6 +460,7 @@ export default function SeniorProfilesPage() {
           )}
         </div>
 
+        {/* Create Dialog - Make it scrollable */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button size="lg" className="bg-blue-700 hover:bg-blue-600">
@@ -341,7 +468,7 @@ export default function SeniorProfilesPage() {
               Create Senior Profile
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Senior Profile</DialogTitle>
               <DialogDescription>
@@ -428,6 +555,223 @@ export default function SeniorProfilesPage() {
                   disabled={isLoading('create')}
                 />
               </div>
+                            {/* Care Level - Enhanced Version */}
+              <div className="space-y-3">
+                <Label>Care Level</Label>
+                
+                {/* Existing Care Level Options */}
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Select from existing options:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {allCareLevels.map(preset => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        className={`px-3 py-1 text-sm rounded-full text-white transition-all ${
+                          createForm.formData.careLevel === preset.name 
+                            ? 'ring-2 ring-offset-2 ring-gray-800 scale-105' 
+                            : 'hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: preset.color }}
+                        onClick={() => {
+                          createForm.updateField('careLevel', preset.name);
+                          createForm.updateField('careLevelColor', preset.color);
+                        }}
+                        disabled={isLoading('create')}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add New Care Level Section */}
+                <div className="border-t pt-3">
+                  {!isAddingCustomCareLevel ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingCustomCareLevel(true)}
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                      disabled={isLoading('create')}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Custom Care Level
+                    </Button>
+                  ) : (
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+                      <div className="text-sm font-medium">Create New Care Level</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Level Name</Label>
+                          <Input
+                            value={newCareLevelName}
+                            onChange={(e) => setNewCareLevelName(e.target.value)}
+                            placeholder="e.g., MODERATE"
+                            className="h-8"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Color</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="color"
+                              value={newCareLevelColor}
+                              onChange={(e) => setNewCareLevelColor(e.target.value)}
+                              className="w-12 h-8 p-1"
+                            />
+                            <Input
+                              value={newCareLevelColor}
+                              onChange={(e) => setNewCareLevelColor(e.target.value)}
+                              placeholder="#6b7280"
+                              className="flex-1 h-8"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Preview */}
+                      {newCareLevelName.trim() && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Preview:</Label>
+                          <div
+                            className="inline-block px-3 py-1 text-sm rounded-full text-white"
+                            style={{ backgroundColor: newCareLevelColor }}
+                          >
+                            {newCareLevelName.trim().toUpperCase()}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={addCustomCareLevel}
+                          disabled={!newCareLevelName.trim()}
+                          className="h-8"
+                        >
+                          Add Level
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsAddingCustomCareLevel(false);
+                            setNewCareLevelName("");
+                            setNewCareLevelColor("#6b7280");
+                          }}
+                          className="h-8"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Manual Input Override */}
+                {/* <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Or enter manually:</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Input
+                        placeholder="Custom care level..."
+                        value={createForm.formData.careLevel || ''}
+                        onChange={(e) => createForm.updateField('careLevel', e.target.value)}
+                        disabled={isLoading('create')}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={createForm.formData.careLevelColor || '#6b7280'}
+                          onChange={(e) => createForm.updateField('careLevelColor', e.target.value)}
+                          className="w-12"
+                        />
+                        <Input
+                          value={createForm.formData.careLevelColor || '#6b7280'}
+                          onChange={(e) => createForm.updateField('careLevelColor', e.target.value)}
+                          placeholder="#6b7280"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div> */}
+
+                {/* Current Selection Display */}
+                {createForm.formData.careLevel && (
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">Current selection:</div>
+                    <div
+                      className="inline-block px-3 py-1 text-sm rounded-full text-white"
+                      style={{ backgroundColor: createForm.formData.careLevelColor || '#6b7280' }}
+                    >
+                      {createForm.formData.careLevel}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Characteristics - Tag Input */}
+              <div className="space-y-2">
+                <Label>Characteristics</Label>
+                <div
+                  className="w-full min-h-[40px] p-2 border rounded-md flex flex-wrap items-center gap-2 bg-white"
+                  onClick={() => document.getElementById("characteristics-input")?.focus()}
+                >
+                  {characteristicsTags.map((tag, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center px-2 h-6 text-[10px] leading-none rounded-sm border border-gray-300 bg-gray-100 text-gray-800"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        className="ml-2 text-gray-500 hover:text-red-500"
+                        onClick={() => {
+                          const updated = characteristicsTags.filter((_, i) => i !== index);
+                          setCharacteristicsTags(updated);
+                          // createForm.updateField('characteristics', updated.join(', '));
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <input
+                    id="characteristics-input"
+                    type="text"
+                    className="inline-block w-auto min-w-[60px] flex-grow border-none outline-none text-[10px] leading-none"
+                    value={currentCharacteristicInput}
+                    onChange={(e) => setCurrentCharacteristicInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === " " && currentCharacteristicInput.trim() !== "") {
+                        e.preventDefault();
+                        const newTag = currentCharacteristicInput.trim();
+                        if (!characteristicsTags.includes(newTag)) {
+                          const updated = [...characteristicsTags, newTag];
+                          setCharacteristicsTags(updated);
+                          // createForm.updateField('characteristics', updated.join(', '));
+                        }
+                        setCurrentCharacteristicInput("");
+                      }
+                      if (e.key === "Backspace" && currentCharacteristicInput === "") {
+                        const updated = characteristicsTags.slice(0, -1);
+                        setCharacteristicsTags(updated);
+                        // createForm.updateField('characteristics', updated.join(', '));
+                      }
+                    }}
+                    placeholder="Type and press space..."
+                    disabled={isLoading('create')}
+                  />
+                </div>
+              </div>
+
 
               <div className="flex justify-end space-x-2 pt-4">
                 <Button 
@@ -490,6 +834,67 @@ export default function SeniorProfilesPage() {
                   <SelectItem value="60-69">60-69 years</SelectItem>
                   <SelectItem value="70-79">70-79 years</SelectItem>
                   <SelectItem value="80-plus">80+ years</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* // Add a multi-select component for characteristics */}
+            <div className="space-y-2">
+              <Label>Filter by Characteristics</Label>
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Type characteristic and press Enter..."
+                  value={characteristicInput}
+                  onChange={(e) => setCharacteristicInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && characteristicInput.trim()) {
+                      e.preventDefault();
+                      if (!selectedCharacteristics.includes(characteristicInput.trim())) {
+                        setSelectedCharacteristics(prev => [...prev, characteristicInput.trim()]);
+                      }
+                      setCharacteristicInput('');
+                    }
+                  }}
+                />
+                
+                {/* Display selected characteristics as removable tags */}
+                <div className="flex flex-wrap gap-1">
+                  {selectedCharacteristics.map(char => (
+                    <Badge key={char} variant="outline" className="cursor-pointer" 
+                          onClick={() => removeCharacteristic(char)}>
+                      {char} ×
+                    </Badge>
+                  ))}
+                </div>
+                
+                {selectedCharacteristics.length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    Will search for seniors with characteristics containing any of these terms
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Filter by Care Level</Label>
+              <Select value={selectedCareLevel} onValueChange={setSelectedCareLevel}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Care Levels</SelectItem>
+                  {allCareLevels.map(level => (
+                    <SelectItem key={level.name} value={level.name}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: level.color }}
+                        />
+                        {level.name}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -568,13 +973,21 @@ export default function SeniorProfilesPage() {
             {seniors.map((senior) => (
               <Card 
                 key={senior.id} 
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className={`hover:shadow-lg transition-shadow cursor-pointer`}
+                style={{ 
+                  backgroundColor: senior.careLevelColor || '#ffffff',
+                  // Add semi-transparency to keep text readable
+                  background: `linear-gradient(135deg, ${senior.careLevelColor || '#ffffff'}20, ${senior.careLevelColor || '#ffffff'}40)`
+                }}
                 onClick={() => handleViewRequests(senior)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{seniorUtils.getFullName(senior)}</CardTitle>
+                      <div className="flex gap-3 pb-2">
+                        <InitialsAvatar name={seniorUtils.getFullName(senior)}/>
+                        <CardTitle className="text-lg">{seniorUtils.getFullName(senior)}</CardTitle>
+                      </div>
                       <CardDescription className="flex items-center gap-2 text-base">
                         <Calendar className="h-4 w-4" />
                         {senior.dateOfBirth ? (
@@ -624,6 +1037,34 @@ export default function SeniorProfilesPage() {
                         <span>{senior.address}</span>
                       </div>
                     )}
+
+                  {senior.characteristics && senior.characteristics.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">Characteristics</div>
+                      <div className="flex flex-wrap gap-1">
+                        {senior.characteristics.slice(0, 3).map((characteristic, index) => (
+                          <span
+                            key={index}
+                            className="inline-block px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border"
+                          >
+                            {characteristic}
+                          </span>
+                        ))}
+                        {senior.characteristics.length > 3 && (
+                          <button
+                            className="text-xs text-blue-600 hover:text-blue-700 underline"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click
+                              setSelectedSeniorForTags(senior);
+                              setIsTagsModalOpen(true);
+                            }}
+                          >
+                            +{senior.characteristics.length - 3} more
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   </div>
 
                   <Separator />
@@ -633,7 +1074,7 @@ export default function SeniorProfilesPage() {
                       Created: {seniorUtils.formatDateTime(senior.createdAt)}
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                       onClick={(e) => {
@@ -659,7 +1100,8 @@ export default function SeniorProfilesPage() {
                   <TableHead className="font-bold">Age</TableHead>
                   <TableHead className="font-bold">Contact</TableHead>
                   <TableHead className="font-bold">Email</TableHead>
-                  <TableHead className="font-bold">Address</TableHead>
+                  <TableHead className="font-bold">Care Level</TableHead>
+                  <TableHead className="font-bold">Characteristics</TableHead>
                   <TableHead className="font-bold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -674,7 +1116,46 @@ export default function SeniorProfilesPage() {
                     </TableCell>
                     <TableCell>{senior.contactPhone || 'N/A'}</TableCell>
                     <TableCell>{senior.contactEmail || 'N/A'}</TableCell>
-                    <TableCell>{senior.address || 'N/A'}</TableCell>
+                    <TableCell>
+                      {senior.careLevel ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: senior.careLevelColor || '#6b7280' }}
+                          />
+                          <span className="text-sm">{senior.careLevel}</span>
+                        </div>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {senior.characteristics && senior.characteristics.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {senior.characteristics.slice(0, 2).map((characteristic, index) => (
+                            <span
+                              key={index}
+                              className="inline-block px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border"
+                            >
+                              {characteristic}
+                            </span>
+                          ))}
+                          {senior.characteristics.length > 2 && (
+                            <button
+                              className="text-xs text-blue-600 hover:text-blue-700 underline"
+                              onClick={() => {
+                                setSelectedSeniorForTags(senior);
+                                setIsTagsModalOpen(true);
+                              }}
+                            >
+                              +{senior.characteristics.length - 2} more
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        'None'
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-1">
                         <Button
@@ -723,9 +1204,41 @@ export default function SeniorProfilesPage() {
         </Card>
       )}
 
-      {/* Edit Dialog */}
+      <Dialog open={isTagsModalOpen} onOpenChange={setIsTagsModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>
+              All Characteristics - {selectedSeniorForTags && seniorUtils.getFullName(selectedSeniorForTags)}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {selectedSeniorForTags?.characteristics?.map((characteristic, index) => (
+                <span
+                  key={index}
+                  className="inline-block px-3 py-2 text-sm rounded-full bg-gray-100 text-gray-700 border"
+                >
+                  {characteristic}
+                </span>
+              ))}
+            </div>
+            {selectedSeniorForTags?.characteristics?.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No characteristics defined for this senior.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end pt-4">
+            <Button variant="outline" onClick={() => setIsTagsModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog - Make it scrollable */}
       <Dialog open={!!editingSenior} onOpenChange={(open) => !open && cancelEdit()}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Senior Profile</DialogTitle>
             <DialogDescription>
@@ -807,6 +1320,102 @@ export default function SeniorProfilesPage() {
                 disabled={isLoading('update')}
               />
             </div>
+
+            <div className="space-y-3">
+              <Label>Care Level</Label>
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground">Select from existing options:</div>
+                <div className="flex flex-wrap gap-2">
+                  {allCareLevels.map(preset => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      className={`px-3 py-1 text-sm rounded-full text-white transition-all ${
+                        editForm.formData.careLevel === preset.name 
+                          ? 'ring-2 ring-offset-2 ring-gray-800 scale-105' 
+                          : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: preset.color }}
+                      onClick={() => {
+                        editForm.updateField('careLevel', preset.name);
+                        editForm.updateField('careLevelColor', preset.color);
+                      }}
+                      disabled={isLoading('update')}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {editForm.formData.careLevel && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Current selection:</div>
+                  <div
+                    className="inline-block px-3 py-1 text-sm rounded-full text-white"
+                    style={{ backgroundColor: editForm.formData.careLevelColor || '#6b7280' }}
+                  >
+                    {editForm.formData.careLevel}
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+            <div className="space-y-2">
+              <Label>Characteristics</Label>
+              <div
+                className="w-full min-h-[40px] p-2 border rounded-md flex flex-wrap items-center gap-2 bg-white"
+                onClick={() => document.getElementById("edit-characteristics-input")?.focus()}
+              >
+                {editTags.map((tag, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center px-2 h-6 text-[10px] leading-none rounded-sm border border-gray-300 bg-gray-100 text-gray-800"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      className="ml-2 text-gray-500 hover:text-red-500"
+                      onClick={() => {
+                        const updated = editTags.filter((_, i) => i !== index);
+                        setEditTags(updated);
+                        editForm.updateField("characteristics", updated.join(", "));
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <input
+                  id="edit-characteristics-input"
+                  type="text"
+                  className="inline-block w-auto min-w-[60px] flex-grow border-none outline-none text-[10px] leading-none"
+                  value={editInput}
+                  onChange={(e) => setEditInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === " " && editInput.trim() !== "") {
+                      e.preventDefault();
+                      const newTag = editInput.trim();
+                      if (!editTags.includes(newTag)) {
+                        const updated = [...editTags, newTag];
+                        setEditTags(updated);
+                        editForm.updateField("characteristics", updated.join(", "));
+                      }
+                      setEditInput("");
+                    }
+                    if (e.key === "Backspace" && editInput === "") {
+                      const updated = editTags.slice(0, -1);
+                      setEditTags(updated);
+                      editForm.updateField("characteristics", updated.join(", "));
+                    }
+                  }}
+                  placeholder="Type and press space..."
+                  disabled={isLoading("update")}
+                />
+              </div>
+            </div>
+
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button 

@@ -14,6 +14,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequestMapping("/api/chatbot/messages")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class MessageController {
 
     private final MessageService messageService;
@@ -23,7 +24,6 @@ public class MessageController {
     }
 
     @GetMapping("/conversation/{conversationId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<MessageDto>> getMessagesByConversation(@PathVariable Long conversationId) {
         List<MessageDto> messages = messageService.getMessagesByConversationId(conversationId);
         log.info("Retrieved {} messages for conversation {}", messages.size(), conversationId);
@@ -31,7 +31,6 @@ public class MessageController {
     }
 
     @GetMapping("/senior/{seniorId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<MessageDto>> getMessagesBySenior(
             @PathVariable Long seniorId,
             @RequestParam(defaultValue = "lodging_request") String campaignName) {
@@ -41,7 +40,6 @@ public class MessageController {
     }
 
     @GetMapping("/senior/{seniorId}/active-conversation")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<ConversationDto> getActiveConversation(
             @PathVariable Long seniorId,
             @RequestParam(defaultValue = "lodging_request") String campaignName) {
@@ -51,7 +49,6 @@ public class MessageController {
     }
 
     @DeleteMapping("/conversation/{conversationId}/clear")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Void> clearConversationMessages(@PathVariable Long conversationId) {
         messageService.clearConversationMessages(conversationId);
         log.info("Cleared all messages for conversation {}", conversationId);

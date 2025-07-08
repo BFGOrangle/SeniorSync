@@ -15,9 +15,11 @@ import {
   StaffWorkloadChart,
   RequestTypeDetails,
 } from "@/components/dashboard-charts";
+
 import { CreateRequestModal } from "@/components/create-request-modal";
-import { useDashboard } from "@/hooks/use-dashboard";
 import { RefreshCw, Calendar, Download, Plus } from "lucide-react";
+import { useDashboard } from "@/hooks/use-dashboard";
+
 import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
@@ -38,6 +40,7 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     await forceRefresh();
+
   };
 
   const handleRequestCreated = () => {

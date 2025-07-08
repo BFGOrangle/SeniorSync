@@ -132,12 +132,12 @@ export function RequestCard({
         {...listeners}
         onClick={handleViewDetails}
         className={cn(
-          "w-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group",
-          isDragging && "opacity-50 rotate-3 scale-105",
+          "w-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative",
+          isDragging && "opacity-50 rotate-3 scale-105 z-40",
           isKanban && "mb-3"
         )}
       >
-        <CardContent className="p-4">
+        <CardContent className="p-4 relative z-20">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <Badge
@@ -179,7 +179,7 @@ export function RequestCard({
                     onPointerDown={(e) => {
                       e.stopPropagation();
                     }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100 relative z-30"
                     title="More Actions"
                   >
                     <MoreHorizontal className="h-3 w-3" />

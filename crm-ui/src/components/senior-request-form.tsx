@@ -4,42 +4,94 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarIcon, ClockIcon, UserIcon, PhoneIcon, MapPinIcon, AlertTriangleIcon, HeartHandshakeIcon } from "lucide-react";
+import {
+  UserIcon,
+  PhoneIcon,
+  AlertTriangleIcon,
+  HeartHandshakeIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
-import { SeniorRequestAPI, REQUEST_TYPES, PRIORITY_LEVELS } from "@/services/senior-request-api";
+import {
+  SeniorRequestAPI,
+  REQUEST_TYPES,
+  PRIORITY_LEVELS,
+} from "@/services/senior-request-api";
 import { SeniorRequest } from "@/types/senior-request";
 
 // Form validation schema
 const formSchema = z.object({
   // Personal Information
-  seniorName: z.string().min(2, { message: "Senior's name must be at least 2 characters." }),
-  phoneNumber: z.string().regex(/^[\+]?[1-9][\d]{0,15}$/, { message: "Please enter a valid phone number." }),
-  email: z.string().email({ message: "Please enter a valid email address." }).optional().or(z.literal("")),
-  address: z.string().min(10, { message: "Please provide a complete address." }),
-  emergencyContact: z.string().min(2, { message: "Emergency contact name is required." }),
-  emergencyPhone: z.string().regex(/^[\+]?[1-9][\d]{0,15}$/, { message: "Please enter a valid emergency phone number." }),
-  
+  seniorName: z
+    .string()
+    .min(2, { message: "Senior's name must be at least 2 characters." }),
+  phoneNumber: z
+    .string()
+    .regex(/^[\+]?[1-9][\d]{0,15}$/, {
+      message: "Please enter a valid phone number.",
+    }),
+  email: z
+    .string()
+    .email({ message: "Please enter a valid email address." })
+    .optional()
+    .or(z.literal("")),
+  address: z
+    .string()
+    .min(10, { message: "Please provide a complete address." }),
+  emergencyContact: z
+    .string()
+    .min(2, { message: "Emergency contact name is required." }),
+  emergencyPhone: z
+    .string()
+    .regex(/^[\+]?[1-9][\d]{0,15}$/, {
+      message: "Please enter a valid emergency phone number.",
+    }),
+
   // Request Details
   requestType: z.string().min(1, { message: "Please select a request type." }),
-  priority: z.enum(["low", "medium", "high", "urgent"], { required_error: "Please select a priority level." }),
-  description: z.string().min(10, { message: "Please provide a detailed description (minimum 10 characters)." }),
+  priority: z.enum(["low", "medium", "high", "urgent"], {
+    required_error: "Please select a priority level.",
+  }),
+  description: z
+    .string()
+    .min(10, {
+      message: "Please provide a detailed description (minimum 10 characters).",
+    }),
   preferredDate: z.string().optional(),
   preferredTime: z.string().optional(),
-  
+
   // Medical Information
   medicalConditions: z.string().optional(),
   medications: z.string().optional(),
   mobilityAssistance: z.boolean(),
-  
+
   // Agent Information
   agentName: z.string().min(2, { message: "Agent name is required." }),
   agentId: z.string().min(3, { message: "Agent ID is required." }),
@@ -76,7 +128,7 @@ export function SeniorRequestForm() {
 
   const validateAgent = async (agentId: string) => {
     if (agentId.length < 3) return;
-    
+
     try {
       const response = await SeniorRequestAPI.validateAgent(agentId);
       if (response.success && response.data) {
@@ -99,7 +151,7 @@ export function SeniorRequestForm() {
       setAgentValidated(false);
       toast({
         title: "Validation Error",
-        description: "Unable to validate agent ID. Please try again.",
+        description: "Unable to validate agent ID. Please try again." + error,
         variant: "destructive",
       });
     }
@@ -116,15 +168,15 @@ export function SeniorRequestForm() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      const requestData: Omit<SeniorRequest, 'createdAt' | 'status'> = {
+      const requestData: Omit<SeniorRequest, "createdAt" | "status"> = {
         ...data,
         mobilityAssistance: data.mobilityAssistance || false,
       };
 
       const response = await SeniorRequestAPI.submitRequest(requestData);
-      
+
       if (response.success) {
         toast({
           title: "Request Submitted Successfully!",
@@ -142,7 +194,7 @@ export function SeniorRequestForm() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: "An unexpected error occurred. Please try again." + error,
         variant: "destructive",
       });
     } finally {
@@ -155,10 +207,13 @@ export function SeniorRequestForm() {
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2 mb-4">
           <HeartHandshakeIcon className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Senior Care Request Form</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Senior Care Request Form
+          </h1>
         </div>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Submit detailed information about senior care requests to ensure proper assistance and support.
+          Submit detailed information about senior care requests to ensure
+          proper assistance and support.
         </p>
       </div>
 
@@ -229,7 +284,7 @@ export function SeniorRequestForm() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserIcon className="h-5 w-5" />
-                Senior's Personal Information
+                Senior&apos;s Personal Information
               </CardTitle>
               <CardDescription>
                 Basic information about the senior requesting assistance.
@@ -241,9 +296,12 @@ export function SeniorRequestForm() {
                 name="seniorName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Senior's Full Name</FormLabel>
+                    <FormLabel>Senior&apos;s Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter senior's full name" {...field} />
+                      <Input
+                        placeholder="Enter senior's full name"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -322,7 +380,10 @@ export function SeniorRequestForm() {
                   <FormItem>
                     <FormLabel>Emergency Contact Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter emergency contact name" {...field} />
+                      <Input
+                        placeholder="Enter emergency contact name"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -363,7 +424,10 @@ export function SeniorRequestForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type of Request</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select request type" />
@@ -387,7 +451,10 @@ export function SeniorRequestForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Priority Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select priority" />
@@ -395,8 +462,13 @@ export function SeniorRequestForm() {
                         </FormControl>
                         <SelectContent>
                           {PRIORITY_LEVELS.map((priority) => (
-                            <SelectItem key={priority.value} value={priority.value}>
-                              <span className={priority.color}>{priority.label}</span>
+                            <SelectItem
+                              key={priority.value}
+                              value={priority.value}
+                            >
+                              <span className={priority.color}>
+                                {priority.label}
+                              </span>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -406,7 +478,7 @@ export function SeniorRequestForm() {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="description"
@@ -421,13 +493,14 @@ export function SeniorRequestForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      The more details you provide, the better we can assist the senior.
+                      The more details you provide, the better we can assist the
+                      senior.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -439,7 +512,7 @@ export function SeniorRequestForm() {
                         <Input
                           type="date"
                           {...field}
-                          min={new Date().toISOString().split('T')[0]}
+                          min={new Date().toISOString().split("T")[0]}
                         />
                       </FormControl>
                       <FormMessage />
@@ -525,7 +598,8 @@ export function SeniorRequestForm() {
                     <div className="space-y-1 leading-none">
                       <FormLabel>Requires Mobility Assistance</FormLabel>
                       <FormDescription>
-                        Check if the senior requires assistance with walking, wheelchair, or other mobility aids.
+                        Check if the senior requires assistance with walking,
+                        wheelchair, or other mobility aids.
                       </FormDescription>
                     </div>
                   </FormItem>
