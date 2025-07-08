@@ -5,167 +5,236 @@ import {
   PriorityDistribution,
   MonthlyTrend,
   StaffWorkload,
-} from '@/types/dashboard';
+  DashboardResponse,
+  DashboardUtils,
+} from "@/types/dashboard";
+import {
+  AuthenticatedApiClient,
+  BaseApiError,
+} from "./authenticated-api-client";
 
-// Mock data that will be replaced with actual API calls
-const MOCK_DATA = {
-  dashboardStats: {
-    statusCounts: {
-      'Pending': 15,
-      'In Progress': 8,
-      'Completed': 45,
-    },
-    requestTypeCounts: {
-      'Medical Assistance': 25,
-      'Social Visit': 20,
-      'Home Maintenance': 15,
-      'Transportation': 10
-    },
-    priorityCounts: {
-      'High': 12,
-      'Medium': 28,
-      'Low': 30
-    },
-    monthlyTrend: {
-      'Jan 2024': 45,
-      'Feb 2024': 52,
-      'Mar 2024': 48,
-      'Apr 2024': 60,
-      'May 2024': 55,
-      'Jun 2024': 65
-    },
-    totalRequests: 70,
-    totalCompletedThisMonth: 25,
-    totalPendingRequests: 23,
-    averageCompletionTime: 3.5,
-    staffWorkload: {
-      'John Smith': 12,
-      'Sarah Johnson': 15,
-      'Mike Brown': 8,
-      'Lisa Davis': 10,
-      'Tom Wilson': 7
-    }
-  },
-  requestTypes: [
-    {
-      id: 1,
-      name: 'Medical Assistance',
-      description: 'Medical-related assistance requests',
-      count: 25,
-      percentage: 35.7,
-      pendingCount: 5,
-      inProgressCount: 3,
-      completedCount: 17
-    },
-    {
-      id: 2,
-      name: 'Social Visit',
-      description: 'Regular social visits and companionship',
-      count: 20,
-      percentage: 28.6,
-      pendingCount: 4,
-      inProgressCount: 2,
-      completedCount: 14
-    },
-    {
-      id: 3,
-      name: 'Home Maintenance',
-      description: 'Home repair and maintenance tasks',
-      count: 15,
-      percentage: 21.4,
-      pendingCount: 3,
-      inProgressCount: 2,
-      completedCount: 10
-    },
-    {
-      id: 4,
-      name: 'Transportation',
-      description: 'Transportation to appointments or events',
-      count: 10,
-      percentage: 14.3,
-      pendingCount: 3,
-      inProgressCount: 1,
-      completedCount: 6
-    }
-  ]
-};
-
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8088';
-// const DASHBOARD_ENDPOINT = `${API_BASE_URL}/api/dashboard`;
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8088";
+const DASHBOARD_ENDPOINT = `${API_BASE_URL}/api/requests/dashboard`;
 
 // Custom error class for dashboard API errors
-export class DashboardApiError extends Error {
+export class DashboardApiError extends BaseApiError {
   constructor(
-    public status: number,
-    public statusText: string,
-    public message: string = 'Dashboard API Error'
+    status: number,
+    statusText: string,
+    errors: Array<{
+      message: string;
+      timestamp: string;
+      field?: string;
+      rejectedValue?: any;
+    }> = []
   ) {
-    super(message);
-    this.name = 'DashboardApiError';
+    super(status, statusText, errors);
+    this.name = "DashboardApiError";
   }
 }
 
 // Dashboard API Service
-export class DashboardApiService {
-  // Uncomment and use this client when connecting to real backend
-  // private client = new DashboardApiClient();
+export class DashboardApiService extends AuthenticatedApiClient {
+  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // Override error handling for dashboard-specific errors
+  protected async handleErrorResponse(response: Response): Promise<never> {
+    let errorData: any;
+
+    try {
+      errorData = await response.json();
+    } catch {
+      throw new DashboardApiError(response.status, response.statusText, [
+        {
+          message: "Failed to parse dashboard error response",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+
+    // Handle specific dashboard errors
+    throw new DashboardApiError(
+      response.status,
+      response.statusText,
+      errorData.errors || [
+        {
+          message: errorData.message || "Dashboard API error",
+          timestamp: errorData.timestamp || new Date().toISOString(),
+        },
+      ]
+    );
+  }
+
+  /**
+   * Get cached data or fetch from API
+   */
+  private async getCachedData<T>(
+    key: string,
+    fetcher: () => Promise<T>
+  ): Promise<T> {
+    const cached = this.cache.get(key);
+    const now = Date.now();
+
+    if (cached && now - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
+    try {
+      const data = await fetcher();
+      this.cache.set(key, { data, timestamp: now });
+      return data;
+    } catch (error) {
+      // If API fails and we have stale cached data, return it
+      if (cached) {
+        console.warn("API failed, returning stale cached data");
+        return cached.data;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get the raw dashboard response from backend
+   */
+  private async getRawDashboardData(): Promise<DashboardResponse> {
+    return this.getCachedData("dashboard-raw", () =>
+      this.get<DashboardResponse>(DASHBOARD_ENDPOINT)
+    );
+  }
 
   /**
    * Get comprehensive dashboard statistics
    */
   async getDashboardStats(): Promise<DashboardStats> {
-    // return this.client.get<DashboardStats>(`${DASHBOARD_ENDPOINT}/stats`);
-    return MOCK_DATA.dashboardStats;
+    try {
+      const rawData = await this.getRawDashboardData();
+      return DashboardUtils.transformDashboardResponse(rawData);
+    } catch (error) {
+      console.error("Failed to get dashboard stats:", error);
+      // Return empty/default stats as fallback
+      return {
+        statusCounts: {},
+        requestTypeCounts: {},
+        priorityCounts: {},
+        monthlyTrend: {},
+        totalRequests: 0,
+        totalCompletedThisMonth: 0,
+        totalPendingRequests: 0,
+        averageCompletionTime: 0,
+        staffWorkload: {},
+      };
+    }
   }
 
   /**
    * Get request type summaries with counts and percentages
    */
   async getRequestTypeSummaries(): Promise<RequestTypeSummary[]> {
-    // return this.client.get<RequestTypeSummary[]>(`${DASHBOARD_ENDPOINT}/request-types`);
-    return MOCK_DATA.requestTypes;
+    try {
+      const rawData = await this.getRawDashboardData();
+      return DashboardUtils.generateRequestTypeSummaries(rawData);
+    } catch (error) {
+      console.error("Failed to get request type summaries:", error);
+      return [];
+    }
   }
 
   /**
    * Get status distribution counts
    */
   async getStatusDistribution(): Promise<StatusDistribution> {
-    // return this.client.get<StatusDistribution>(`${DASHBOARD_ENDPOINT}/status-distribution`);
-    return MOCK_DATA.dashboardStats.statusCounts;
+    try {
+      const stats = await this.getDashboardStats();
+      return stats.statusCounts;
+    } catch (error) {
+      console.error("Failed to get status distribution:", error);
+      return {};
+    }
   }
 
   /**
    * Get priority distribution counts
    */
   async getPriorityDistribution(): Promise<PriorityDistribution> {
-    // return this.client.get<PriorityDistribution>(`${DASHBOARD_ENDPOINT}/priority-distribution`);
-    return MOCK_DATA.dashboardStats.priorityCounts;
+    try {
+      const stats = await this.getDashboardStats();
+      return stats.priorityCounts;
+    } catch (error) {
+      console.error("Failed to get priority distribution:", error);
+      return {};
+    }
   }
 
   /**
    * Get monthly request trends
    */
   async getMonthlyTrends(months: number = 6): Promise<MonthlyTrend> {
-    // return this.client.get<MonthlyTrend>(`${DASHBOARD_ENDPOINT}/monthly-trends?months=${months}`);
-    return MOCK_DATA.dashboardStats.monthlyTrend;
+    try {
+      const stats = await this.getDashboardStats();
+      return stats.monthlyTrend;
+    } catch (error) {
+      console.error("Failed to get monthly trends:", error);
+      return {};
+    }
   }
 
   /**
    * Get requests by date range
    */
-  async getRequestsByDateRange(startDate: string, endDate: string): Promise<Record<string, number>> {
-    // return this.client.get<Record<string, number>>(`${DASHBOARD_ENDPOINT}/date-range?startDate=${startDate}&endDate=${endDate}`);
-    return MOCK_DATA.dashboardStats.monthlyTrend;
+  async getRequestsByDateRange(
+    startDate: string,
+    endDate: string
+  ): Promise<Record<string, number>> {
+    try {
+      // For now, return monthly trend data as we don't have date range endpoint
+      const stats = await this.getDashboardStats();
+      return stats.monthlyTrend;
+    } catch (error) {
+      console.error("Failed to get requests by date range:", error);
+      return {};
+    }
   }
 
   /**
    * Get staff workload distribution
    */
   async getStaffWorkload(): Promise<StaffWorkload> {
-    // return this.client.get<StaffWorkload>(`${DASHBOARD_ENDPOINT}/staff-workload`);
-    return MOCK_DATA.dashboardStats.staffWorkload;
+    try {
+      const stats = await this.getDashboardStats();
+      return stats.staffWorkload;
+    } catch (error) {
+      console.error("Failed to get staff workload:", error);
+      return {};
+    }
+  }
+
+  /**
+   * Force refresh all dashboard data (clears cache and refetches)
+   */
+  async forceRefresh(): Promise<DashboardStats> {
+    this.clearCache();
+    return this.getDashboardStats();
+  }
+
+  /**
+   * Clear cache (useful for forced refresh)
+   */
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Get cache status for debugging
+   */
+  getCacheStatus(): { keys: string[]; size: number } {
+    return {
+      keys: Array.from(this.cache.keys()),
+      size: this.cache.size,
+    };
   }
 }
 
 // Export singleton instance
-export const dashboardApiService = new DashboardApiService(); 
+export const dashboardApiService = new DashboardApiService();
