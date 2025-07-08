@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -34,6 +33,7 @@ import { ReminderSection } from "@/components/reminder-section";
 import { CommentSection } from "@/components/comment-section";
 import { useRequestDetails } from "@/hooks/use-requests";
 import { cn } from "@/lib/utils";
+import InitialsAvatar from "@/components/initials-avatar";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "todo" | "in-progress" | "completed";
@@ -80,14 +80,6 @@ export default function RequestDetailsPage() {
       setEditedRequest(request);
       setIsEditing(false);
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
   };
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
@@ -335,11 +327,7 @@ export default function RequestDetailsPage() {
               <div className="space-y-2">
                 <Label htmlFor="seniorName">Senior Name</Label>
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs">
-                      {getInitials(editedRequest.seniorName || "N/A")}
-                    </AvatarFallback>
-                  </Avatar>
+                  <InitialsAvatar name={editedRequest.seniorName || "N/A"}/>
                   <span className="font-medium">
                     {editedRequest.seniorName || "N/A"}
                   </span>
@@ -443,11 +431,7 @@ export default function RequestDetailsPage() {
             <div className="space-y-2">
               <Label htmlFor="assignee">Assigned Staff</Label>
               <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {getInitials(editedRequest.assignedStaffName || "U")}
-                  </AvatarFallback>
-                </Avatar>
+                <InitialsAvatar name={editedRequest.assignedStaffName || "Unassigned"}/>
                 <span>{editedRequest.assignedStaffName || "Unassigned"}</span>
               </div>
             </div>

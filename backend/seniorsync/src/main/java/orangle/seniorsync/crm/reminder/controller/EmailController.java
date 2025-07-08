@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/email")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class EmailController {
     private final EmailService emailService;
 
@@ -16,7 +17,6 @@ public class EmailController {
     }
 
     @PostMapping("/test")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public String testEmail(@RequestBody String email) {
         log.info("Received email for testing: {}", email);
         try {

@@ -16,6 +16,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/reminders")
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class ReminderController {
     private final ReminderService reminderService;
 
@@ -24,7 +25,6 @@ public class ReminderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<ReminderDto>> getAllReminders() {
         List<ReminderDto> reminders = reminderService.findReminders(null);
         log.info("Retrieved {} reminders", reminders.size());
@@ -32,7 +32,6 @@ public class ReminderController {
     }
 
     @GetMapping("/request/{requestId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<ReminderDto>> getRemindersByRequest(@PathVariable Long requestId) {
         List<ReminderDto> requestReminders = reminderService.findReminders(requestId);
         log.info("Retrieved {} reminders for request {}", requestReminders.size(), requestId);
@@ -40,7 +39,6 @@ public class ReminderController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<ReminderDto> createReminder(@Valid @RequestBody CreateReminderDto createReminderDto) {
         ReminderDto reminder = reminderService.createReminder(createReminderDto);
         log.info("Created reminder with id {}", reminder.id());
@@ -48,7 +46,6 @@ public class ReminderController {
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ReminderDto updateReminder(@Valid @RequestBody UpdateReminderDto updateReminderDto) {
         ReminderDto updatedReminder = reminderService.updateReminder(updateReminderDto);
         log.info("Updated reminder with id {}", updatedReminder.id());
@@ -56,7 +53,6 @@ public class ReminderController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Void> deleteReminder(@PathVariable long id) {
         reminderService.deleteReminder(id);
         log.info("Deleted reminder with id {}", id);
