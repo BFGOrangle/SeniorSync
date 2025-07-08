@@ -322,7 +322,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
     address: initialData?.address || '',
     careLevel: initialData?.careLevel || '',
     careLevelColor: initialData?.careLevelColor || '#6b7280',
-    characteristics: initialData?.characteristics || '',
+    characteristics: typeof initialData?.characteristics === 'string' ? initialData?.characteristics : '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -374,7 +374,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
       address: newData?.address || '',
       careLevel: newData?.careLevel || '',
       careLevelColor: newData?.careLevelColor || '#6b7280',
-      characteristics: newData?.characteristics || '',
+      characteristics: typeof newData?.characteristics === 'string' ? newData?.characteristics : '',
     });
     setErrors({});
     setTouched({});
