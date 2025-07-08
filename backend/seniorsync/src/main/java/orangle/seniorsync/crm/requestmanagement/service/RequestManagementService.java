@@ -1,10 +1,7 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
 import orangle.seniorsync.common.util.TimeUtils;
-import orangle.seniorsync.crm.requestmanagement.dto.CreateSeniorRequestDto;
-import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestDto;
-import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestFilterDto;
-import orangle.seniorsync.crm.requestmanagement.dto.UpdateSeniorRequestDto;
+import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
 import orangle.seniorsync.crm.requestmanagement.mapper.CreateSeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.mapper.SeniorRequestMapper;
@@ -15,6 +12,7 @@ import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestReposito
 import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -145,5 +143,32 @@ public class RequestManagementService implements IRequestManagementService {
         SeniorRequest seniorRequest = seniorRequestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + id));
         return seniorRequestMapper.toDto(seniorRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardDto getDashboard() {
+        Long totalRequestsCount = seniorRequestRepository.countAllRequests();
+        Long pendingRequestsCount = seniorRequestRepository.countPendingRequests();
+        Long completedThisMonthCount = seniorRequestRepository.completedThisMonth();
+        Double averageCompletionTime = seniorRequestRepository.averageRequestCompletionTime();
+        List<StringCountDto> requestsByType = seniorRequestRepository.findSeniorRequestsByRequestTypeId();
+        List<StringCountDto> requestsByStaff = seniorRequestRepository.findCountsByAssignedStaffId();
+        List<StringCountDto> requestsByMonth = seniorRequestRepository.findCountsByMonthAndYear();
+        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findCountsByPriority();
+        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findCountsByStatus();
+        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findCountByRequestTypeIdAndStatus();
+
+        return new DashboardDto(
+                totalRequestsCount,
+                pendingRequestsCount,
+                completedThisMonthCount,
+                averageCompletionTime,
+                requestsByStatus,
+                requestsByType,
+                requestsByPriority,
+                requestsByMonth,
+                requestsByStaff,
+                requestTypeStatusCounts
+        );
     }
 }

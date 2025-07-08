@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  dashboardApiService, 
-  DashboardApiError 
-} from '@/services/dashboard-api';
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  dashboardApiService,
+  DashboardApiError,
+} from "@/services/dashboard-api";
 import {
   DashboardStats,
   RequestTypeSummary,
@@ -11,7 +11,7 @@ import {
   PriorityDistribution,
   MonthlyTrend,
   StaffWorkload,
-} from '@/types/dashboard';
+} from "@/types/dashboard";
 
 export interface UseDashboardState {
   dashboardStats: DashboardStats | null;
@@ -27,23 +27,34 @@ export interface UseDashboardState {
 
 export interface UseDashboardActions {
   refreshAll: () => Promise<void>;
+  forceRefresh: () => Promise<void>;
   refreshStats: () => Promise<void>;
   refreshRequestTypes: () => Promise<void>;
   clearError: () => void;
 }
 
-export interface UseDashboardReturn extends UseDashboardState, UseDashboardActions {}
+export interface UseDashboardReturn
+  extends UseDashboardState,
+    UseDashboardActions {}
 
 /**
  * Hook for managing dashboard data with comprehensive analytics
  */
 export function useDashboard(): UseDashboardReturn {
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [requestTypeSummaries, setRequestTypeSummaries] = useState<RequestTypeSummary[]>([]);
-  const [statusDistribution, setStatusDistribution] = useState<StatusDistribution | null>(null);
-  const [priorityDistribution, setPriorityDistribution] = useState<PriorityDistribution | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
+    null
+  );
+  const [requestTypeSummaries, setRequestTypeSummaries] = useState<
+    RequestTypeSummary[]
+  >([]);
+  const [statusDistribution, setStatusDistribution] =
+    useState<StatusDistribution | null>(null);
+  const [priorityDistribution, setPriorityDistribution] =
+    useState<PriorityDistribution | null>(null);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend | null>(null);
-  const [staffWorkload, setStaffWorkload] = useState<StaffWorkload | null>(null);
+  const [staffWorkload, setStaffWorkload] = useState<StaffWorkload | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<DashboardApiError | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -60,16 +71,19 @@ export function useDashboard(): UseDashboardReturn {
       setDashboardStats(stats);
       setLastUpdated(new Date());
 
-      console.log('Dashboard statistics loaded successfully');
+      console.log("Dashboard statistics loaded successfully");
     } catch (err) {
-      const apiError = err instanceof DashboardApiError ? err : new DashboardApiError(500, 'Unknown Error');
+      const apiError =
+        err instanceof DashboardApiError
+          ? err
+          : new DashboardApiError(500, "Unknown Error");
       setError(apiError);
-      console.error('Error loading dashboard statistics:', apiError);
+      console.error("Error loading dashboard statistics:", apiError);
 
       toast({
-        title: 'Error Loading Dashboard',
-        description: 'Failed to load dashboard statistics. Please try again.',
-        variant: 'destructive',
+        title: "Error Loading Dashboard",
+        description: "Failed to load dashboard statistics. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -86,16 +100,19 @@ export function useDashboard(): UseDashboardReturn {
       setRequestTypeSummaries(summaries);
       setLastUpdated(new Date());
 
-      console.log('Request type summaries loaded successfully');
+      console.log("Request type summaries loaded successfully");
     } catch (err) {
-      const apiError = err instanceof DashboardApiError ? err : new DashboardApiError(500, 'Unknown Error');
+      const apiError =
+        err instanceof DashboardApiError
+          ? err
+          : new DashboardApiError(500, "Unknown Error");
       setError(apiError);
-      console.error('Error loading request type summaries:', apiError);
+      console.error("Error loading request type summaries:", apiError);
 
       toast({
-        title: 'Error Loading Request Types',
-        description: 'Failed to load request type data. Please try again.',
-        variant: 'destructive',
+        title: "Error Loading Request Types",
+        description: "Failed to load request type data. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -108,12 +125,13 @@ export function useDashboard(): UseDashboardReturn {
       setLoading(true);
       setError(null);
 
-      const [statusDist, priorityDist, monthlyData, workload] = await Promise.all([
-        dashboardApiService.getStatusDistribution(),
-        dashboardApiService.getPriorityDistribution(),
-        dashboardApiService.getMonthlyTrends(6),
-        dashboardApiService.getStaffWorkload(),
-      ]);
+      const [statusDist, priorityDist, monthlyData, workload] =
+        await Promise.all([
+          dashboardApiService.getStatusDistribution(),
+          dashboardApiService.getPriorityDistribution(),
+          dashboardApiService.getMonthlyTrends(6),
+          dashboardApiService.getStaffWorkload(),
+        ]);
 
       setStatusDistribution(statusDist);
       setPriorityDistribution(priorityDist);
@@ -121,16 +139,19 @@ export function useDashboard(): UseDashboardReturn {
       setStaffWorkload(workload);
       setLastUpdated(new Date());
 
-      console.log('Dashboard distributions loaded successfully');
+      console.log("Dashboard distributions loaded successfully");
     } catch (err) {
-      const apiError = err instanceof DashboardApiError ? err : new DashboardApiError(500, 'Unknown Error');
+      const apiError =
+        err instanceof DashboardApiError
+          ? err
+          : new DashboardApiError(500, "Unknown Error");
       setError(apiError);
-      console.error('Error loading dashboard distributions:', apiError);
+      console.error("Error loading dashboard distributions:", apiError);
 
       toast({
-        title: 'Error Loading Analytics',
-        description: 'Failed to load analytics data. Please try again.',
-        variant: 'destructive',
+        title: "Error Loading Analytics",
+        description: "Failed to load analytics data. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -143,28 +164,74 @@ export function useDashboard(): UseDashboardReturn {
       setLoading(true);
       setError(null);
 
-      // Load all data in parallel for better performance
-      await Promise.all([
-        refreshStats(),
-        refreshRequestTypes(),
-        loadDistributions(),
-      ]);
+      // Force refresh to clear cache and get fresh data
+      const freshStats = await dashboardApiService.forceRefresh();
+      setDashboardStats(freshStats);
+
+      // Load all other data in parallel for better performance
+      await Promise.all([refreshRequestTypes(), loadDistributions()]);
 
       setLastUpdated(new Date());
+      console.log("Dashboard refreshed successfully");
     } catch (err) {
-      const apiError = err instanceof DashboardApiError ? err : new DashboardApiError(500, 'Unknown Error');
+      const apiError =
+        err instanceof DashboardApiError
+          ? err
+          : new DashboardApiError(500, "Unknown Error");
       setError(apiError);
-      console.error('Error refreshing dashboard:', apiError);
+      console.error("Error refreshing dashboard:", apiError);
 
       toast({
-        title: 'Error Refreshing Dashboard',
-        description: 'Failed to refresh dashboard data. Please try again.',
-        variant: 'destructive',
+        title: "Error Refreshing Dashboard",
+        description: "Failed to refresh dashboard data. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [refreshStats, refreshRequestTypes, loadDistributions, toast]);
+  }, [refreshRequestTypes, loadDistributions, toast]);
+
+  // Force refresh with cache clearing
+  const forceRefresh = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Clear cache and force fresh data
+      dashboardApiService.clearCache();
+
+      // Force refresh to get fresh data
+      const freshStats = await dashboardApiService.forceRefresh();
+      setDashboardStats(freshStats);
+
+      // Load all other data in parallel for better performance
+      await Promise.all([refreshRequestTypes(), loadDistributions()]);
+
+      setLastUpdated(new Date());
+      console.log("Dashboard force refreshed successfully");
+
+      toast({
+        title: "Dashboard Refreshed",
+        description: "All dashboard data has been refreshed successfully.",
+        variant: "default",
+      });
+    } catch (err) {
+      const apiError =
+        err instanceof DashboardApiError
+          ? err
+          : new DashboardApiError(500, "Unknown Error");
+      setError(apiError);
+      console.error("Error force refreshing dashboard:", apiError);
+
+      toast({
+        title: "Error Refreshing Dashboard",
+        description: "Failed to refresh dashboard data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshRequestTypes, loadDistributions, toast]);
 
   // Clear error state
   const clearError = useCallback(() => {
@@ -187,9 +254,10 @@ export function useDashboard(): UseDashboardReturn {
     loading,
     error,
     lastUpdated,
-    
+
     // Actions
     refreshAll,
+    forceRefresh,
     refreshStats,
     refreshRequestTypes,
     clearError,
@@ -200,7 +268,9 @@ export function useDashboard(): UseDashboardReturn {
  * Simplified hook for just status counts (lighter weight)
  */
 export function useStatusCounts() {
-  const [statusCounts, setStatusCounts] = useState<StatusDistribution | null>(null);
+  const [statusCounts, setStatusCounts] = useState<StatusDistribution | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<DashboardApiError | null>(null);
 
@@ -212,9 +282,12 @@ export function useStatusCounts() {
       const distribution = await dashboardApiService.getStatusDistribution();
       setStatusCounts(distribution);
     } catch (err) {
-      const apiError = err instanceof DashboardApiError ? err : new DashboardApiError(500, 'Unknown Error');
+      const apiError =
+        err instanceof DashboardApiError
+          ? err
+          : new DashboardApiError(500, "Unknown Error");
       setError(apiError);
-      console.error('Error loading status counts:', apiError);
+      console.error("Error loading status counts:", apiError);
     } finally {
       setLoading(false);
     }
@@ -230,4 +303,4 @@ export function useStatusCounts() {
     error,
     refresh,
   };
-} 
+}

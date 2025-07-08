@@ -2,10 +2,7 @@ package orangle.seniorsync.crm.requestmanagement.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import orangle.seniorsync.crm.requestmanagement.dto.CreateSeniorRequestDto;
-import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestDto;
-import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestFilterDto;
-import orangle.seniorsync.crm.requestmanagement.dto.UpdateSeniorRequestDto;
+import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.service.IRequestManagementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -75,5 +72,13 @@ public class RequestManagementController {
         SeniorRequestDto seniorRequest = requestManagementService.findRequestById(id);
         log.info("Retrieved senior request with ID: {}", id);
         return ResponseEntity.ok().body(seniorRequest);
+    }
+
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<DashboardDto> getDashboard() {
+        DashboardDto dashboard = requestManagementService.getDashboard();
+        log.info("Retrieved dashboard data");
+        return ResponseEntity.ok().body(dashboard);
     }
 }
