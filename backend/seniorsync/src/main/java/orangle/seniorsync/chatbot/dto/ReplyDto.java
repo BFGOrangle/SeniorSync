@@ -5,7 +5,7 @@ import java.util.List;
 public record ReplyDto(
         Long message_id,
         Long senior_id,
-        String message_content,
+        String prompt,
         List<ReplyOption> replyOptions
 ) {
 }

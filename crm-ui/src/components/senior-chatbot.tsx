@@ -1,15 +1,16 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Bot, Send, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Bot, Send, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ChatContainer, ChatMessages } from '@/components/ui/chat'
+import { LanguageSelector } from '@/components/ui/language-selector'
 import { SeniorDetailsHeader } from '@/components/senior-details-header'
 import { useSeniorChatbot } from '@/hooks/use-senior-chatbot'
-import { ReplyOption, ChatMessage } from '@/types/chatbot'
+import { ReplyOption, ChatMessage, SupportedLanguage } from '@/types/chatbot'
 
 interface SeniorChatbotProps {
   seniorId: number
@@ -21,65 +22,48 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
     isLoading, 
     error, 
     activeConversation, 
+    selectedLanguage,
     sendMessage, 
-    initializeChat, 
-    clearMessages 
+    initializeChat,
+    changeLanguage,
+    setMessages,
   } = useSeniorChatbot(seniorId)
   
   const [currentReplyOptions, setCurrentReplyOptions] = useState<ReplyOption[]>([])
   const [textInput, setTextInput] = useState('')
-  const [isStarted, setIsStarted] = useState(false)
   const [needsTextInput, setNeedsTextInput] = useState(false)
+  const [showLanguageSelector, setShowLanguageSelector] = useState(true)
+  const [hasStartedChat, setHasStartedChat] = useState(false)
 
   useEffect(() => {
-    const initialize = async () => {
-      const replyOptions = await initializeChat()
-      if (replyOptions && replyOptions.length > 0) {
-        setCurrentReplyOptions(replyOptions)
-        // Check if we need text input
-        const hasEmptyTextOptions = replyOptions.some(opt => opt.text === '')
-        setNeedsTextInput(hasEmptyTextOptions)
-        // If we have reply options, we're already started
-        if (activeConversation && activeConversation.currentState !== 'START') {
-          setIsStarted(true)
+    // Don't auto-initialize chat - let user select language first
+    // This effect is now only for handling language changes after chat has started
+    if (hasStartedChat) {
+      const initialize = async () => {
+        const replyOptions = await initializeChat(selectedLanguage)
+        if (replyOptions && replyOptions.length > 0) {
+          setCurrentReplyOptions(replyOptions)
+          // Check if we need text input
+          const hasEmptyTextOptions = replyOptions.some(opt => opt.value === '')
+          setNeedsTextInput(hasEmptyTextOptions)
         }
       }
+      
+      initialize()
     }
-    initialize()
-  }, [initializeChat, activeConversation])
-
-  // Check if we have an active conversation and set appropriate state
-  useEffect(() => {
-    if (activeConversation && activeConversation.currentState !== 'START') {
-      setIsStarted(true)
-    }
-  }, [activeConversation])
+  }, [initializeChat, selectedLanguage, hasStartedChat])
 
   const handleOptionClick = async (option: ReplyOption) => {
     try {
-      const newReplyOptions = await sendMessage(option)
+      const newReplyOptions = await sendMessage(option, selectedLanguage)
       setCurrentReplyOptions(newReplyOptions || [])
       setTextInput('')
       
       // Check if we need text input (when reply options have empty text)
-      const hasEmptyTextOptions = newReplyOptions?.some(opt => opt.text === '')
+      const hasEmptyTextOptions = newReplyOptions?.some(opt => opt.value === '')
       setNeedsTextInput(hasEmptyTextOptions || false)
-      
-      if (!isStarted && option.fsmEvent === 'BEGIN') {
-        setIsStarted(true)
-      }
-
-      // Check if request was completed, reset state after delay
-      if (newReplyOptions?.length === 0 || 
-          (newReplyOptions?.length === 1 && newReplyOptions[0].fsmEvent === 'BEGIN')) {
-        setTimeout(() => {
-          setIsStarted(false)
-          setCurrentReplyOptions([])
-          setNeedsTextInput(false)
-        }, 2000)
-      }
     } catch (err) {
-      // Error is handled by the hook
+      console.error(err);
     }
   }
 
@@ -87,31 +71,77 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
     if (!textInput.trim()) return
 
     // Use the fsmEvent from the empty text option if available
-    const emptyTextOption = currentReplyOptions.find(opt => opt.text === '')
+    const emptyTextOption = currentReplyOptions.find(opt => opt.value === '')
     const textOption: ReplyOption = {
-      text: textInput,
+      displayText: textInput,
+      value: textInput,
       fsmEvent: emptyTextOption?.fsmEvent || 'USER_INPUT'
     }
 
     try {
-      const newReplyOptions = await sendMessage(textOption)
+      const newReplyOptions = await sendMessage(textOption, selectedLanguage)
       setCurrentReplyOptions(newReplyOptions || [])
       setTextInput('')
       
       // Check if we need text input for next interaction
-      const hasEmptyTextOptions = newReplyOptions?.some(opt => opt.text === '')
+      const hasEmptyTextOptions = newReplyOptions?.some(opt => opt.value === '')
       setNeedsTextInput(hasEmptyTextOptions || false)
     } catch (err) {
       // Error is handled by the hook
+      console.error(err)
     }
   }
 
-  const handleStartConversation = () => {
-    const startOption: ReplyOption = {
-      text: 'Okay',
-      fsmEvent: 'BEGIN'
+  const handleLanguageChange = async (newLanguage: SupportedLanguage) => {
+    try {
+      const chatbotResponse = await changeLanguage(newLanguage);
+      
+      // changeLanguage now always returns ReplyDto, so we can directly access replyOptions
+      const newReplyOptions = chatbotResponse.replyOptions || [];
+      const newReplyPrompt = chatbotResponse.prompt;
+
+      // Update the last assistant message with the new prompt if it exists
+      if (newReplyPrompt && messages.length > 0) {
+        setMessages(prevMessages => {
+          const updatedMessages = [...prevMessages];
+          
+          // Find the last assistant message and update its content
+          for (let i = updatedMessages.length - 1; i >= 0; i--) {
+            if (updatedMessages[i].role === 'assistant') {
+              updatedMessages[i] = {
+                ...updatedMessages[i],
+                content: newReplyPrompt
+              };
+              break;
+            }
+          }
+          
+          return updatedMessages;
+        });
+      }
+
+      if (newReplyOptions.length > 0) {
+        setCurrentReplyOptions(newReplyOptions)
+        const hasEmptyTextOptions = newReplyOptions.some(opt => opt.value === '')
+        setNeedsTextInput(hasEmptyTextOptions)
+      }
+    } catch (err) {
+      console.error('Failed to change language:', err)
     }
-    handleOptionClick(startOption)
+  }
+
+  const handleStartChat = async (language: SupportedLanguage) => {
+    await changeLanguage(language)
+    setShowLanguageSelector(false)
+    setHasStartedChat(true)
+    
+    // Initialize chat with selected language
+    const replyOptions = await initializeChat(language)
+    if (replyOptions && replyOptions.length > 0) {
+      setCurrentReplyOptions(replyOptions)
+      const hasEmptyTextOptions = replyOptions.some((opt: ReplyOption) => opt.value === '')
+      setNeedsTextInput(hasEmptyTextOptions)
+    }
   }
 
   // Convert ChatMessage to Message format for UI components
@@ -121,7 +151,88 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
   })
 
   // Filter out empty text options for button display
-  const buttonOptions = currentReplyOptions.filter(opt => opt.text !== '')
+  const buttonOptions = currentReplyOptions.filter(opt => opt.value !== '')
+
+  // Language selection screen - shown before chat starts
+  if (showLanguageSelector && !hasStartedChat) {
+    return (
+      <div className="w-full max-w-4xl mx-auto">
+        <SeniorDetailsHeader seniorId={seniorId} />
+        
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-2xl md:text-3xl font-bold text-center justify-center">
+              <Bot className="h-8 w-8 md:h-10 md:w-10" />
+              Holly - Your Request Assistant
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="p-8 text-center">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Choose Your Language / 选择语言 / Pilih Bahasa / மொழியைத் தேர்ந்தெடுக்கவும்
+                </h2>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  Please select your preferred language to start chatting with Holly. 
+                  You can change the language at any time during the conversation.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <Button
+                  onClick={() => handleStartChat('en')}
+                  size="lg"
+                  className="h-16 text-lg font-semibold flex items-center gap-3 bg-blue-600 hover:bg-blue-700"
+                  disabled={isLoading}
+                >
+                  <span className="text-2xl">🇺🇸</span>
+                  English
+                </Button>
+                
+                <Button
+                  onClick={() => handleStartChat('zh-CN')}
+                  size="lg"
+                  className="h-16 text-lg font-semibold flex items-center gap-3 bg-red-600 hover:bg-red-700"
+                  disabled={isLoading}
+                >
+                  <span className="text-2xl">🇨🇳</span>
+                  简体中文
+                </Button>
+                
+                <Button
+                  onClick={() => handleStartChat('ms')}
+                  size="lg"
+                  className="h-16 text-lg font-semibold flex items-center gap-3 bg-yellow-600 hover:bg-yellow-700"
+                  disabled={isLoading}
+                >
+                  <span className="text-2xl">🇲🇾</span>
+                  Bahasa Melayu
+                </Button>
+                
+                <Button
+                  onClick={() => handleStartChat('ta')}
+                  size="lg"
+                  className="h-16 text-lg font-semibold flex items-center gap-3 bg-orange-600 hover:bg-orange-700"
+                  disabled={isLoading}
+                >
+                  <span className="text-2xl">🇮🇳</span>
+                  தமிழ்
+                </Button>
+              </div>
+              
+              {isLoading && (
+                <div className="flex items-center justify-center gap-2 text-blue-600">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Starting chat...</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -136,14 +247,23 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
               Holly - Your Request Assistant
             </CardTitle>
             
-            {/* Show active conversation indicator */}
-            {activeConversation && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              {/* Language Selector - only visible after chat has started */}
+              {hasStartedChat && (
+                <LanguageSelector
+                  selectedLanguage={selectedLanguage}
+                  onLanguageChange={handleLanguageChange}
+                  className="ml-2 text-black border-white/20 hover:bg-white/10"
+                />
+              )}
+              
+              {/* Show active conversation indicator */}
+              {activeConversation && (
                 <div className="text-sm bg-green-500 px-3 py-1 rounded-full">
                   Active: {activeConversation.currentState}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </CardHeader>
         
@@ -203,75 +323,57 @@ export function SeniorChatbot({ seniorId }: SeniorChatbotProps) {
 
             {/* Reply Options or Text Input */}
             <div className="space-y-4">
-              {!isStarted ? (
-                <div className="flex justify-center">
-                  <Button
-                    onClick={handleStartConversation}
-                    size="lg"
-                    className="text-xl md:text-2xl px-12 py-6 bg-green-600 hover:bg-green-700 text-white font-bold rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    ) : null}
-                    {activeConversation ? 'Create New Request?' : "Okay, Let's Start!"}
-                  </Button>
+              {/* Show button options if any */}
+              {buttonOptions.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-lg font-semibold text-gray-700 text-center">
+                    Please choose an option:
+                  </p>
+                  <div className="grid gap-3">
+                    {buttonOptions.map((option, index) => (
+                      <Button
+                        key={index}
+                        onClick={() => handleOptionClick(option)}
+                        variant="outline"
+                        size="lg"
+                        className="text-lg md:text-xl p-6 h-auto border-2 border-blue-300 hover:border-blue-500 hover:bg-blue-50 text-gray-800 font-semibold rounded-xl shadow-sm transition-all duration-200"
+                        disabled={isLoading}
+                      >
+                        {option.displayText}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Show button options if any */}
-                  {buttonOptions.length > 0 && (
-                    <div className="space-y-3">
-                      <p className="text-lg font-semibold text-gray-700 text-center">
-                        Please choose an option:
-                      </p>
-                      <div className="grid gap-3">
-                        {buttonOptions.map((option, index) => (
-                          <Button
-                            key={index}
-                            onClick={() => handleOptionClick(option)}
-                            variant="outline"
-                            size="lg"
-                            className="text-lg md:text-xl p-6 h-auto border-2 border-blue-300 hover:border-blue-500 hover:bg-blue-50 text-gray-800 font-semibold rounded-xl shadow-sm transition-all duration-200"
-                            disabled={isLoading}
-                          >
-                            {option.text}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              )}
 
-                  {/* Show text input if needed */}
-                  {needsTextInput && (
-                    <div className="space-y-3">
-                      <p className="text-lg font-semibold text-gray-700 text-center">
-                        Please type your response:
-                      </p>
-                      <div className="flex gap-3">
-                        <Input
-                          value={textInput}
-                          onChange={(e) => setTextInput(e.target.value)}
-                          placeholder="Type your message here..."
-                          className="text-lg md:text-xl p-4 h-auto border-2 border-blue-300 rounded-xl focus:border-blue-500"
-                          onKeyPress={(e) => e.key === 'Enter' && handleTextSubmit()}
-                          disabled={isLoading}
-                        />
-                        <Button
-                          onClick={handleTextSubmit}
-                          size="lg"
-                          className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm"
-                          disabled={isLoading || !textInput.trim()}
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                          ) : (
-                            <Send className="h-5 w-5" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+              {/* Show text input if needed */}
+              {needsTextInput && (
+                <div className="space-y-3">
+                  <p className="text-lg font-semibold text-gray-700 text-center">
+                    Please type your response:
+                  </p>
+                  <div className="flex gap-3">
+                    <Input
+                      value={textInput}
+                      onChange={(e) => setTextInput(e.target.value)}
+                      placeholder="Type your message here..."
+                      className="text-lg md:text-xl p-4 h-auto border-2 border-blue-300 rounded-xl focus:border-blue-500"
+                      onKeyPress={(e) => e.key === 'Enter' && handleTextSubmit()}
+                      disabled={isLoading}
+                    />
+                    <Button
+                      onClick={handleTextSubmit}
+                      size="lg"
+                      className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm"
+                      disabled={isLoading || !textInput.trim()}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Send className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

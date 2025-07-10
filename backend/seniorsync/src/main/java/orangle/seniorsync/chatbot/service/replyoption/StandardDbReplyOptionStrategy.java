@@ -28,13 +28,14 @@ public class StandardDbReplyOptionStrategy implements IReplyOptionStrategy {
     }
 
     @Override
-    public List<ReplyOption> getReplyOptions(String campaignName, String state) {
-        List<FsmStateReplyOption> fsmStateReplyOptions = fsmStateReplyOptionsRepository.findByCampaignNameAndState(campaignName, state);
+    public List<ReplyOption> getReplyOptions(String campaignName, String state, String languageCode) {
+        List<FsmStateReplyOption> fsmStateReplyOptions = fsmStateReplyOptionsRepository.findByCampaignNameAndStateAndLanguageCode(campaignName, state, languageCode);
         if (fsmStateReplyOptions.isEmpty()) {
-            log.warn("No standard reply options found for campaign: " + campaignName + " and state: " + state);
+            log.warn("No standard reply options found for campaign: {} and state: {} and language_code {}", campaignName, state, languageCode);
         }
         return fsmStateReplyOptions.stream()
                 .map(fsmStateReplyOption -> new ReplyOption(
+                        fsmStateReplyOption.getContent(),
                         fsmStateReplyOption.getContent(),
                         fsmStateReplyOption.getEvent()
                 ))

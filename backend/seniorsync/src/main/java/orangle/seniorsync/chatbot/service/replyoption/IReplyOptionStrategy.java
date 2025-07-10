@@ -14,5 +14,5 @@ public interface IReplyOptionStrategy {
     /**
      * Retrieves the reply option contents based on this strategy.
      */
-    List<ReplyOption> getReplyOptions(String campaignName, String state);
+    List<ReplyOption> getReplyOptions(String campaignName, String state, String languageCode);
 }

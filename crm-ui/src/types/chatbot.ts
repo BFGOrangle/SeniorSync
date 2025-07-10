@@ -1,6 +1,7 @@
 // Chatbot types for senior request logging
 export interface ReplyOption {
-  text: string;
+  displayText: string,
+  value: string;
   fsmEvent: string;
 }
 
@@ -13,7 +14,7 @@ export interface IncomingMessageDto {
 export interface ReplyDto {
   message_id: number;
   senior_id: number;
-  message_content: string;
+  prompt: string;
   replyOptions: ReplyOption[];
 }
 
@@ -43,8 +44,19 @@ export interface ChatMessage {
   createdAt?: Date;
 }
 
+// Language support types
+export type SupportedLanguage = 'en' | 'zh-CN' | 'ms' | 'ta';
+
+export interface LanguageOption {
+  code: SupportedLanguage;
+  name: string;
+  nativeName: string;
+  flag: string;
+}
+
 export interface ChatbotState {
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
+  selectedLanguage: SupportedLanguage;
 }

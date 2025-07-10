@@ -32,6 +32,7 @@ public class CapturePriorityAction implements Action<String, String> {
             case "PRIORITY_LOW" -> (short) 1;
             case "PRIORITY_MEDIUM" -> (short) 2;
             case "PRIORITY_HIGH" -> (short) 3;
+            case "PRIORITY_URGENT" -> (short) 4;
             default -> throw new IllegalArgumentException("Unknown priority event: " + event);
         };
     }

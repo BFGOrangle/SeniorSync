@@ -69,40 +69,6 @@ public class SeniorSpecs {
                         : cb.equal(root.get("careLevelColor"), careLevelColor);
     }
 
-    // public static Specification<Senior> hasCharacteristics(String[] characteristics) {
-    //     return (root, query, cb) -> {
-    //         if (characteristics == null || characteristics.length == 0) {
-    //             return cb.conjunction();
-    //         }
-            
-    //         // Build OR conditions for each characteristic
-    //         var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
-            
-    //         for (String characteristic : characteristics) {
-    //             if (characteristic != null && !characteristic.trim().isEmpty()) {
-    //                 // Use native SQL function to check if the JSONB array contains the characteristic
-    //                 // This converts the JSONB to text and checks if it contains the characteristic
-    //                 predicates.add(
-    //                     cb.like(
-    //                         cb.function("COALESCE", String.class,
-    //                             cb.function("array_to_string", String.class,
-    //                                 root.get("characteristics"),
-    //                                 cb.literal(",")
-    //                             ),
-    //                             cb.literal("")
-    //                         ),
-    //                         "%" + characteristic.trim() + "%"
-    //                     )
-    //                 );
-    //             }
-    //         }
-            
-    //         return predicates.isEmpty() 
-    //             ? cb.conjunction() 
-    //             : cb.or(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
-    //     };
-    // }
-
     public static Specification<Senior> hasCharacteristics(String[] characteristics) {
         return (root, query, cb) -> {
             if (characteristics == null || characteristics.length == 0) {
