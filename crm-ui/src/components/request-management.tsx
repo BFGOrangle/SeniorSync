@@ -98,18 +98,18 @@ export default function RequestManagement() {
         setFilters(newFilters);
         toast({
           title: "Filter Removed",
-          description: "Showing all tickets",
+          description: "Showing all requests",
           duration: 2000,
         });
       } else {
-        // Toggle on - show only my tickets
+        // Toggle on - show only my requests
         setFilters({
           ...filters,
           assignedStaff: [currentUser.id],
         });
         toast({
           title: "Filter Applied",
-          description: "Showing only your assigned tickets",
+          description: "Showing only your assigned requests",
           duration: 2000,
         });
       }
@@ -126,18 +126,18 @@ export default function RequestManagement() {
       setFilters(newFilters);
       toast({
         title: "Filter Removed",
-        description: "Showing all tickets",
+        description: "Showing all requests",
         duration: 2000,
       });
     } else {
-      // Toggle on - show only unassigned tickets
+      // Toggle on - show only unassigned requests
       setFilters({
         ...filters,
         assignedStaff: [], // Empty array means unassigned in the backend filter
       });
       toast({
         title: "Filter Applied", 
-        description: "Showing only unassigned tickets",
+        description: "Showing only unassigned requests",
         duration: 2000,
       });
     }
@@ -205,45 +205,29 @@ export default function RequestManagement() {
               </p>
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              {/* Create Request Button */}
-              <CreateRequestModal 
-                onRequestCreated={() => {
-                  refresh();
-                  toast({
-                    title: "Success",
-                    description: "Request created successfully and list refreshed!",
-                  });
-                }}
-              />
+            <div className="flex gap-2 lg:gap-3">
+              <Badge
+                variant="outline"
+                className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
+              >
+                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                TODO: {statusCounts.todo}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="bg-orange-50 text-orange-700 border-orange-200 font-medium px-3 py-1"
+              >
+                <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
+                In Progress: {statusCounts['in-progress']}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1"
+              >
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                Completed: {statusCounts.completed}
+              </Badge>
 
-              {/* Status Summary */}
-              <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-                <Badge
-                  variant="outline"
-                  className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
-                >
-                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  TODO: {statusCounts.todo}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="bg-orange-50 text-orange-700 border-orange-200 font-medium px-3 py-1"
-                >
-                  <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
-                  In Progress: {statusCounts['in-progress']}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1"
-                >
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  Completed: {statusCounts.completed}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
               <Tabs
                 value={viewMode}
                 onValueChange={(value) => setViewMode(value as ViewMode)}
@@ -272,6 +256,17 @@ export default function RequestManagement() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+
+              {/* Create Request Button */}
+              <CreateRequestModal 
+                onRequestCreated={() => {
+                  refresh();
+                  toast({
+                    title: "Success",
+                    description: "Request created successfully and list refreshed!",
+                  });
+                }}
+              />
             </div>
           </div>
 
@@ -292,19 +287,17 @@ export default function RequestManagement() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto p-5">
         {viewMode === "kanban-status" && (
           <RequestKanbanView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
-            showOnlyFilteredStatuses={smartFilter && Object.keys(filters).length > 0}
           />
         )}
         {viewMode === "kanban-priority" && (
           <RequestKanbanPriorityView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
-            showOnlyFilteredPriorities={smartFilter && Object.keys(filters).length > 0}
           />
         )}
         {viewMode === "table" && (

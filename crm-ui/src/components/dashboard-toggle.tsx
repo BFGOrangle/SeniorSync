@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Building2, ToggleLeft, ToggleRight } from "lucide-react";
+import { User, Building2 } from "lucide-react";
 
 export type DashboardMode = 'personal' | 'center';
 
@@ -28,7 +28,7 @@ export function DashboardToggle({ mode, onModeChange, className }: DashboardTogg
           onClick={() => onModeChange('personal')}
           className={`flex items-center gap-2 px-3 py-1 h-8 ${
             isPersonal 
-              ? 'bg-white shadow-sm' 
+              ? 'shadow-sm' 
               : 'hover:bg-gray-200'
           }`}
         >
@@ -41,7 +41,7 @@ export function DashboardToggle({ mode, onModeChange, className }: DashboardTogg
           onClick={() => onModeChange('center')}
           className={`flex items-center gap-2 px-3 py-1 h-8 ${
             !isPersonal 
-              ? 'bg-white shadow-sm' 
+              ? 'shadow-sm' 
               : 'hover:bg-gray-200'
           }`}
         >

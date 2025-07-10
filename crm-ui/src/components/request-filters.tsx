@@ -155,8 +155,10 @@ export function RequestFilters({
   ].reduce((sum: number, count) => sum + (count || 0), 0);
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-white border-b border-gray-200">
+    <div className="flex flex-row justify-between items-center gap-4 p-4 bg-white border-b border-gray-200">
       {/* Quick Filters */}
+      <div className="flex gap-2 lg:gap-3 items-center">
+      <span className="text-sm text-gray-500">Quick Filters:</span>
       {(onMyTicketsClick || onUnassignedClick) && (
         <>
           {onMyTicketsClick && (
@@ -171,7 +173,7 @@ export function RequestFilters({
               }`}
             >
               <User className="h-4 w-4" />
-              My Tickets
+              My Assigned Requests
             </Button>
           )}
           {onUnassignedClick && (
@@ -185,290 +187,292 @@ export function RequestFilters({
                   : "hover:bg-gray-50"
               }`}
             >
-              Unassigned
+              Unassigned Requests
             </Button>
           )}
-          <Separator orientation="vertical" className="h-6" />
         </>
       )}
-
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="Search requests..."
-          value={filters.searchTerm || ""}
-          onChange={(e) =>
-            onFiltersChange({ ...filters, searchTerm: e.target.value })
-          }
-          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-        />
       </div>
 
-      {/* Advanced Filters */}
-      <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="border-gray-300 hover:bg-gray-50 relative"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-            <ChevronDown className="h-4 w-4 ml-2" />
-            {activeFilterCount > 0 && (
-              <Badge
-                variant="secondary"
-                className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center"
-              >
-                {activeFilterCount}
-              </Badge>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-4" align="start">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium text-gray-900">Filters</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="h-6 text-gray-500 hover:text-gray-700"
-              >
-                Clear all
-              </Button>
-            </div>
-
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {/* Priority Filter */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium text-gray-900">
-                  Priority
-                </Label>
-                <div className="space-y-2">
-                  {priorityOptions.map((priority) => (
-                    <div
-                      key={priority}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={`priority-${priority}`}
-                        checked={
-                          filters.priority?.includes(priority) || false
-                        }
-                        onCheckedChange={(checked) =>
-                          handlePriorityChange(priority, checked as boolean)
-                        }
-                        className="border-gray-300"
-                      />
-                      <Label
-                        htmlFor={`priority-${priority}`}
-                        className="text-sm text-gray-700 font-normal cursor-pointer"
-                      >
-                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Status Filter */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium text-gray-900">
-                  Status
-                </Label>
-                <div className="space-y-2">
-                  {statusOptions.map((status) => (
-                    <div key={status} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`status-${status}`}
-                        checked={filters.status?.includes(status) || false}
-                        onCheckedChange={(checked) =>
-                          handleStatusChange(status, checked as boolean)
-                        }
-                        className="border-gray-300"
-                      />
-                      <Label
-                        htmlFor={`status-${status}`}
-                        className="text-sm text-gray-700 font-normal cursor-pointer"
-                      >
-                        {status
-                          .replace("-", " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Request Type Filter */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium text-gray-900">
-                  Request Type
-                </Label>
-                {loading ? (
-                  <div className="text-sm text-gray-500">Loading...</div>
-                ) : (
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterOptions.requestTypeOptions.map((requestType) => (
-                      <div
-                        key={requestType.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`request-type-${requestType.id}`}
-                          checked={
-                            filters.requestType?.includes(requestType.id) || false
-                          }
-                          onCheckedChange={(checked) =>
-                            handleRequestTypeChange(
-                              requestType.id,
-                              checked as boolean
-                            )
-                          }
-                          className="border-gray-300"
-                        />
-                        <div className="flex flex-col">
-                          <Label
-                            htmlFor={`request-type-${requestType.id}`}
-                            className="text-sm text-gray-700 font-normal cursor-pointer"
-                          >
-                            {requestType.name}
-                          </Label>
-                          {requestType.description && (
-                            <span className="text-xs text-gray-500">
-                              {requestType.description}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Staff Filter */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium text-gray-900">
-                  Assigned Staff
-                </Label>
-                {loading ? (
-                  <div className="text-sm text-gray-500">Loading...</div>
-                ) : (
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterOptions.staffOptions.map((staff) => (
-                      <div
-                        key={staff.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`staff-${staff.id}`}
-                          checked={
-                            filters.assignedStaff?.includes(staff.id) || false
-                          }
-                          onCheckedChange={(checked) =>
-                            handleStaffChange(staff.id, checked as boolean)
-                          }
-                          className="border-gray-300"
-                        />
-                        <div className="flex flex-col">
-                          <Label
-                            htmlFor={`staff-${staff.id}`}
-                            className="text-sm text-gray-700 font-normal cursor-pointer"
-                          >
-                            {staff.fullName}
-                          </Label>
-                          <span className="text-xs text-gray-500">
-                            {staff.jobTitle}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Clear Filters Button */}
-      {activeFilterCount > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={clearFilters}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <X className="h-4 w-4 mr-1" />
-          Clear ({activeFilterCount})
-        </Button>
-      )}
-
-      {/* Sort */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500">Sort by:</span>
-        <select
-          value={`${sort.field}-${sort.direction}`}
-          onChange={(e) => {
-            const [field, direction] = e.target.value.split('-') as [RequestSortOption['field'], RequestSortOption['direction']];
-            onSortChange({ field, direction });
-          }}
-          className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
-        >
-          {sortOptions.map((option) => (
-            <optgroup key={option.field} label={option.label}>
-              <option value={`${option.field}-desc`}>
-                {option.label} (Newest first)
-              </option>
-              <option value={`${option.field}-asc`}>
-                {option.label} (Oldest first)
-              </option>
-            </optgroup>
-          ))}
-        </select>
-      </div>
-
-      {/* Active Filters Display - only show if we have them and they're not taking too much space */}
-      {activeFilterCount > 0 && (
-        <div className="hidden xl:flex items-center gap-1">
-          <span className="text-xs text-gray-500">Active:</span>
-          {activeFilterCount > 3 ? (
-            <Badge variant="secondary" className="text-xs">
-              {activeFilterCount} filters
-            </Badge>
-          ) : (
-            <>
-              {filters.priority?.length && (
-                <Badge variant="secondary" className="text-xs">
-                  Priority ({filters.priority.length})
-                </Badge>
-              )}
-              {filters.status?.length && (
-                <Badge variant="secondary" className="text-xs">
-                  Status ({filters.status.length})
-                </Badge>
-              )}
-              {filters.requestType?.length && (
-                <Badge variant="secondary" className="text-xs">
-                  Type ({filters.requestType.length})
-                </Badge>
-              )}
-              {filters.assignedStaff?.length && (
-                <Badge variant="secondary" className="text-xs">
-                  Staff ({filters.assignedStaff.length})
-                </Badge>
-              )}
-            </>
-          )}
+      <div className="flex gap-2 lg:gap-3">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search requests..."
+            value={filters.searchTerm || ""}
+            onChange={(e) =>
+              onFiltersChange({ ...filters, searchTerm: e.target.value })
+            }
+            className="min-w-40 pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+          />
         </div>
-      )}
+
+        {/* Advanced Filters */}
+        <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="border-gray-300 hover:bg-gray-50 relative"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+              <ChevronDown className="h-4 w-4 ml-2" />
+              {activeFilterCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center"
+                >
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4" align="start">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-gray-900">Filters</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-6 text-gray-500 hover:text-gray-700"
+                >
+                  Clear all
+                </Button>
+              </div>
+
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {/* Priority Filter */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-900">
+                    Priority
+                  </Label>
+                  <div className="space-y-2">
+                    {priorityOptions.map((priority) => (
+                      <div
+                        key={priority}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={`priority-${priority}`}
+                          checked={
+                            filters.priority?.includes(priority) || false
+                          }
+                          onCheckedChange={(checked) =>
+                            handlePriorityChange(priority, checked as boolean)
+                          }
+                          className="border-gray-300"
+                        />
+                        <Label
+                          htmlFor={`priority-${priority}`}
+                          className="text-sm text-gray-700 font-normal cursor-pointer"
+                        >
+                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Status Filter */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-900">
+                    Status
+                  </Label>
+                  <div className="space-y-2">
+                    {statusOptions.map((status) => (
+                      <div key={status} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`status-${status}`}
+                          checked={filters.status?.includes(status) || false}
+                          onCheckedChange={(checked) =>
+                            handleStatusChange(status, checked as boolean)
+                          }
+                          className="border-gray-300"
+                        />
+                        <Label
+                          htmlFor={`status-${status}`}
+                          className="text-sm text-gray-700 font-normal cursor-pointer"
+                        >
+                          {status
+                            .replace("-", " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Request Type Filter */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-900">
+                    Request Type
+                  </Label>
+                  {loading ? (
+                    <div className="text-sm text-gray-500">Loading...</div>
+                  ) : (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {filterOptions.requestTypeOptions.map((requestType) => (
+                        <div
+                          key={requestType.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`request-type-${requestType.id}`}
+                            checked={
+                              filters.requestType?.includes(requestType.id) || false
+                            }
+                            onCheckedChange={(checked) =>
+                              handleRequestTypeChange(
+                                requestType.id,
+                                checked as boolean
+                              )
+                            }
+                            className="border-gray-300"
+                          />
+                          <div className="flex flex-col">
+                            <Label
+                              htmlFor={`request-type-${requestType.id}`}
+                              className="text-sm text-gray-700 font-normal cursor-pointer"
+                            >
+                              {requestType.name}
+                            </Label>
+                            {requestType.description && (
+                              <span className="text-xs text-gray-500">
+                                {requestType.description}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Staff Filter */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-900">
+                    Assigned Staff
+                  </Label>
+                  {loading ? (
+                    <div className="text-sm text-gray-500">Loading...</div>
+                  ) : (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {filterOptions.staffOptions.map((staff) => (
+                        <div
+                          key={staff.id}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`staff-${staff.id}`}
+                            checked={
+                              filters.assignedStaff?.includes(staff.id) || false
+                            }
+                            onCheckedChange={(checked) =>
+                              handleStaffChange(staff.id, checked as boolean)
+                            }
+                            className="border-gray-300"
+                          />
+                          <div className="flex flex-col">
+                            <Label
+                              htmlFor={`staff-${staff.id}`}
+                              className="text-sm text-gray-700 font-normal cursor-pointer"
+                            >
+                              {staff.fullName}
+                            </Label>
+                            <span className="text-xs text-gray-500">
+                              {staff.jobTitle}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Clear Filters Button */}
+        {activeFilterCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Clear ({activeFilterCount})
+          </Button>
+        )}
+
+        {/* Sort */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Sort by:</span>
+          <select
+            value={`${sort.field}-${sort.direction}`}
+            onChange={(e) => {
+              const [field, direction] = e.target.value.split('-') as [RequestSortOption['field'], RequestSortOption['direction']];
+              onSortChange({ field, direction });
+            }}
+            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+          >
+            {sortOptions.map((option) => (
+              <optgroup key={option.field} label={option.label}>
+                <option value={`${option.field}-desc`}>
+                  {option.label} (Newest first)
+                </option>
+                <option value={`${option.field}-asc`}>
+                  {option.label} (Oldest first)
+                </option>
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        {/* Active Filters Display - only show if we have them and they're not taking too much space */}
+        {activeFilterCount > 0 && (
+          <div className="hidden xl:flex items-center gap-1">
+            <span className="text-xs text-gray-500">Active:</span>
+            {activeFilterCount > 3 ? (
+              <Badge variant="secondary" className="text-xs">
+                {activeFilterCount} filters
+              </Badge>
+            ) : (
+              <>
+                {filters.priority?.length && (
+                  <Badge variant="secondary" className="text-xs">
+                    Priority ({filters.priority.length})
+                  </Badge>
+                )}
+                {filters.status?.length && (
+                  <Badge variant="secondary" className="text-xs">
+                    Status ({filters.status.length})
+                  </Badge>
+                )}
+                {filters.requestType?.length && (
+                  <Badge variant="secondary" className="text-xs">
+                    Type ({filters.requestType.length})
+                  </Badge>
+                )}
+                {filters.assignedStaff?.length && (
+                  <Badge variant="secondary" className="text-xs">
+                    Staff ({filters.assignedStaff.length})
+                  </Badge>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

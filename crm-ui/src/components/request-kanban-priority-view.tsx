@@ -29,7 +29,6 @@ type Priority = "urgent" | "high" | "medium" | "low";
 interface RequestKanbanPriorityViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
-  showOnlyFilteredPriorities?: boolean;
 }
 
 interface PriorityColumn {
@@ -66,7 +65,7 @@ const priorityColumns: PriorityColumn[] = [
   },
 ];
 
-export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyFilteredPriorities = false }: RequestKanbanPriorityViewProps) {
+export function RequestKanbanPriorityView({ requests, onRequestUpdate }: RequestKanbanPriorityViewProps) {
   const [activeRequest, setActiveRequest] = useState<SeniorRequestDisplayView | null>(null);
 
   const sensors = useSensors(
@@ -77,24 +76,12 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
     })
   );
 
-  // Get visible columns based on filtering
-  const getVisibleColumns = () => {
-    if (!showOnlyFilteredPriorities) {
-      return priorityColumns;
-    }
-    
-    const requestPriorities = new Set(requests.map(r => r.frontendPriority));
-    return priorityColumns.filter(col => requestPriorities.has(col.id));
-  };
-
-  const visibleColumns = getVisibleColumns();
-
   // Custom collision detection that prioritizes droppable columns
   const collisionDetectionStrategy = (args: any) => {
     // First try to find intersecting droppable areas
     const pointerIntersections = pointerWithin(args);
     const droppableIntersections = pointerIntersections.filter((intersection: any) => {
-      return visibleColumns.some(col => col.id === intersection.id);
+      return priorityColumns.some(col => col.id === intersection.id);
     });
 
     if (droppableIntersections.length > 0) {
@@ -104,7 +91,7 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
     // Fallback to rect intersection for droppable areas only
     const rectIntersections = rectIntersection(args);
     const droppableRectIntersections = rectIntersections.filter((intersection: any) => {
-      return visibleColumns.some(col => col.id === intersection.id);
+      return priorityColumns.some(col => col.id === intersection.id);
     });
 
     if (droppableRectIntersections.length > 0) {
@@ -114,7 +101,7 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
     // Last resort: closest center for droppable areas only
     const allIntersections = closestCenter(args);
     return allIntersections.filter((intersection: any) => {
-      return visibleColumns.some(col => col.id === intersection.id);
+      return priorityColumns.some(col => col.id === intersection.id);
     });
   };
 
@@ -136,7 +123,7 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
     let newPriority: Priority | null = null;
 
     // Check if dropped directly on a column
-    if (visibleColumns.some(col => col.id === over.id)) {
+    if (priorityColumns.some(col => col.id === over.id)) {
       newPriority = over.id as Priority;
     } else {
       // If dropped on a card, find which column it belongs to
@@ -209,12 +196,12 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate, showOnlyF
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-6 h-full overflow-x-auto pb-6">
-        {visibleColumns.map((column) => {
+        {priorityColumns.map((column) => {
           const columnRequests = getRequestsForPriority(column.id);          
           return (
             <Card
               key={column.id}
-              className={cn("min-w-80 border shadow-sm flex flex-col", column.color)}
+              className={cn("border shadow-sm flex flex-col flex-1", column.color)}
             >
               <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-lg">

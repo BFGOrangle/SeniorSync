@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import {
   DndContext,
@@ -29,7 +28,6 @@ type Status = "todo" | "in-progress" | "completed";
 interface RequestKanbanViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
-  showOnlyFilteredStatuses?: boolean;
 }
 
 interface Column {
@@ -63,7 +61,6 @@ const allColumns: Column[] = [
 export function RequestKanbanView({
   requests,
   onRequestUpdate,
-  showOnlyFilteredStatuses = false,
 }: RequestKanbanViewProps) {
   const [activeRequest, setActiveRequest] =
     useState<SeniorRequestDisplayView | null>(null);
@@ -81,7 +78,7 @@ export function RequestKanbanView({
     // First try to find intersecting droppable areas
     const pointerIntersections = pointerWithin(args);
     const droppableIntersections = pointerIntersections.filter((intersection: any) => {
-      return visibleColumns.some(col => col.id === intersection.id);
+      return allColumns.some(col => col.id === intersection.id);
     });
 
     if (droppableIntersections.length > 0) {
@@ -91,7 +88,7 @@ export function RequestKanbanView({
     // Fallback to rect intersection for droppable areas only
     const rectIntersections = rectIntersection(args);
     const droppableRectIntersections = rectIntersections.filter((intersection: any) => {
-      return visibleColumns.some(col => col.id === intersection.id);
+      return allColumns.some(col => col.id === intersection.id);
     });
 
     if (droppableRectIntersections.length > 0) {
@@ -101,21 +98,9 @@ export function RequestKanbanView({
     // Last resort: closest center for droppable areas only
     const allIntersections = closestCenter(args);
     return allIntersections.filter((intersection: any) => {
-      return visibleColumns.some(col => col.id === intersection.id);
+      return allColumns.some(col => col.id === intersection.id);
     });
   };
-
-  // Get unique statuses from requests if we want to filter columns
-  const getVisibleColumns = () => {
-    if (!showOnlyFilteredStatuses) {
-      return allColumns;
-    }
-
-    const requestStatuses = new Set(requests.map((r) => r.frontendStatus));
-    return allColumns.filter((col) => requestStatuses.has(col.id));
-  };
-
-  const visibleColumns = getVisibleColumns();
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -135,7 +120,7 @@ export function RequestKanbanView({
     let newStatus: Status | null = null;
 
     // Check if dropped directly on a column
-    if (visibleColumns.some(col => col.id === over.id)) {
+    if (allColumns.some(col => col.id === over.id)) {
       newStatus = over.id as Status;
     } else {
       // If dropped on a card, find which column it belongs to
@@ -182,13 +167,13 @@ export function RequestKanbanView({
     >
       <div className="overflow-x-auto">
         <div className="flex gap-6 h-full w-full">
-          {visibleColumns.map((column) => {
+          {allColumns.map((column) => {
             const columnRequests = getRequestsForStatus(column.id);
 
             return (
               <Card
                 key={column.id}
-                className={cn("min-w-80 border shadow-sm flex flex-col", column.color)}
+                className={cn("border shadow-sm flex flex-col flex-1", column.color)}
               >
                 <CardHeader className="pb-3 flex-shrink-0">
                   <CardTitle className="flex items-center justify-between text-lg">
