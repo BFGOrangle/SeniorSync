@@ -8,7 +8,6 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 
-@Repository
 public interface ReminderRepository extends JpaRepository<Reminder, Long> {
     List<Reminder> findByRequestId(Long requestId);
     List<Reminder> findByReminderDateBetween(OffsetDateTime start, OffsetDateTime end);

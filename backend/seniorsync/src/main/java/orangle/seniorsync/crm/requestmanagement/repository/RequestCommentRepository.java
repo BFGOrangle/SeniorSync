@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface RequestCommentRepository extends JpaRepository<RequestComment, Long>, JpaSpecificationExecutor<RequestComment> {
     List<RequestComment> findByRequestId(Long requestId);
 }
