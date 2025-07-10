@@ -49,6 +49,6 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
     @Query("SELECT COUNT(1) FROM SeniorRequest r")
     Long countAllRequests();
 
-    @Query(value = "SELECT AVG(EXTRACT(day FROM (r.completed_at - r.created_at))) FROM senior_sync.senior_requests r WHERE r.status = 'COMPLETED'", nativeQuery = true)
+    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (r.completed_at - r.created_at)) / 3600) FROM senior_sync.senior_requests r WHERE r.status = 'COMPLETED'", nativeQuery = true)
     Double averageRequestCompletionTime();
 }

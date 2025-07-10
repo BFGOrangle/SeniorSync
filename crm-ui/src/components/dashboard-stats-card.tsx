@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -161,16 +162,34 @@ export function CompletedThisMonthCard({ value, loading, trend }: Pick<Dashboard
 }
 
 export function AverageCompletionTimeCard({ value, loading, trend }: Pick<DashboardStatsCardProps, 'value' | 'loading' | 'trend'>) {
-  const formattedValue = typeof value === 'number' ? `${value.toFixed(1)} days` : value;
+  const [showInDays, setShowInDays] = useState(false);
+  
+  const getFormattedValue = () => {
+    if (typeof value !== 'number') return value;
+    
+    if (showInDays) {
+      const days = value / 24;
+      return `${days.toFixed(1)} days`;
+    } else {
+      return `${value.toFixed(1)} hours`;
+    }
+  };
+
+  const handleToggle = () => {
+    setShowInDays(!showInDays);
+  };
   
   return (
+    <div className='cursor-pointer'
+    onClick={handleToggle}>
     <DashboardStatsCard
       title="Avg. Completion Time"
-      value={formattedValue}
+      value={getFormattedValue()}
       icon={<TrendingUp className="h-4 w-4" />}
       description="Average resolution"
       trend={trend}
       loading={loading}
     />
+      </div>
   );
 } 
