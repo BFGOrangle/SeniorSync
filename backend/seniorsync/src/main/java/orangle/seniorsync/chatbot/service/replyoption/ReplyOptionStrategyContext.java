@@ -27,9 +27,9 @@ public class ReplyOptionStrategyContext implements IReplyOptionStrategyContext {
         throw new IllegalStateException("No applicable reply option strategy found for campaign: " + campaignName + " and state: " + state);
     }
 
-    public List<ReplyOption> getReplyOptionContents(String campaignName, String state) {
+    public List<ReplyOption> getReplyOptionContents(String campaignName, String state, String languageCode) {
         IReplyOptionStrategy strategy = getApplicableStrategy(campaignName, state);
         log.info("Using reply option strategy: {} for campaign: {}, state: {}", strategy.getClass().getName(), campaignName, state);
-        return strategy.getReplyOptions(campaignName, state);
+        return strategy.getReplyOptions(campaignName, state, languageCode);
     }
 }

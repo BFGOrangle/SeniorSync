@@ -43,9 +43,9 @@ public class MessageController {
     public ResponseEntity<ConversationDto> getActiveConversation(
             @PathVariable Long seniorId,
             @RequestParam(defaultValue = "lodging_request") String campaignName) {
-        Optional<ConversationDto> conversation = messageService.getActiveConversation(seniorId, campaignName);
-        return conversation.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return messageService.getActiveConversation(seniorId, campaignName)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/conversation/{conversationId}/clear")

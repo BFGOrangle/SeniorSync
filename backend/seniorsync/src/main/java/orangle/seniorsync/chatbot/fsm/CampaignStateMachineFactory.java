@@ -61,7 +61,7 @@ public class CampaignStateMachineFactory implements ICampaignStateMachineFactory
         StateMachineBuilder.Builder<String, String> stateMachineBuilder = StateMachineBuilder.builder();
         stateMachineBuilder.configureStates()
                 .withStates()
-                .initial("START") // Where "START" is the initial state
+                .initial("INIT") // Where "INIT" is the initial state
                 .states(allStates);
 
         var transitionConfigurer = stateMachineBuilder.configureTransitions();

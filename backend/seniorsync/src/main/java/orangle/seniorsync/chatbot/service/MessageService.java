@@ -46,11 +46,9 @@ public class MessageService {
     }
     
     public Optional<ConversationDto> getActiveConversation(Long seniorId, String campaignName) {
-        Conversation conversation = conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId);
-        if (conversation != null && !"COMPLETED".equals(conversation.getCurrentState())) {
-            return Optional.of(conversationMapper.toDto(conversation));
-        }
-        return Optional.empty();
+        return conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId)
+                .filter(conv -> !"COMPLETED".equals(conv.getCurrentState()))
+                .map(conversationMapper::toDto);
     }
     
     public void clearConversationMessages(Long conversationId) {

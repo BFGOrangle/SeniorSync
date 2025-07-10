@@ -24,22 +24,26 @@ public class ReplyController {
     }
 
     @PostMapping("/reply")
-    public ResponseEntity<ReplyDto> replyMessage(@RequestBody IncomingMessageDto incomingMessage) {
+    public ResponseEntity<ReplyDto> replyMessage(
+            @RequestBody IncomingMessageDto incomingMessage,
+            @RequestParam(defaultValue = "en") String languageCode) {
         ReplyDto replyDto = replyService.replyMessage(
                 incomingMessage.campaignName(),
                 incomingMessage.seniorId(),
-                incomingMessage.replyOption()
+                incomingMessage.replyOption(),
+                languageCode
         );
         log.info("Replying with message to senior_id: {}", replyDto.senior_id());
         return ResponseEntity.ok(replyDto);
     }
 
-    @GetMapping("/senior/{seniorId}/current-reply-options")
-    public ResponseEntity<List<ReplyOption>> getCurrentReplyOptions(
+    @GetMapping("/senior/{seniorId}/current-reply-response")
+    public ResponseEntity<ReplyDto> getCurrentReplyResponse(
             @PathVariable Long seniorId,
-            @RequestParam(defaultValue = "lodging_request") String campaignName) {
-        List<ReplyOption> replyOptions = replyService.getCurrentReplyOptions(campaignName, seniorId);
-        log.info("Retrieved {} current reply options for senior {} in campaign {}", replyOptions.size(), seniorId, campaignName);
-        return ResponseEntity.ok(replyOptions);
+            @RequestParam(defaultValue = "lodging_request") String campaignName,
+            @RequestParam(defaultValue = "en") String languageCode) {
+        ReplyDto replyResponse = replyService.getCurrentReplyResponse(campaignName, seniorId, languageCode);
+        log.info("Retrieving current reply response (prompt and reply options) for senior_id: {}", seniorId);
+        return ResponseEntity.ok(replyResponse);
     }
 }

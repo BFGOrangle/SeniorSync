@@ -11,6 +11,7 @@ import orangle.seniorsync.chatbot.repository.ConversationRepository;
 import orangle.seniorsync.chatbot.repository.FsmStateReplyOptionsRepository;
 import orangle.seniorsync.chatbot.repository.MessageRepository;
 import orangle.seniorsync.chatbot.service.replyoption.IReplyOptionStrategyContext;
+import orangle.seniorsync.chatbot.service.replyprompt.IReplyPromptService;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.StateMachineEventResult;
@@ -30,29 +31,33 @@ public class ReplyService implements IReplyService {
     private final MessageRepository messageRepository;
     private final ConversationStateMachinePersister conversationStateMachinePersister;
     private final IReplyOptionStrategyContext replyOptionStrategyContext;
+    private final IReplyPromptService replyPromptService;
 
     public ReplyService(ICampaignStateMachineFactory campaignStateMachineFactory,
                         ConversationRepository conversationRepository,
                         MessageRepository messageRepository,
                         FsmStateReplyOptionsRepository fsmStateReplyOptionsRepository,
                         ConversationStateMachinePersister conversationStateMachinePersister,
-                        IReplyOptionStrategyContext replyOptionStrategyContext) {
+                        IReplyOptionStrategyContext replyOptionStrategyContext,
+                        IReplyPromptService replyPromptService) {
         this.campaignStateMachineFactory = campaignStateMachineFactory;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.conversationStateMachinePersister = conversationStateMachinePersister;
         this.replyOptionStrategyContext = replyOptionStrategyContext;
+        this.replyPromptService = replyPromptService;
     }
 
-    public ReplyDto replyMessage(String campaignName, Long seniorId, ReplyOption replyOption) {
+    public ReplyDto replyMessage(String campaignName, Long seniorId, ReplyOption replyOption, String languageCode) {
         String fsmEvent = replyOption.fsmEvent();
-        String messageText = replyOption.text();
+        String replyDisplayText = replyOption.displayText();
+        String replyValue = replyOption.value();
 
         // Assuming one senior can only have one open request at a time
         Conversation conversation = loadExistingOrCreateNewConversation(campaignName, seniorId);
         log.info("Conversation loaded or created of id: {}", conversation.getId());
 
-        Message incomingMessage = persistMessage(conversation.getId(), messageText, "IN"); // use enum for direction
+        Message incomingMessage = persistMessage(conversation.getId(), replyDisplayText, "IN"); // use enum for direction
         log.info("Incoming message persisted with id: {}", incomingMessage.getId());
 
         // Restore and start conversation fsm
@@ -63,13 +68,12 @@ public class ReplyService implements IReplyService {
         String currentState = stateMachine.getState().getId();
 
         // Trigger fsm transition with the event
-        Flux<StateMachineEventResult<String, String>> stateMachineEventResultFlux = stateMachine.sendEvent(Mono.just(MessageBuilder.withPayload(fsmEvent)
+        StateMachineEventResult<String, String> stateTransitionResult = stateMachine.sendEvent(Mono.just(MessageBuilder.withPayload(fsmEvent)
                 .setHeader("conversationId", conversation.getId())
                 .setHeader("seniorId", seniorId)
-                .setHeader("text", messageText)
-                .build()));
+                .setHeader("text", replyValue)
+                .build())).blockLast();
 
-        StateMachineEventResult<String, String> stateTransitionResult = stateMachineEventResultFlux.blockLast();
         verifyFsmStateEventAccepted(stateTransitionResult);
 
         // Verify that the state machine transitioned to a new state
@@ -82,39 +86,18 @@ public class ReplyService implements IReplyService {
 
         log.info("Fsm transitioned successfully from: {} -> {}", currentState, newState);
 
-        // Check if we've reached COMPLETED state and auto-transition to START
-        if ("COMPLETED".equals(newState)) {
-            log.info("Reached COMPLETED state, auto-transitioning to START");
-
-            // Auto-trigger transition from COMPLETED to START
-            Flux<StateMachineEventResult<String, String>> autoRestartResultFlux = stateMachine.sendEvent(Mono.just(MessageBuilder.withPayload("AUTO_RESTART")
-                    .setHeader("conversationId", conversation.getId())
-                    .setHeader("seniorId", seniorId)
-                    .build()));
-
-            StateMachineEventResult<String, String> autoRestartResult = autoRestartResultFlux.blockLast();
-            verifyFsmStateEventAccepted(autoRestartResult);
-
-            // Update newState to reflect the auto-transition
-            newState = stateMachine.getState().getId();
-            log.info("Auto-transitioned from COMPLETED to: {}", newState);
-        }
-
         // Persist new FSM state after processing the event
         conversationStateMachinePersister.persist(stateMachine, conversation.getId());
         conversation.setCurrentState(newState);
-        conversationRepository.save(conversation);
 
         stateMachine.stopReactively().block();
 
-        // Prepare outbound reply - get reply options for the NEW state
-        String replyMessagePrompt = lookupPrompt(newState);
-
-        List<ReplyOption> replyOptions = replyOptionStrategyContext.getReplyOptionContents(campaignName, newState);
+        // Prepare outbound reply - get reply prompt and options for the NEW state
+        String replyMessagePrompt = replyPromptService.getReplyPrompt(campaignName, newState, languageCode);
+        List<ReplyOption> replyOptions = replyOptionStrategyContext.getReplyOptionContents(campaignName, newState, languageCode);
 
         // Persist outbound message
-        Message outboundMessage = persistMessage(conversation.getId(), replyMessagePrompt, "OUT");
-        Message savedOut = messageRepository.save(outboundMessage);
+        Message savedOut = persistMessage(conversation.getId(), replyMessagePrompt, "OUT");
 
         return new ReplyDto(
                 savedOut.getId(),
@@ -125,31 +108,39 @@ public class ReplyService implements IReplyService {
     }
 
     @Override
-    public List<ReplyOption> getCurrentReplyOptions(String campaignName, Long seniorId) {
+    public ReplyDto getCurrentReplyResponse(String campaignName, Long seniorId, String languageCode) {
         // Load existing conversation
-        Conversation conversation = conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId);
-        if (conversation == null) {
-            // No conversation exists, return START state options
-            return replyOptionStrategyContext.getReplyOptionContents(campaignName, "START");
-        }
-
-        String currentState = conversation.getCurrentState();
-        log.info("Getting current reply options for senior {} in state: {}", seniorId, currentState);
-
-        // Get reply options for the current state
-        return replyOptionStrategyContext.getReplyOptionContents(campaignName, currentState);
+        return conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId)
+                .map(conv -> {
+                    String currentState = conv.getCurrentState();
+                    String replyMessagePrompt = replyPromptService.getReplyPrompt(campaignName, currentState, languageCode);
+                    return new ReplyDto(
+                            null, // Since we are only fetching prompt an options for an alr sent out chatbot reply
+                            seniorId,
+                            replyMessagePrompt,
+                            replyOptionStrategyContext.getReplyOptionContents(campaignName, currentState, languageCode)
+                    );
+                })
+                .orElseGet(() -> {
+                    // No conversation exists, return INIT state options
+                    String replyMessagePrompt = replyPromptService.getReplyPrompt(campaignName, "INIT", languageCode);
+                    return new ReplyDto(
+                            null, // Since we are only fetching prompt an options for an alr sent out chatbot reply
+                            seniorId,
+                            replyMessagePrompt,
+                            replyOptionStrategyContext.getReplyOptionContents(campaignName, "INIT", languageCode)
+                    );
+                });
     }
 
     private Conversation loadExistingOrCreateNewConversation(String campaignName, Long seniorId) {
-        Conversation conversation = conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId);
-        if (conversation == null) {
-            conversation = Conversation.builder()
-                    .campaignName(campaignName)
-                    .seniorId(seniorId)
-                    .currentState("START")
-                    .extendedState(new HashMap<>())
-                    .build();
-        }
+        Conversation conversation = conversationRepository.findByCampaignNameAndSeniorId(campaignName, seniorId)
+                .orElseGet(() -> Conversation.builder()
+                        .campaignName(campaignName)
+                        .seniorId(seniorId)
+                        .currentState("INIT")
+                        .extendedState(new HashMap<>())
+                        .build());
         return conversationRepository.save(conversation);
     }
 
@@ -183,21 +174,5 @@ public class ReplyService implements IReplyService {
                 log.error("Unexpected result type: {}", resultType);
                 throw new IllegalStateException("Unexpected state machine result: " + resultType);
         }
-    }
-
-    /**
-     * TODO: This is a temporary method to return prompts based on the state. Should be persisted in a database table.
-     */
-    private String lookupPrompt(String state) {
-        return switch (state) {
-            case "START" -> "Hi there, let me help you with your request. Select Okay to start :)";
-            case "AWAITING_TYPE" -> "Please choose a request type:";
-            case "AWAITING_TITLE" -> "What’s the title of your request?";
-            case "AWAITING_DESCRIPTION" -> "Please describe your request:";
-            case "AWAITING_PRIORITY" -> "How urgent is this request?";
-            case "AWAITING_CONFIRMATION" -> "Looks good—submit now?";
-            case "COMPLETED" -> "Thanks! Your request has been lodged.";
-            default -> "Sorry, I didn’t understand that.";
-        };
     }
 }
