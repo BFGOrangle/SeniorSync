@@ -8,9 +8,13 @@ import orangle.seniorsync.crm.requestmanagement.mapper.CreateSeniorRequestMapper
 import orangle.seniorsync.crm.requestmanagement.mapper.SeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.mapper.UpdateSeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
+import orangle.seniorsync.crm.requestmanagement.model.RequestType;
 import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestView;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
+import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository;
 import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
+import orangle.seniorsync.common.model.Staff;
+import orangle.seniorsync.common.repository.StaffRepository;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,16 +28,22 @@ public class RequestManagementService implements IRequestManagementService {
     private final CreateSeniorRequestMapper createSeniorRequestMapper;
     private final SeniorRequestMapper seniorRequestMapper;
     private final UpdateSeniorRequestMapper updateSeniorRequestMapper;
+    private final StaffRepository staffRepository;
+    private final RequestTypeRepository requestTypeRepository;
 
     public RequestManagementService(
             SeniorRequestRepository seniorRequestRepository,
             CreateSeniorRequestMapper createSeniorRequestMapper,
             SeniorRequestMapper seniorRequestMapper,
-            UpdateSeniorRequestMapper updateSeniorRequestMapper) {
+            UpdateSeniorRequestMapper updateSeniorRequestMapper,
+            StaffRepository staffRepository,
+            RequestTypeRepository requestTypeRepository) {
         this.seniorRequestRepository = seniorRequestRepository;
         this.createSeniorRequestMapper = createSeniorRequestMapper;
         this.seniorRequestMapper = seniorRequestMapper;
         this.updateSeniorRequestMapper = updateSeniorRequestMapper;
+        this.staffRepository = staffRepository;
+        this.requestTypeRepository = requestTypeRepository;
     }
 
     /**
@@ -79,6 +89,7 @@ public class RequestManagementService implements IRequestManagementService {
                     SeniorRequestSpecs.hasStatus(filter.status()),
                     SeniorRequestSpecs.hasSeniorId(filter.seniorId()),
                     SeniorRequestSpecs.hasAssignedStaffId(filter.assignedStaffId()),
+                    SeniorRequestSpecs.hasRequestTypeId(filter.requestTypeId()),
                     SeniorRequestSpecs.priorityBetween(filter.minPriority(), filter.maxPriority()),
                     SeniorRequestSpecs.createdInRange(filter.createdAfter(), filter.createdBefore())
             );
@@ -248,5 +259,49 @@ public class RequestManagementService implements IRequestManagementService {
         seniorRequestRepository.save(request);
 
         return seniorRequestMapper.toDto(request);
+    }
+
+    @Transactional(readOnly = true)
+    public RequestFilterOptionsDto getFilterOptions() {
+        // Get all active staff
+        List<StaffOptionDto> staffOptions = staffRepository.findByIsActiveTrue()
+                .stream()
+                .map(staff -> new StaffOptionDto(
+                        staff.getId(),
+                        staff.getFullName(),
+                        staff.getJobTitle()
+                ))
+                .toList();
+
+        // Get all request types
+        List<RequestTypeOptionDto> requestTypeOptions = requestTypeRepository.findAll()
+                .stream()
+                .map(rt -> new RequestTypeOptionDto(
+                        rt.getId(),
+                        rt.getName(),
+                        rt.getDescription()
+                ))
+                .toList();
+
+        return new RequestFilterOptionsDto(staffOptions, requestTypeOptions);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SeniorRequestDto> findMyRequests(SeniorRequestFilterDto filter) {
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        
+        // Create a new filter with the current user's ID
+        SeniorRequestFilterDto myFilter = new SeniorRequestFilterDto(
+                filter != null ? filter.status() : null,
+                filter != null ? filter.seniorId() : null,
+                currentUserId, // Force to current user
+                filter != null ? filter.requestTypeId() : null,
+                filter != null ? filter.minPriority() : null,
+                filter != null ? filter.maxPriority() : null,
+                filter != null ? filter.createdAfter() : null,
+                filter != null ? filter.createdBefore() : null
+        );
+        
+        return findRequests(myFilter);
     }
 }

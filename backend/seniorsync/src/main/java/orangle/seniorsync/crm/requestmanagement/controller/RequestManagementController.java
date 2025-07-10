@@ -112,6 +112,20 @@ public class RequestManagementController {
         return ResponseEntity.ok().body(seniorRequest);
     }
 
+    @GetMapping("/filter-options")
+    public ResponseEntity<RequestFilterOptionsDto> getFilterOptions() {
+        RequestFilterOptionsDto options = requestManagementService.getFilterOptions();
+        log.info("Retrieved filter options");
+        return ResponseEntity.ok().body(options);
+    }
+
+    @GetMapping("/my-requests")
+    public ResponseEntity<List<SeniorRequestDto>> getMyRequests(@RequestBody(required = false) SeniorRequestFilterDto filter) {
+        List<SeniorRequestDto> myRequests = requestManagementService.findMyRequests(filter);
+        log.info("Retrieved {} requests for current user", myRequests.size());
+        return ResponseEntity.ok().body(myRequests);
+    }
+
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<DashboardDto> getDashboard() {

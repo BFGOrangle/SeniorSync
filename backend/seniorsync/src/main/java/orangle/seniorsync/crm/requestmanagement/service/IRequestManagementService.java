@@ -19,4 +19,8 @@ public interface IRequestManagementService {
     // Assignment operations with role-based business rules
     SeniorRequestDto assignRequest(Long requestId, AssignRequestDto assignRequestDto);
     SeniorRequestDto unassignRequest(Long requestId);
+    
+    // New filter support methods
+    RequestFilterOptionsDto getFilterOptions();
+    List<SeniorRequestDto> findMyRequests(SeniorRequestFilterDto filter);
 }

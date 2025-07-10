@@ -6,7 +6,8 @@ import {
   SeniorRequestFilterDto,
   SeniorRequestView,
   SeniorRequestDisplayView,
-  RequestUtils
+  RequestUtils,
+  RequestFilterOptionsDto
 } from '@/types/request';
 import { SeniorDto } from '@/types/senior';
 import { PaginatedResponse } from '@/types/common';
@@ -274,6 +275,24 @@ export class RequestManagementApiService {
       return null;
     }
   }
+
+  /**
+   * Get filter options for request filtering
+   */
+  async getFilterOptions(): Promise<RequestFilterOptionsDto> {
+    return this.client.get<RequestFilterOptionsDto>(`${REQUESTS_ENDPOINT}/filter-options`);
+  }
+
+  /**
+   * Get current user's requests with optional filtering
+   */
+  async getMyRequests(filter?: SeniorRequestFilterDto): Promise<SeniorRequestDto[]> {
+    if (filter) {
+      return this.client.post<SeniorRequestDto[]>(`${REQUESTS_ENDPOINT}/my-requests`, filter);
+    } else {
+      return this.client.get<SeniorRequestDto[]>(`${REQUESTS_ENDPOINT}/my-requests`);
+    }
+  }
 }
 
 // Export singleton instance
@@ -322,7 +341,8 @@ export const requestUtils = {
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
       status?: ('todo' | 'in-progress'| 'completed' )[];
-      assignedStaff?: string[];
+      requestType?: number[];
+      assignedStaff?: number[];
       searchTerm?: string;
     }
   ): SeniorRequestDisplayView[] {
@@ -341,10 +361,24 @@ export const requestUtils = {
         }
       }
 
-      // Assigned staff filter
-      if (filters.assignedStaff && filters.assignedStaff.length > 0) {
-        if (!filters.assignedStaff.includes(request.assignedStaffName || '')) {
+      // Request type filter
+      if (filters.requestType && filters.requestType.length > 0) {
+        if (!request.requestTypeId || !filters.requestType.includes(request.requestTypeId)) {
           return false;
+        }
+      }
+
+      // Assigned staff filter - filter by staff ID
+      if (filters.assignedStaff) {
+        // Handle unassigned requests (empty array means show unassigned)
+        if (filters.assignedStaff.length === 0) {
+          if (request.assignedStaffId) {
+            return false;
+          }
+        } else {
+          if (!request.assignedStaffId || !filters.assignedStaff.includes(request.assignedStaffId)) {
+            return false;
+          }
         }
       }
 

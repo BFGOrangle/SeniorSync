@@ -14,14 +14,15 @@ import { SeniorRequestDisplayView } from "@/types/request";
 import { useRequestManagement } from "@/hooks/use-requests";
 import { useToast } from "@/hooks/use-toast";
 import { CreateRequestModal } from "@/components/create-request-modal";
+import { useCurrentUser } from "@/contexts/user-context";
 
 type ViewMode = "kanban-status" | "kanban-priority" | "table";
 
 interface RequestFilterOptions {
   priority?: ("low" | "medium" | "high" | "urgent")[];
   status?: ("todo" | "in-progress" | "completed")[];
-  requestType?: string[];
-  assignedStaff?: string[];
+  requestType?: number[];
+  assignedStaff?: number[];
   searchTerm?: string;
 }
 
@@ -41,6 +42,7 @@ export default function RequestManagement() {
   });
 
   const { toast } = useToast();
+  const { currentUser } = useCurrentUser();
 
   // Use the request management hook
   const {
@@ -81,6 +83,62 @@ export default function RequestManagement() {
         title: "Error",
         description: "Failed to update senior request. Please try again.",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleMyTicketsClick = () => {
+    if (currentUser) {
+      const isMyTicketsActive = filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUser.id;
+      
+      if (isMyTicketsActive) {
+        // Toggle off - remove the assignedStaff filter
+        const newFilters = { ...filters };
+        delete newFilters.assignedStaff;
+        setFilters(newFilters);
+        toast({
+          title: "Filter Removed",
+          description: "Showing all tickets",
+          duration: 2000,
+        });
+      } else {
+        // Toggle on - show only my tickets
+        setFilters({
+          ...filters,
+          assignedStaff: [currentUser.id],
+        });
+        toast({
+          title: "Filter Applied",
+          description: "Showing only your assigned tickets",
+          duration: 2000,
+        });
+      }
+    }
+  };
+
+  const handleUnassignedClick = () => {
+    const isUnassignedActive = filters.assignedStaff?.length === 0;
+    
+    if (isUnassignedActive) {
+      // Toggle off - remove the assignedStaff filter
+      const newFilters = { ...filters };
+      delete newFilters.assignedStaff;
+      setFilters(newFilters);
+      toast({
+        title: "Filter Removed",
+        description: "Showing all tickets",
+        duration: 2000,
+      });
+    } else {
+      // Toggle on - show only unassigned tickets
+      setFilters({
+        ...filters,
+        assignedStaff: [], // Empty array means unassigned in the backend filter
+      });
+      toast({
+        title: "Filter Applied", 
+        description: "Showing only unassigned tickets",
+        duration: 2000,
       });
     }
   };
@@ -225,6 +283,10 @@ export default function RequestManagement() {
             onFiltersChange={setFilters}
             onSortChange={setSort}
             sort={sort}
+            onMyTicketsClick={handleMyTicketsClick}
+            onUnassignedClick={handleUnassignedClick}
+            isMyTicketsActive={currentUser ? filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUser.id : false}
+            isUnassignedActive={filters.assignedStaff?.length === 0}
           />
         </div>
       </div>

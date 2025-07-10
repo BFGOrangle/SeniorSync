@@ -171,8 +171,8 @@ export function useRequestManagement() {
     filters: {
       priority?: ('low' | 'medium' | 'high' | 'urgent')[];
       status?: ('todo' | 'in-progress' | 'completed')[];
-      requestType?: string[];
-      assignedStaff?: string[];
+      requestType?: number[];
+      assignedStaff?: number[];
       searchTerm?: string;
     },
     sortBy: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName' = 'createdAt',
