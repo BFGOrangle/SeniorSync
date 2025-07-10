@@ -63,7 +63,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
+    <Sidebar collapsible="icon" className="border-r z-30">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <HeartHandshake className="h-6 w-6 text-blue-600 shrink-0" />

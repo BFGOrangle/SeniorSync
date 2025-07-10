@@ -74,14 +74,6 @@ export function RequestCard({
     transition,
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
       case "low":
@@ -167,20 +159,6 @@ export function RequestCard({
                     .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </Badge>
               )}
-            </div>
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewDetails();
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                title="View Details"
-              >
-                <Eye className="h-3 w-3" />
-              </Button>
             </div>
           </div>
 

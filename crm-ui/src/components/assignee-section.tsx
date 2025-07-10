@@ -88,7 +88,7 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
             includeAssignToMe={true}
           />
         ) : currentUser ? (
-          /* Staff: Simple "Take" button */
+          /* Staff: Simple "Assign To Me" button */
           <Button
             size="sm"
             variant="default"
@@ -96,7 +96,7 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
             disabled={isLoading}
             className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            {isLoading ? "..." : "Take"}
+            {isLoading ? "..." : "Assign To Me"}
           </Button>
         ) : null}
       </div>
@@ -126,7 +126,7 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
           className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
         >
           <UserMinus className="h-3 w-3 mr-1" />
-          {isLoading ? "..." : "Release"}
+          {isLoading ? "..." : "Unassign"}
         </Button>
       )}
       

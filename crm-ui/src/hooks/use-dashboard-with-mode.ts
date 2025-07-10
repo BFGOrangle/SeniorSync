@@ -39,7 +39,7 @@ export interface UseDashboardWithModeReturn extends UseDashboardWithModeState {
 /**
  * Hook for managing dashboard data with mode support (personal vs center)
  */
-export function useDashboardWithMode(initialMode: DashboardMode = 'personal'): UseDashboardWithModeReturn {
+export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWithModeReturn {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [requestTypeSummaries, setRequestTypeSummaries] = useState<RequestTypeSummary[]>([]);
   const [statusDistribution, setStatusDistribution] = useState<StatusDistribution | null>(null);

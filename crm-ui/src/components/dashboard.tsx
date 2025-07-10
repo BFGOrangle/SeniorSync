@@ -43,7 +43,7 @@ export default function Dashboard() {
     setMode,
     forceRefresh,
     clearError,
-  } = useDashboardWithMode('personal');
+  } = useDashboardWithMode(isAdmin ? "center" : "personal");
 
   const handleRefresh = async () => {
     await forceRefresh();
@@ -88,13 +88,6 @@ export default function Dashboard() {
             />
           )}
 
-          {lastUpdated && (
-            <Badge variant="secondary" className="text-xs">
-              <Calendar className="w-3 h-3 mr-1" />
-              Updated {lastUpdated.toLocaleTimeString()}
-            </Badge>
-          )}
-
           <Button
             onClick={handleRefresh}
             disabled={loading}
@@ -107,10 +100,12 @@ export default function Dashboard() {
             {loading ? "Refreshing..." : "Refresh"}
           </Button>
 
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          {lastUpdated && (
+            <Badge variant="secondary" className="text-xs">
+              <Calendar className="w-3 h-3 mr-1" />
+              Updated {lastUpdated.toLocaleTimeString()}
+            </Badge>
+          )}
         </div>
       </div>
 
