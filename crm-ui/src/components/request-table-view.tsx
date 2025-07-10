@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useNavigationHelper } from "@/components/navigation-helper";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -39,6 +40,7 @@ export function RequestTableView({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const router = useRouter();
+  const { getRoutes } = useNavigationHelper();
 
   const getInitials = (name: string) => {
     return name
@@ -343,7 +345,8 @@ export function RequestTableView({
                   data-state={row.getIsSelected() && "selected"}
                   className="border-gray-100 hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    router.push(`/admin/requests/${row.original.id}`);
+                                          const routes = getRoutes();
+                      router.push(routes.requests(row.original.id.toString()));
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (

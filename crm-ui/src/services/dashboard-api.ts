@@ -16,6 +16,8 @@ import {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8088";
 const DASHBOARD_ENDPOINT = `${API_BASE_URL}/api/requests/dashboard`;
+const PERSONAL_DASHBOARD_ENDPOINT = `${API_BASE_URL}/api/requests/dashboard/personal`;
+const CENTER_DASHBOARD_ENDPOINT = `${API_BASE_URL}/api/requests/dashboard/center`;
 
 // Custom error class for dashboard API errors
 export class DashboardApiError extends BaseApiError {
@@ -211,11 +213,165 @@ export class DashboardApiService extends AuthenticatedApiClient {
   }
 
   /**
+   * Get personal dashboard data (filtered to current user's assigned requests)
+   */
+  private async getRawPersonalDashboardData(): Promise<DashboardResponse> {
+    return this.getCachedData("dashboard-personal-raw", () =>
+      this.get<DashboardResponse>(PERSONAL_DASHBOARD_ENDPOINT)
+    );
+  }
+
+  /**
+   * Get personal dashboard statistics
+   */
+  async getPersonalDashboardStats(): Promise<DashboardStats> {
+    try {
+      const rawData = await this.getRawPersonalDashboardData();
+      return DashboardUtils.transformDashboardResponse(rawData);
+    } catch (error) {
+      console.error("Failed to get personal dashboard stats:", error);
+      return {
+        statusCounts: {},
+        requestTypeCounts: {},
+        priorityCounts: {},
+        monthlyTrend: {},
+        totalRequests: 0,
+        totalCompletedThisMonth: 0,
+        totalPendingRequests: 0,
+        averageCompletionTime: 0,
+        staffWorkload: {},
+      };
+    }
+  }
+
+  /**
+   * Get center dashboard data (all requests - admin only)
+   */
+  private async getRawCenterDashboardData(): Promise<DashboardResponse> {
+    return this.getCachedData("dashboard-center-raw", () =>
+      this.get<DashboardResponse>(CENTER_DASHBOARD_ENDPOINT)
+    );
+  }
+
+  /**
+   * Get center dashboard statistics
+   */
+  async getCenterDashboardStats(): Promise<DashboardStats> {
+    try {
+      const rawData = await this.getRawCenterDashboardData();
+      return DashboardUtils.transformDashboardResponse(rawData);
+    } catch (error) {
+      console.error("Failed to get center dashboard stats:", error);
+      return {
+        statusCounts: {},
+        requestTypeCounts: {},
+        priorityCounts: {},
+        monthlyTrend: {},
+        totalRequests: 0,
+        totalCompletedThisMonth: 0,
+        totalPendingRequests: 0,
+        averageCompletionTime: 0,
+        staffWorkload: {},
+      };
+    }
+  }
+
+  /**
+   * Get dashboard data based on mode (personal or center)
+   */
+  async getDashboardStatsByMode(mode: 'personal' | 'center'): Promise<DashboardStats> {
+    if (mode === 'personal') {
+      return this.getPersonalDashboardStats();
+    } else {
+      return this.getCenterDashboardStats();
+    }
+  }
+
+  /**
+   * Get request type summaries by mode
+   */
+  async getRequestTypeSummariesByMode(mode: 'personal' | 'center'): Promise<RequestTypeSummary[]> {
+    try {
+      const rawData = mode === 'personal' 
+        ? await this.getRawPersonalDashboardData() 
+        : await this.getRawCenterDashboardData();
+      return DashboardUtils.generateRequestTypeSummaries(rawData);
+    } catch (error) {
+      console.error(`Failed to get ${mode} request type summaries:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get status distribution by mode
+   */
+  async getStatusDistributionByMode(mode: 'personal' | 'center'): Promise<StatusDistribution> {
+    try {
+      const stats = await this.getDashboardStatsByMode(mode);
+      return stats.statusCounts;
+    } catch (error) {
+      console.error(`Failed to get ${mode} status distribution:`, error);
+      return {};
+    }
+  }
+
+  /**
+   * Get priority distribution by mode
+   */
+  async getPriorityDistributionByMode(mode: 'personal' | 'center'): Promise<PriorityDistribution> {
+    try {
+      const stats = await this.getDashboardStatsByMode(mode);
+      return stats.priorityCounts;
+    } catch (error) {
+      console.error(`Failed to get ${mode} priority distribution:`, error);
+      return {};
+    }
+  }
+
+  /**
+   * Get monthly trends by mode
+   */
+  async getMonthlyTrendsByMode(mode: 'personal' | 'center'): Promise<MonthlyTrend> {
+    try {
+      const stats = await this.getDashboardStatsByMode(mode);
+      return stats.monthlyTrend;
+    } catch (error) {
+      console.error(`Failed to get ${mode} monthly trends:`, error);
+      return {};
+    }
+  }
+
+  /**
+   * Get staff workload by mode (only relevant for center mode)
+   */
+  async getStaffWorkloadByMode(mode: 'personal' | 'center'): Promise<StaffWorkload> {
+    try {
+      if (mode === 'personal') {
+        // Personal mode doesn't show staff workload
+        return {};
+      }
+      const stats = await this.getDashboardStatsByMode(mode);
+      return stats.staffWorkload;
+    } catch (error) {
+      console.error(`Failed to get ${mode} staff workload:`, error);
+      return {};
+    }
+  }
+
+  /**
    * Force refresh all dashboard data (clears cache and refetches)
    */
   async forceRefresh(): Promise<DashboardStats> {
     this.clearCache();
     return this.getDashboardStats();
+  }
+
+  /**
+   * Force refresh dashboard data by mode
+   */
+  async forceRefreshByMode(mode: 'personal' | 'center'): Promise<DashboardStats> {
+    this.clearCache();
+    return this.getDashboardStatsByMode(mode);
   }
 
   /**

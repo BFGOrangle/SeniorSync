@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import orangle.seniorsync.crm.requestmanagement.dto.AssignRequestDto;
 
 @Slf4j
 @RestController
@@ -52,6 +53,43 @@ public class RequestManagementController {
         return ResponseEntity.ok().body(updatedSeniorRequest);
     }
 
+    /**
+     * Assign or reassign a request to a staff member
+     * Business rules enforced in service layer:
+     * - Admin can assign to anyone
+     * - Staff can only assign unassigned requests to themselves
+     *
+     * @param requestId the ID of the request to assign
+     * @param assignRequestDto the assignment details
+     * @return updated SeniorRequestDto with HTTP 200
+     */
+    @PutMapping("/{requestId}/assign")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<SeniorRequestDto> assignRequest(
+            @PathVariable Long requestId,
+            @Valid @RequestBody AssignRequestDto assignRequestDto) {
+        SeniorRequestDto assignedRequest = requestManagementService.assignRequest(requestId, assignRequestDto);
+        log.info("Assigned request {} to staff ID: {}", requestId, assignRequestDto.assignedStaffId());
+        return ResponseEntity.ok().body(assignedRequest);
+    }
+
+    /**
+     * Unassign a request (remove assignment)
+     * Business rules enforced in service layer:
+     * - Admin can unassign any request
+     * - Staff can only unassign requests assigned to themselves
+     *
+     * @param requestId the ID of the request to unassign
+     * @return updated SeniorRequestDto with HTTP 200
+     */
+    @DeleteMapping("/{requestId}/assign")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<SeniorRequestDto> unassignRequest(@PathVariable Long requestId) {
+        SeniorRequestDto unassignedRequest = requestManagementService.unassignRequest(requestId);
+        log.info("Unassigned request {}", requestId);
+        return ResponseEntity.ok().body(unassignedRequest);
+    }
+
     @GetMapping("/senior/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<SeniorRequestDto>> getRequestsBySenior(@PathVariable long id) {
@@ -74,11 +112,41 @@ public class RequestManagementController {
         return ResponseEntity.ok().body(seniorRequest);
     }
 
+    @GetMapping("/filter-options")
+    public ResponseEntity<RequestFilterOptionsDto> getFilterOptions() {
+        RequestFilterOptionsDto options = requestManagementService.getFilterOptions();
+        log.info("Retrieved filter options");
+        return ResponseEntity.ok().body(options);
+    }
+
+    @GetMapping("/my-requests")
+    public ResponseEntity<List<SeniorRequestDto>> getMyRequests(@RequestBody(required = false) SeniorRequestFilterDto filter) {
+        List<SeniorRequestDto> myRequests = requestManagementService.findMyRequests(filter);
+        log.info("Retrieved {} requests for current user", myRequests.size());
+        return ResponseEntity.ok().body(myRequests);
+    }
+
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<DashboardDto> getDashboard() {
         DashboardDto dashboard = requestManagementService.getDashboard();
         log.info("Retrieved dashboard data");
+        return ResponseEntity.ok().body(dashboard);
+    }
+
+    @GetMapping("/dashboard/personal")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<DashboardDto> getPersonalDashboard() {
+        DashboardDto dashboard = requestManagementService.getPersonalDashboard();
+        log.info("Retrieved personal dashboard data");
+        return ResponseEntity.ok().body(dashboard);
+    }
+
+    @GetMapping("/dashboard/center")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DashboardDto> getCenterDashboard() {
+        DashboardDto dashboard = requestManagementService.getCenterDashboard();
+        log.info("Retrieved center dashboard data");
         return ResponseEntity.ok().body(dashboard);
     }
 }

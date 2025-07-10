@@ -1,5 +1,6 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
+import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.common.util.TimeUtils;
 import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
@@ -7,9 +8,13 @@ import orangle.seniorsync.crm.requestmanagement.mapper.CreateSeniorRequestMapper
 import orangle.seniorsync.crm.requestmanagement.mapper.SeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.mapper.UpdateSeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
+import orangle.seniorsync.crm.requestmanagement.model.RequestType;
 import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestView;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
+import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository;
 import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
+import orangle.seniorsync.common.model.Staff;
+import orangle.seniorsync.common.repository.StaffRepository;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,16 +28,22 @@ public class RequestManagementService implements IRequestManagementService {
     private final CreateSeniorRequestMapper createSeniorRequestMapper;
     private final SeniorRequestMapper seniorRequestMapper;
     private final UpdateSeniorRequestMapper updateSeniorRequestMapper;
+    private final StaffRepository staffRepository;
+    private final RequestTypeRepository requestTypeRepository;
 
     public RequestManagementService(
             SeniorRequestRepository seniorRequestRepository,
             CreateSeniorRequestMapper createSeniorRequestMapper,
             SeniorRequestMapper seniorRequestMapper,
-            UpdateSeniorRequestMapper updateSeniorRequestMapper) {
+            UpdateSeniorRequestMapper updateSeniorRequestMapper,
+            StaffRepository staffRepository,
+            RequestTypeRepository requestTypeRepository) {
         this.seniorRequestRepository = seniorRequestRepository;
         this.createSeniorRequestMapper = createSeniorRequestMapper;
         this.seniorRequestMapper = seniorRequestMapper;
         this.updateSeniorRequestMapper = updateSeniorRequestMapper;
+        this.staffRepository = staffRepository;
+        this.requestTypeRepository = requestTypeRepository;
     }
 
     /**
@@ -78,6 +89,7 @@ public class RequestManagementService implements IRequestManagementService {
                     SeniorRequestSpecs.hasStatus(filter.status()),
                     SeniorRequestSpecs.hasSeniorId(filter.seniorId()),
                     SeniorRequestSpecs.hasAssignedStaffId(filter.assignedStaffId()),
+                    SeniorRequestSpecs.hasRequestTypeId(filter.requestTypeId()),
                     SeniorRequestSpecs.priorityBetween(filter.minPriority(), filter.maxPriority()),
                     SeniorRequestSpecs.createdInRange(filter.createdAfter(), filter.createdBefore())
             );
@@ -170,5 +182,197 @@ public class RequestManagementService implements IRequestManagementService {
                 requestsByStaff,
                 requestTypeStatusCounts
         );
+    }
+
+    /**
+     * Get personal dashboard data for the current user
+     * Shows only data for requests assigned to the current user
+     * Available for both ADMIN and STAFF roles
+     */
+    @Transactional(readOnly = true)
+    public DashboardDto getPersonalDashboard() {
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        
+        Long totalRequestsCount = seniorRequestRepository.countPersonalAllRequests(currentUserId);
+        Long pendingRequestsCount = seniorRequestRepository.countPersonalPendingRequests(currentUserId);
+        Long completedThisMonthCount = seniorRequestRepository.personalCompletedThisMonth(currentUserId);
+        Double averageCompletionTime = seniorRequestRepository.averagePersonalRequestCompletionTime(currentUserId);
+        List<StringCountDto> requestsByType = seniorRequestRepository.findPersonalRequestsByRequestTypeId(currentUserId);
+        List<StringCountDto> requestsByMonth = seniorRequestRepository.findPersonalCountsByMonthAndYear(currentUserId);
+        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findPersonalCountsByPriority(currentUserId);
+        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findPersonalCountsByStatus(currentUserId);
+        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findPersonalCountByRequestTypeIdAndStatus(currentUserId);
+        
+        // For personal dashboard, staff workload is not relevant - return empty list
+        List<StringCountDto> emptyStaffWorkload = List.of();
+
+        return new DashboardDto(
+                totalRequestsCount,
+                pendingRequestsCount,
+                completedThisMonthCount,
+                averageCompletionTime,
+                requestsByStatus,
+                requestsByType,
+                requestsByPriority,
+                requestsByMonth,
+                emptyStaffWorkload,
+                requestTypeStatusCounts
+        );
+    }
+
+    /**
+     * Get center-level dashboard data (all requests across the organization)
+     * Only available for ADMIN role
+     * This is essentially the same as getDashboard() but with explicit admin check
+     */
+    @Transactional(readOnly = true)
+    public DashboardDto getCenterDashboard() {
+        // Ensure only admins can access center dashboard
+        SecurityContextUtil.requireAdmin();
+        
+        Long totalRequestsCount = seniorRequestRepository.countAllRequests();
+        Long pendingRequestsCount = seniorRequestRepository.countPendingRequests();
+        Long completedThisMonthCount = seniorRequestRepository.completedThisMonth();
+        Double averageCompletionTime = seniorRequestRepository.averageRequestCompletionTime();
+        List<StringCountDto> requestsByType = seniorRequestRepository.findSeniorRequestsByRequestTypeId();
+        List<StringCountDto> requestsByStaff = seniorRequestRepository.findCountsByAssignedStaffId();
+        List<StringCountDto> requestsByMonth = seniorRequestRepository.findCountsByMonthAndYear();
+        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findCountsByPriority();
+        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findCountsByStatus();
+        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findCountByRequestTypeIdAndStatus();
+
+        return new DashboardDto(
+                totalRequestsCount,
+                pendingRequestsCount,
+                completedThisMonthCount,
+                averageCompletionTime,
+                requestsByStatus,
+                requestsByType,
+                requestsByPriority,
+                requestsByMonth,
+                requestsByStaff,
+                requestTypeStatusCounts
+        );
+    }
+
+    /**
+     * Assign a request to a staff member with role-based business rules:
+     * - Admin can assign any request to any staff member
+     * - Staff can only assign unassigned requests to themselves
+     *
+     * @param requestId the ID of the request to assign
+     * @param assignRequestDto the assignment details
+     * @return the updated SeniorRequestDto
+     * @throws IllegalArgumentException if request not found
+     * @throws SecurityException if assignment violates business rules
+     */
+    @Transactional
+    public SeniorRequestDto assignRequest(Long requestId, AssignRequestDto assignRequestDto) {
+        SeniorRequest request = seniorRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
+
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
+        Long targetStaffId = assignRequestDto.assignedStaffId();
+
+        // Validate business rules
+        if (isAdmin) {
+            // Admin can assign to anyone
+            // TODO: Optionally validate that targetStaffId exists in staff table
+        } else {
+            // Staff can only assign unassigned requests to themselves
+            if (request.getAssignedStaffId() != null) {
+                throw new SecurityException("Staff members can only assign unassigned requests");
+            }
+            if (!currentUserId.equals(targetStaffId)) {
+                throw new SecurityException("Staff members can only assign requests to themselves");
+            }
+        }
+
+        // Perform assignment
+        request.setAssignedStaffId(targetStaffId);
+        seniorRequestRepository.save(request);
+
+        return seniorRequestMapper.toDto(request);
+    }
+
+    /**
+     * Unassign a request (remove assignment) with role-based business rules:
+     * - Admin can unassign any request
+     * - Staff can only unassign requests assigned to themselves
+     *
+     * @param requestId the ID of the request to unassign
+     * @return the updated SeniorRequestDto
+     * @throws IllegalArgumentException if request not found
+     * @throws SecurityException if unassignment violates business rules
+     */
+    @Transactional
+    public SeniorRequestDto unassignRequest(Long requestId) {
+        SeniorRequest request = seniorRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
+
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
+
+        // Validate business rules
+        if (!isAdmin) {
+            // Staff can only unassign requests assigned to themselves
+            if (request.getAssignedStaffId() == null) {
+                throw new SecurityException("Request is not assigned");
+            }
+            if (!currentUserId.equals(request.getAssignedStaffId())) {
+                throw new SecurityException("Staff members can only unassign requests assigned to themselves");
+            }
+        }
+
+        // Perform unassignment
+        request.setAssignedStaffId(null);
+        seniorRequestRepository.save(request);
+
+        return seniorRequestMapper.toDto(request);
+    }
+
+    @Transactional(readOnly = true)
+    public RequestFilterOptionsDto getFilterOptions() {
+        // Get all active staff
+        List<StaffOptionDto> staffOptions = staffRepository.findByIsActiveTrue()
+                .stream()
+                .map(staff -> new StaffOptionDto(
+                        staff.getId(),
+                        staff.getFullName(),
+                        staff.getJobTitle()
+                ))
+                .toList();
+
+        // Get all request types
+        List<RequestTypeOptionDto> requestTypeOptions = requestTypeRepository.findAll()
+                .stream()
+                .map(rt -> new RequestTypeOptionDto(
+                        rt.getId(),
+                        rt.getName(),
+                        rt.getDescription()
+                ))
+                .toList();
+
+        return new RequestFilterOptionsDto(staffOptions, requestTypeOptions);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SeniorRequestDto> findMyRequests(SeniorRequestFilterDto filter) {
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        
+        // Create a new filter with the current user's ID
+        SeniorRequestFilterDto myFilter = new SeniorRequestFilterDto(
+                filter != null ? filter.status() : null,
+                filter != null ? filter.seniorId() : null,
+                currentUserId, // Force to current user
+                filter != null ? filter.requestTypeId() : null,
+                filter != null ? filter.minPriority() : null,
+                filter != null ? filter.maxPriority() : null,
+                filter != null ? filter.createdAfter() : null,
+                filter != null ? filter.createdBefore() : null
+        );
+        
+        return findRequests(myFilter);
     }
 }

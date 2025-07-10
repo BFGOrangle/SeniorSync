@@ -1,20 +1,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useNavigationHelper } from "@/components/navigation-helper";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Clock, MoreHorizontal } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Clock, Eye } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useCurrentUser } from "@/contexts/user-context";
+import { AssigneeSection } from "@/components/assignee-section";
 import { cn } from "@/lib/utils";
 
 interface RequestCardProps {
@@ -30,6 +26,7 @@ export function RequestCard({
 }: RequestCardProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
+  const { getRoutes } = useNavigationHelper();
   const { currentUser } = useCurrentUser();
 
   const {
@@ -46,7 +43,8 @@ export function RequestCard({
 
   const handleViewDetails = () => {
     setIsNavigating(true);
-    router.push(`/admin/requests/${request.id}`);
+    const routes = getRoutes();
+    router.push(routes.requests(request.id.toString()));
   };
 
   const handleAssignToMe = async () => {
@@ -171,41 +169,18 @@ export function RequestCard({
               )}
             </div>
             <div className="flex gap-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-gray-100 relative z-30"
-                    title="More Actions"
-                  >
-                    <MoreHorizontal className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewDetails();
-                    }}
-                  >
-                    View Details
-                  </DropdownMenuItem>
-                  {currentUser && request.assignedStaffId !== currentUser.id && (
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAssignToMe();
-                      }}
-                    >
-                      Assign to Me
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewDetails();
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                title="View Details"
+              >
+                <Eye className="h-3 w-3" />
+              </Button>
             </div>
           </div>
 
@@ -220,18 +195,10 @@ export function RequestCard({
           )}
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-xs bg-gray-100 text-gray-600 font-medium">
-                  {getInitials(
-                    request.assignedStaffName || "Unassigned"
-                  )}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs text-gray-600 font-medium">
-                {request.assignedStaffName || "Unassigned"}
-              </span>
-            </div>
+            <AssigneeSection 
+              request={request} 
+              onUpdate={onUpdate}
+            />
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <Clock className="h-3 w-3" />
               <span className="font-medium">

@@ -2,12 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
   FileText,
   Users,
   Settings,
   HeartHandshake,
   Layout,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -23,6 +25,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 // Navigation items
 const navigationItems = [
@@ -54,6 +57,10 @@ const settingsItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -128,9 +135,33 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
-        <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-          <p>Admin Panel</p>
-          <p>v1.0.0</p>
+        <div className="space-y-3 group-data-[collapsible=icon]:hidden">
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+          <div className="text-xs text-muted-foreground">
+            <p>Admin Panel</p>
+            <p>v1.0.0</p>
+          </div>
+        </div>
+        
+        {/* Icon-only mode sign out button */}
+        <div className="group-data-[collapsible=icon]:block hidden">
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            size="sm"
+            className="w-full p-2"
+            title="Sign Out"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </SidebarFooter>
 

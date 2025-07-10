@@ -32,6 +32,13 @@ public class SeniorRequestSpecs {
                         : cb.equal(root.get("assignedStaff").get("id"), staffId);
     }
 
+    public static Specification<SeniorRequest> hasRequestTypeId(Long requestTypeId) {
+        return (root, query, cb) ->
+                requestTypeId == null
+                        ? cb.conjunction()
+                        : cb.equal(root.get("requestTypeId"), requestTypeId);
+    }
+
     public static Specification<SeniorRequest> priorityBetween(Short min, Short max) {
         return (root, query, cb) -> {
             if (min == null && max == null) {

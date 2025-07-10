@@ -8,6 +8,7 @@ public record SeniorRequestFilterDto(
         RequestStatus status,
         Long seniorId,
         Long assignedStaffId,
+        Long requestTypeId,
         Short minPriority,
         Short maxPriority,
         OffsetDateTime createdAfter,

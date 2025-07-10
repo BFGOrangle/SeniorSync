@@ -1,23 +1,21 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Search, Filter, ChevronDown, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Search, Filter, SortAsc, SortDesc, ChevronDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { requestManagementApiService } from "@/services/request-api";
+import { RequestFilterOptionsDto } from "@/types/request";
+import { useCurrentUser } from "@/contexts/user-context";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "todo" | "in-progress" | "completed";
@@ -25,8 +23,8 @@ type Status = "todo" | "in-progress" | "completed";
 interface RequestFilterOptions {
   priority?: Priority[];
   status?: Status[];
-  requestType?: string[];
-  assignedStaff?: string[];
+  requestType?: number[]; // Changed from string[] to number[]
+  assignedStaff?: number[]; // Changed from string[] to number[]
   searchTerm?: string;
 }
 
@@ -40,6 +38,10 @@ interface RequestFiltersProps {
   sort: RequestSortOption;
   onFiltersChange: (filters: RequestFilterOptions) => void;
   onSortChange: (sort: RequestSortOption) => void;
+  onMyTicketsClick?: () => void;
+  onUnassignedClick?: () => void;
+  isMyTicketsActive?: boolean;
+  isUnassignedActive?: boolean;
 }
 
 export function RequestFilters({
@@ -47,8 +49,18 @@ export function RequestFilters({
   sort,
   onFiltersChange,
   onSortChange,
+  onMyTicketsClick,
+  onUnassignedClick,
+  isMyTicketsActive,
+  isUnassignedActive,
 }: RequestFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterOptions, setFilterOptions] = useState<RequestFilterOptionsDto>({
+    staffOptions: [],
+    requestTypeOptions: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const { currentUser } = useCurrentUser();
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
   const statusOptions: Status[] = [
@@ -65,22 +77,22 @@ export function RequestFilters({
     { field: "status", label: "Status" },
   ] as const;
 
-  // Sample request types and staff - in real app these would come from props or API
-  const requestTypes = [
-    "Medical Assistance",
-    "Transportation", 
-    "Home Care",
-    "Emergency Support",
-    "Other"
-  ];
-
-  const staffMembers = [
-    "Sarah Johnson",
-    "Michael Chen",
-    "Emily Rodriguez",
-    "David Wilson",
-    "Lisa Anderson"
-  ];
+  // Load filter options on mount
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        setLoading(true);
+        const options = await requestManagementApiService.getFilterOptions();
+        setFilterOptions(options);
+      } catch (error) {
+        console.error('Failed to load filter options:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadFilterOptions();
+  }, []);
 
   const handlePriorityChange = (priority: Priority, checked: boolean) => {
     const currentPriorities = filters.priority || [];
@@ -106,11 +118,11 @@ export function RequestFilters({
     });
   };
 
-  const handleRequestTypeChange = (requestType: string, checked: boolean) => {
+  const handleRequestTypeChange = (requestTypeId: number, checked: boolean) => {
     const currentRequestTypes = filters.requestType || [];
     const newRequestTypes = checked
-      ? [...currentRequestTypes, requestType]
-      : currentRequestTypes.filter((rt) => rt !== requestType);
+      ? [...currentRequestTypes, requestTypeId]
+      : currentRequestTypes.filter((rt) => rt !== requestTypeId);
 
     onFiltersChange({
       ...filters,
@@ -118,11 +130,11 @@ export function RequestFilters({
     });
   };
 
-  const handleStaffChange = (staff: string, checked: boolean) => {
+  const handleStaffChange = (staffId: number, checked: boolean) => {
     const currentStaff = filters.assignedStaff || [];
     const newStaff = checked
-      ? [...currentStaff, staff]
-      : currentStaff.filter((s) => s !== staff);
+      ? [...currentStaff, staffId]
+      : currentStaff.filter((s) => s !== staffId);
 
     onFiltersChange({
       ...filters,
@@ -144,229 +156,319 @@ export function RequestFilters({
 
   return (
     <div className="flex items-center gap-4 p-4 bg-white border-b border-gray-200">
-      <div className="flex-1 flex items-center gap-4">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search requests..."
-            value={filters.searchTerm || ""}
-            onChange={(e) =>
-              onFiltersChange({ ...filters, searchTerm: e.target.value })
-            }
-            className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-
-        {/* Filters */}
-        <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <PopoverTrigger asChild>
+      {/* Quick Filters */}
+      {(onMyTicketsClick || onUnassignedClick) && (
+        <>
+          {onMyTicketsClick && (
             <Button
-              variant="outline"
-              className="border-gray-300 hover:bg-gray-50 relative"
+              variant={isMyTicketsActive ? "default" : "outline"}
+              size="sm"
+              onClick={onMyTicketsClick}
+              className={`flex items-center gap-2 ${
+                isMyTicketsActive 
+                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                  : "hover:bg-gray-50"
+              }`}
             >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-              <ChevronDown className="h-4 w-4 ml-2" />
-              {activeFilterCount > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center"
-                >
-                  {activeFilterCount}
-                </Badge>
-              )}
+              <User className="h-4 w-4" />
+              My Tickets
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-4" align="start">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-gray-900">Filters</h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-6 text-gray-500 hover:text-gray-700"
-                >
-                  Clear all
-                </Button>
+          )}
+          {onUnassignedClick && (
+            <Button
+              variant={isUnassignedActive ? "default" : "outline"}
+              size="sm"
+              onClick={onUnassignedClick}
+              className={`flex items-center gap-2 ${
+                isUnassignedActive 
+                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                  : "hover:bg-gray-50"
+              }`}
+            >
+              Unassigned
+            </Button>
+          )}
+          <Separator orientation="vertical" className="h-6" />
+        </>
+      )}
+
+      {/* Search */}
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          placeholder="Search requests..."
+          value={filters.searchTerm || ""}
+          onChange={(e) =>
+            onFiltersChange({ ...filters, searchTerm: e.target.value })
+          }
+          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+        />
+      </div>
+
+      {/* Advanced Filters */}
+      <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="border-gray-300 hover:bg-gray-50 relative"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+            <ChevronDown className="h-4 w-4 ml-2" />
+            {activeFilterCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center"
+              >
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-4" align="start">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-gray-900">Filters</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="h-6 text-gray-500 hover:text-gray-700"
+              >
+                Clear all
+              </Button>
+            </div>
+
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {/* Priority Filter */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-900">
+                  Priority
+                </Label>
+                <div className="space-y-2">
+                  {priorityOptions.map((priority) => (
+                    <div
+                      key={priority}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        id={`priority-${priority}`}
+                        checked={
+                          filters.priority?.includes(priority) || false
+                        }
+                        onCheckedChange={(checked) =>
+                          handlePriorityChange(priority, checked as boolean)
+                        }
+                        className="border-gray-300"
+                      />
+                      <Label
+                        htmlFor={`priority-${priority}`}
+                        className="text-sm text-gray-700 font-normal cursor-pointer"
+                      >
+                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {/* Priority Filter */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-900">
-                    Priority
-                  </Label>
-                  <div className="space-y-2">
-                    {priorityOptions.map((priority) => (
+              <Separator />
+
+              {/* Status Filter */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-900">
+                  Status
+                </Label>
+                <div className="space-y-2">
+                  {statusOptions.map((status) => (
+                    <div key={status} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${status}`}
+                        checked={filters.status?.includes(status) || false}
+                        onCheckedChange={(checked) =>
+                          handleStatusChange(status, checked as boolean)
+                        }
+                        className="border-gray-300"
+                      />
+                      <Label
+                        htmlFor={`status-${status}`}
+                        className="text-sm text-gray-700 font-normal cursor-pointer"
+                      >
+                        {status
+                          .replace("-", " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Request Type Filter */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-900">
+                  Request Type
+                </Label>
+                {loading ? (
+                  <div className="text-sm text-gray-500">Loading...</div>
+                ) : (
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {filterOptions.requestTypeOptions.map((requestType) => (
                       <div
-                        key={priority}
+                        key={requestType.id}
                         className="flex items-center space-x-2"
                       >
                         <Checkbox
-                          id={`priority-${priority}`}
+                          id={`request-type-${requestType.id}`}
                           checked={
-                            filters.priority?.includes(priority) || false
-                          }
-                          onCheckedChange={(checked) =>
-                            handlePriorityChange(priority, checked as boolean)
-                          }
-                          className="border-gray-300"
-                        />
-                        <Label
-                          htmlFor={`priority-${priority}`}
-                          className="text-sm text-gray-700 font-normal cursor-pointer"
-                        >
-                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Status Filter */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-900">
-                    Status
-                  </Label>
-                  <div className="space-y-2">
-                    {statusOptions.map((status) => (
-                      <div key={status} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`status-${status}`}
-                          checked={filters.status?.includes(status) || false}
-                          onCheckedChange={(checked) =>
-                            handleStatusChange(status, checked as boolean)
-                          }
-                          className="border-gray-300"
-                        />
-                        <Label
-                          htmlFor={`status-${status}`}
-                          className="text-sm text-gray-700 font-normal cursor-pointer"
-                        >
-                          {status
-                            .replace("-", " ")
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Request Type Filter */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-900">
-                    Request Type
-                  </Label>
-                  <div className="space-y-2">
-                    {requestTypes.map((requestType) => (
-                      <div
-                        key={requestType}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`request-type-${requestType}`}
-                          checked={
-                            filters.requestType?.includes(requestType) || false
+                            filters.requestType?.includes(requestType.id) || false
                           }
                           onCheckedChange={(checked) =>
                             handleRequestTypeChange(
-                              requestType,
+                              requestType.id,
                               checked as boolean
                             )
                           }
                           className="border-gray-300"
                         />
-                        <Label
-                          htmlFor={`request-type-${requestType}`}
-                          className="text-sm text-gray-700 font-normal cursor-pointer"
-                        >
-                          {requestType}
-                        </Label>
+                        <div className="flex flex-col">
+                          <Label
+                            htmlFor={`request-type-${requestType.id}`}
+                            className="text-sm text-gray-700 font-normal cursor-pointer"
+                          >
+                            {requestType.name}
+                          </Label>
+                          {requestType.description && (
+                            <span className="text-xs text-gray-500">
+                              {requestType.description}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
+                )}
+              </div>
 
-                <Separator />
+              <Separator />
 
-                {/* Staff Filter */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-900">
-                    Assigned Staff
-                  </Label>
-                  <div className="space-y-2">
-                    {staffMembers.map((staff) => (
+              {/* Staff Filter */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-900">
+                  Assigned Staff
+                </Label>
+                {loading ? (
+                  <div className="text-sm text-gray-500">Loading...</div>
+                ) : (
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {filterOptions.staffOptions.map((staff) => (
                       <div
-                        key={staff}
+                        key={staff.id}
                         className="flex items-center space-x-2"
                       >
                         <Checkbox
-                          id={`staff-${staff}`}
+                          id={`staff-${staff.id}`}
                           checked={
-                            filters.assignedStaff?.includes(staff) || false
+                            filters.assignedStaff?.includes(staff.id) || false
                           }
                           onCheckedChange={(checked) =>
-                            handleStaffChange(staff, checked as boolean)
+                            handleStaffChange(staff.id, checked as boolean)
                           }
                           className="border-gray-300"
                         />
-                        <Label
-                          htmlFor={`staff-${staff}`}
-                          className="text-sm text-gray-700 font-normal cursor-pointer"
-                        >
-                          {staff}
-                        </Label>
+                        <div className="flex flex-col">
+                          <Label
+                            htmlFor={`staff-${staff.id}`}
+                            className="text-sm text-gray-700 font-normal cursor-pointer"
+                          >
+                            {staff.fullName}
+                          </Label>
+                          <span className="text-xs text-gray-500">
+                            {staff.jobTitle}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
+                )}
               </div>
             </div>
-          </PopoverContent>
-        </Popover>
+          </div>
+        </PopoverContent>
+      </Popover>
 
-        {/* Sort */}
-        <div className="flex items-center gap-2">
-          <Select
-            value={`${sort.field}-${sort.direction}`}
-            onValueChange={(value) => {
-              const [field, direction] = value.split("-") as [
-                RequestSortOption["field"],
-                "asc" | "desc"
-              ];
-              onSortChange({ field, direction });
-            }}
-          >
-            <SelectTrigger className="w-48 border-gray-300 hover:bg-gray-50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <React.Fragment key={option.field}>
-                  <SelectItem value={`${option.field}-desc`}>
-                    <div className="flex items-center gap-2">
-                      <SortDesc className="h-4 w-4" />
-                      {option.label} (Newest)
-                    </div>
-                  </SelectItem>
-                  <SelectItem value={`${option.field}-asc`}>
-                    <div className="flex items-center gap-2">
-                      <SortAsc className="h-4 w-4" />
-                      {option.label} (Oldest)
-                    </div>
-                  </SelectItem>
-                </React.Fragment>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Clear Filters Button */}
+      {activeFilterCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <X className="h-4 w-4 mr-1" />
+          Clear ({activeFilterCount})
+        </Button>
+      )}
+
+      {/* Sort */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-500">Sort by:</span>
+        <select
+          value={`${sort.field}-${sort.direction}`}
+          onChange={(e) => {
+            const [field, direction] = e.target.value.split('-') as [RequestSortOption['field'], RequestSortOption['direction']];
+            onSortChange({ field, direction });
+          }}
+          className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+        >
+          {sortOptions.map((option) => (
+            <optgroup key={option.field} label={option.label}>
+              <option value={`${option.field}-desc`}>
+                {option.label} (Newest first)
+              </option>
+              <option value={`${option.field}-asc`}>
+                {option.label} (Oldest first)
+              </option>
+            </optgroup>
+          ))}
+        </select>
       </div>
+
+      {/* Active Filters Display - only show if we have them and they're not taking too much space */}
+      {activeFilterCount > 0 && (
+        <div className="hidden xl:flex items-center gap-1">
+          <span className="text-xs text-gray-500">Active:</span>
+          {activeFilterCount > 3 ? (
+            <Badge variant="secondary" className="text-xs">
+              {activeFilterCount} filters
+            </Badge>
+          ) : (
+            <>
+              {filters.priority?.length && (
+                <Badge variant="secondary" className="text-xs">
+                  Priority ({filters.priority.length})
+                </Badge>
+              )}
+              {filters.status?.length && (
+                <Badge variant="secondary" className="text-xs">
+                  Status ({filters.status.length})
+                </Badge>
+              )}
+              {filters.requestType?.length && (
+                <Badge variant="secondary" className="text-xs">
+                  Type ({filters.requestType.length})
+                </Badge>
+              )}
+              {filters.assignedStaff?.length && (
+                <Badge variant="secondary" className="text-xs">
+                  Staff ({filters.assignedStaff.length})
+                </Badge>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

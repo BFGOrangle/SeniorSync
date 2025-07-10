@@ -41,10 +41,29 @@ export interface SeniorRequestFilterDto {
   status?: RequestStatus;
   seniorId?: number;
   assignedStaffId?: number;
+  requestTypeId?: number;
   minPriority?: number;
   maxPriority?: number;
   createdAfter?: string; // ISO string
   createdBefore?: string; // ISO string
+}
+
+// Filter options from backend
+export interface RequestFilterOptionsDto {
+  staffOptions: StaffOptionDto[];
+  requestTypeOptions: RequestTypeOptionDto[];
+}
+
+export interface StaffOptionDto {
+  id: number;
+  fullName: string;
+  jobTitle: string;
+}
+
+export interface RequestTypeOptionDto {
+  id: number;
+  name: string;
+  description?: string;
 }
 
 // High-performance projection for read operations - matches backend SeniorRequestView interface

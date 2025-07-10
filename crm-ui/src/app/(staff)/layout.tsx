@@ -5,11 +5,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { AppSidebar } from "@/components/app-sidebar";
+import { StaffSidebar } from "@/components/staff-sidebar";
 import { UserProvider } from "@/contexts/user-context";
 import { Loader2 } from "lucide-react";
 
-export default function DashboardLayout({
+export default function StaffLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -20,7 +20,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
+    } else if (status === "authenticated" && session?.user?.role !== "STAFF") {
       router.push("/unauthorized");
     }
   }, [status, router, session?.user?.role]);
@@ -37,15 +37,15 @@ export default function DashboardLayout({
     );
   }
 
-  // Don't render anything if not authenticated or not an admin (will redirect)
-  if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "ADMIN")) {
+  // Don't render anything if not authenticated or not staff (will redirect)
+  if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "STAFF")) {
     return null;
   }
 
   return (
     <UserProvider>
       <SidebarProvider defaultOpen={true}>
-        <AppSidebar />
+        <StaffSidebar />
         <main className="flex-1 flex flex-col min-h-screen">
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
             <SidebarTrigger className="-ml-1" />
