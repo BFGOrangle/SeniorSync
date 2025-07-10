@@ -42,6 +42,11 @@ public class DailyReminderService implements IDailyReminderService{
             String staffEmail = staffRepository.findById(reminder.getStaffAssigneeId())
                     .map(Staff::getContactEmail)
                     .orElse("");
+            if (staffEmail == null || staffEmail.isEmpty()) {
+                log.warn("No valid email found for staff assignee ID: {}. Skipping email for reminder ID: {}", 
+                        reminder.getStaffAssigneeId(), reminder.getId());
+                continue;
+            }
             emailService.sendEmail(staffEmail, reminder.getTitle(), reminder.getDescription());
             log.info("Sent reminder email for reminder ID: {}", reminder.getId());
         }
