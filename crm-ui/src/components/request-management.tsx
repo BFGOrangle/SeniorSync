@@ -133,7 +133,7 @@ export default function RequestManagement() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-screen bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
         <div className="px-4 lg:px-6 py-4">
@@ -230,7 +230,7 @@ export default function RequestManagement() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-auto">
         {viewMode === "kanban-status" && (
           <RequestKanbanView
             requests={processedRequests}

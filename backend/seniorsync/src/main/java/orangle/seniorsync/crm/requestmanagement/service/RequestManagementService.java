@@ -1,5 +1,6 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
+import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.common.util.TimeUtils;
 import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
@@ -170,5 +171,82 @@ public class RequestManagementService implements IRequestManagementService {
                 requestsByStaff,
                 requestTypeStatusCounts
         );
+    }
+
+    /**
+     * Assign a request to a staff member with role-based business rules:
+     * - Admin can assign any request to any staff member
+     * - Staff can only assign unassigned requests to themselves
+     *
+     * @param requestId the ID of the request to assign
+     * @param assignRequestDto the assignment details
+     * @return the updated SeniorRequestDto
+     * @throws IllegalArgumentException if request not found
+     * @throws SecurityException if assignment violates business rules
+     */
+    @Transactional
+    public SeniorRequestDto assignRequest(Long requestId, AssignRequestDto assignRequestDto) {
+        SeniorRequest request = seniorRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
+
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
+        Long targetStaffId = assignRequestDto.assignedStaffId();
+
+        // Validate business rules
+        if (isAdmin) {
+            // Admin can assign to anyone
+            // TODO: Optionally validate that targetStaffId exists in staff table
+        } else {
+            // Staff can only assign unassigned requests to themselves
+            if (request.getAssignedStaffId() != null) {
+                throw new SecurityException("Staff members can only assign unassigned requests");
+            }
+            if (!currentUserId.equals(targetStaffId)) {
+                throw new SecurityException("Staff members can only assign requests to themselves");
+            }
+        }
+
+        // Perform assignment
+        request.setAssignedStaffId(targetStaffId);
+        seniorRequestRepository.save(request);
+
+        return seniorRequestMapper.toDto(request);
+    }
+
+    /**
+     * Unassign a request (remove assignment) with role-based business rules:
+     * - Admin can unassign any request
+     * - Staff can only unassign requests assigned to themselves
+     *
+     * @param requestId the ID of the request to unassign
+     * @return the updated SeniorRequestDto
+     * @throws IllegalArgumentException if request not found
+     * @throws SecurityException if unassignment violates business rules
+     */
+    @Transactional
+    public SeniorRequestDto unassignRequest(Long requestId) {
+        SeniorRequest request = seniorRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
+
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
+
+        // Validate business rules
+        if (!isAdmin) {
+            // Staff can only unassign requests assigned to themselves
+            if (request.getAssignedStaffId() == null) {
+                throw new SecurityException("Request is not assigned");
+            }
+            if (!currentUserId.equals(request.getAssignedStaffId())) {
+                throw new SecurityException("Staff members can only unassign requests assigned to themselves");
+            }
+        }
+
+        // Perform unassignment
+        request.setAssignedStaffId(null);
+        seniorRequestRepository.save(request);
+
+        return seniorRequestMapper.toDto(request);
     }
 }

@@ -15,4 +15,8 @@ public interface IRequestManagementService {
     List<SeniorRequestDto> findRequestsBySenior(long id);
     void deleteRequest(long id);
     DashboardDto getDashboard();
+    
+    // Assignment operations with role-based business rules
+    SeniorRequestDto assignRequest(Long requestId, AssignRequestDto assignRequestDto);
+    SeniorRequestDto unassignRequest(Long requestId);
 }

@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import orangle.seniorsync.crm.requestmanagement.dto.AssignRequestDto;
 
 @Slf4j
 @RestController
@@ -50,6 +51,43 @@ public class RequestManagementController {
         SeniorRequestDto updatedSeniorRequest = requestManagementService.updateRequest(updateSeniorRequestDto);
         log.info("Updated senior request with ID: {}", updatedSeniorRequest.id());
         return ResponseEntity.ok().body(updatedSeniorRequest);
+    }
+
+    /**
+     * Assign or reassign a request to a staff member
+     * Business rules enforced in service layer:
+     * - Admin can assign to anyone
+     * - Staff can only assign unassigned requests to themselves
+     *
+     * @param requestId the ID of the request to assign
+     * @param assignRequestDto the assignment details
+     * @return updated SeniorRequestDto with HTTP 200
+     */
+    @PutMapping("/{requestId}/assign")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<SeniorRequestDto> assignRequest(
+            @PathVariable Long requestId,
+            @Valid @RequestBody AssignRequestDto assignRequestDto) {
+        SeniorRequestDto assignedRequest = requestManagementService.assignRequest(requestId, assignRequestDto);
+        log.info("Assigned request {} to staff ID: {}", requestId, assignRequestDto.assignedStaffId());
+        return ResponseEntity.ok().body(assignedRequest);
+    }
+
+    /**
+     * Unassign a request (remove assignment)
+     * Business rules enforced in service layer:
+     * - Admin can unassign any request
+     * - Staff can only unassign requests assigned to themselves
+     *
+     * @param requestId the ID of the request to unassign
+     * @return updated SeniorRequestDto with HTTP 200
+     */
+    @DeleteMapping("/{requestId}/assign")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<SeniorRequestDto> unassignRequest(@PathVariable Long requestId) {
+        SeniorRequestDto unassignedRequest = requestManagementService.unassignRequest(requestId);
+        log.info("Unassigned request {}", requestId);
+        return ResponseEntity.ok().body(unassignedRequest);
     }
 
     @GetMapping("/senior/{id}")
