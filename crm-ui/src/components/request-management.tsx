@@ -225,8 +225,6 @@ export default function RequestManagement() {
             onFiltersChange={setFilters}
             onSortChange={setSort}
             sort={sort}
-            smartFilter={smartFilter}
-            onSmartFilterChange={setSmartFilter}
           />
         </div>
       </div>
@@ -237,14 +235,14 @@ export default function RequestManagement() {
           <RequestKanbanView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
-            hideEmptyColumns={smartFilter && Object.keys(filters).length > 0}
+            showOnlyFilteredStatuses={smartFilter && Object.keys(filters).length > 0}
           />
         )}
         {viewMode === "kanban-priority" && (
           <RequestKanbanPriorityView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
-            hideEmptyColumns={smartFilter && Object.keys(filters).length > 0}
+            showOnlyFilteredPriorities={smartFilter && Object.keys(filters).length > 0}
           />
         )}
         {viewMode === "table" && (
