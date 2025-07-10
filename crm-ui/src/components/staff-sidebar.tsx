@@ -2,14 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
   FileText,
   Users,
   Settings,
   HeartHandshake,
   Layout,
-  Calendar,
-  MessageCircle,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -25,37 +25,24 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 // Navigation items for staff
 const navigationItems = [
   {
     title: "Dashboard",
-    url: "/staff/dashboard",
+    url: "/staff",
     icon: Layout,
   },
   {
-    title: "My Tasks",
-    url: "/staff/tasks",
+    title: "Request Management",
+    url: "/staff/request-management",
     icon: FileText,
-    badge: "Coming Soon",
   },
   {
-    title: "My Seniors",
-    url: "/staff/seniors",
+    title: "Senior Profiles",
+    url: "/staff/senior-profiles",
     icon: Users,
-    badge: "Coming Soon",
-  },
-  {
-    title: "Schedule",
-    url: "/staff/schedule",
-    icon: Calendar,
-    badge: "Coming Soon",
-  },
-  {
-    title: "Messages",
-    url: "/staff/messages",
-    icon: MessageCircle,
-    badge: "Coming Soon",
   },
 ];
 
@@ -71,11 +58,15 @@ const settingsItems = [
 export function StaffSidebar() {
   const pathname = usePathname();
 
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/login" });
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <HeartHandshake className="h-6 w-6 text-green-600 shrink-0" />
+          <HeartHandshake className="h-6 w-6 text-blue-600 shrink-0" />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-semibold text-sm">SeniorSync</span>
             <span className="text-xs text-muted-foreground">Staff Portal</span>
@@ -92,7 +83,7 @@ export function StaffSidebar() {
                 const isActive =
                   pathname === item.url ||
                   (item.title === "Dashboard" &&
-                    (pathname === "/staff" || pathname === "/staff/dashboard"));
+                    pathname === "/staff/dashboard");
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -103,11 +94,6 @@ export function StaffSidebar() {
                       <Link href={item.url} className="flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -118,7 +104,7 @@ export function StaffSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Personal</SidebarGroupLabel>
+          <SidebarGroupLabel>Tools</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {settingsItems.map((item) => {
@@ -149,9 +135,33 @@ export function StaffSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
-        <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-          <p>Staff Portal</p>
-          <p>v1.0.0</p>
+        <div className="space-y-3 group-data-[collapsible=icon]:hidden">
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+          <div className="text-xs text-muted-foreground">
+            <p>Staff Portal</p>
+            <p>v1.0.0</p>
+          </div>
+        </div>
+        
+        {/* Icon-only mode sign out button */}
+        <div className="group-data-[collapsible=icon]:block hidden">
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            size="sm"
+            className="w-full p-2"
+            title="Sign Out"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </SidebarFooter>
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useNavigationHelper } from "@/components/navigation-helper";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,7 @@ export function RequestCard({
 }: RequestCardProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
+  const { getRoutes } = useNavigationHelper();
   const { currentUser } = useCurrentUser();
 
   const {
@@ -46,7 +48,8 @@ export function RequestCard({
 
   const handleViewDetails = () => {
     setIsNavigating(true);
-    router.push(`/admin/requests/${request.id}`);
+    const routes = getRoutes();
+    router.push(routes.requests(request.id.toString()));
   };
 
   const handleAssignToMe = async () => {

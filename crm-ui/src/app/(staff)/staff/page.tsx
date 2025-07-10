@@ -1,5 +1,5 @@
-import StaffDashboard from './dashboard/page';
+import { redirect } from 'next/navigation';
 
 export default function StaffPage() {
-  return <StaffDashboard />;
+  redirect('/staff/dashboard');
 } 
