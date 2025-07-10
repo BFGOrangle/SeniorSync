@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface SeniorRepository extends JpaRepository<Senior, Long>, JpaSpecificationExecutor<Senior> {
     // Interface projection methods for high-throughput operations
     List<SeniorView> findByFirstNameContainingIgnoreCase(String firstName);

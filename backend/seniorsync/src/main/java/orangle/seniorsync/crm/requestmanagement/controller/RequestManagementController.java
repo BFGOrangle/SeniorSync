@@ -64,7 +64,6 @@ public class RequestManagementController {
      * @return updated SeniorRequestDto with HTTP 200
      */
     @PutMapping("/{requestId}/assign")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<SeniorRequestDto> assignRequest(
             @PathVariable Long requestId,
             @Valid @RequestBody AssignRequestDto assignRequestDto) {
@@ -83,7 +82,6 @@ public class RequestManagementController {
      * @return updated SeniorRequestDto with HTTP 200
      */
     @DeleteMapping("/{requestId}/assign")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<SeniorRequestDto> unassignRequest(@PathVariable Long requestId) {
         SeniorRequestDto unassignedRequest = requestManagementService.unassignRequest(requestId);
         log.info("Unassigned request {}", requestId);
@@ -91,7 +89,6 @@ public class RequestManagementController {
     }
 
     @GetMapping("/senior/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<List<SeniorRequestDto>> getRequestsBySenior(@PathVariable long id) {
         List<SeniorRequestDto> seniorRequests = requestManagementService.findRequestsBySenior(id);
         log.info("Retrieved {} senior requests for senior ID: {}", seniorRequests.size(), id);
@@ -127,7 +124,6 @@ public class RequestManagementController {
     }
 
     @GetMapping("/dashboard")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<DashboardDto> getDashboard() {
         DashboardDto dashboard = requestManagementService.getDashboard();
         log.info("Retrieved dashboard data");
@@ -135,7 +131,6 @@ public class RequestManagementController {
     }
 
     @GetMapping("/dashboard/personal")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<DashboardDto> getPersonalDashboard() {
         DashboardDto dashboard = requestManagementService.getPersonalDashboard();
         log.info("Retrieved personal dashboard data");
