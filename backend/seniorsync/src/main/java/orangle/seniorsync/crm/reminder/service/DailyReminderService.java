@@ -1,6 +1,8 @@
 package orangle.seniorsync.crm.reminder.service;
 
 import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.common.model.Staff;
+import orangle.seniorsync.common.repository.StaffRepository;
 import orangle.seniorsync.crm.reminder.model.Reminder;
 import orangle.seniorsync.crm.reminder.repository.ReminderRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,10 +17,12 @@ import java.util.List;
 public class DailyReminderService implements IDailyReminderService{
     private final IEmailService emailService;
     private final ReminderRepository reminderRepository;
+    private final StaffRepository staffRepository;
 
-    public DailyReminderService(IEmailService emailService, ReminderRepository reminderRepository) {
+    public DailyReminderService(IEmailService emailService, ReminderRepository reminderRepository, StaffRepository staffRepository) {
         this.emailService = emailService;
         this.reminderRepository = reminderRepository;
+        this.staffRepository = staffRepository;
     }
     @Scheduled(cron = "0 0 8 * * ?") // Runs daily at 8:00 AM
     public void sendDailyReminders() {
@@ -35,7 +39,15 @@ public class DailyReminderService implements IDailyReminderService{
             * function to get email by assignee staff id
             * placeholder for now, assuming email is hardcoded
             * */
-            emailService.sendEmail("holycowandsheep@gmail.com", reminder.getTitle(), reminder.getDescription());
+            String staffEmail = staffRepository.findById(reminder.getStaffAssigneeId())
+                    .map(Staff::getContactEmail)
+                    .orElse("");
+            if (staffEmail == null || staffEmail.isEmpty()) {
+                log.warn("No valid email found for staff assignee ID: {}. Skipping email for reminder ID: {}", 
+                        reminder.getStaffAssigneeId(), reminder.getId());
+                continue;
+            }
+            emailService.sendEmail(staffEmail, reminder.getTitle(), reminder.getDescription());
             log.info("Sent reminder email for reminder ID: {}", reminder.getId());
         }
     }
