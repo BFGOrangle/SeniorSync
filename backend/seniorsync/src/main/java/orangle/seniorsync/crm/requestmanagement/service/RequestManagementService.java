@@ -185,6 +185,77 @@ public class RequestManagementService implements IRequestManagementService {
     }
 
     /**
+     * Get personal dashboard data for the current user
+     * Shows only data for requests assigned to the current user
+     * Available for both ADMIN and STAFF roles
+     */
+    @Transactional(readOnly = true)
+    public DashboardDto getPersonalDashboard() {
+        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        
+        Long totalRequestsCount = seniorRequestRepository.countPersonalAllRequests(currentUserId);
+        Long pendingRequestsCount = seniorRequestRepository.countPersonalPendingRequests(currentUserId);
+        Long completedThisMonthCount = seniorRequestRepository.personalCompletedThisMonth(currentUserId);
+        Double averageCompletionTime = seniorRequestRepository.averagePersonalRequestCompletionTime(currentUserId);
+        List<StringCountDto> requestsByType = seniorRequestRepository.findPersonalRequestsByRequestTypeId(currentUserId);
+        List<StringCountDto> requestsByMonth = seniorRequestRepository.findPersonalCountsByMonthAndYear(currentUserId);
+        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findPersonalCountsByPriority(currentUserId);
+        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findPersonalCountsByStatus(currentUserId);
+        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findPersonalCountByRequestTypeIdAndStatus(currentUserId);
+        
+        // For personal dashboard, staff workload is not relevant - return empty list
+        List<StringCountDto> emptyStaffWorkload = List.of();
+
+        return new DashboardDto(
+                totalRequestsCount,
+                pendingRequestsCount,
+                completedThisMonthCount,
+                averageCompletionTime,
+                requestsByStatus,
+                requestsByType,
+                requestsByPriority,
+                requestsByMonth,
+                emptyStaffWorkload,
+                requestTypeStatusCounts
+        );
+    }
+
+    /**
+     * Get center-level dashboard data (all requests across the organization)
+     * Only available for ADMIN role
+     * This is essentially the same as getDashboard() but with explicit admin check
+     */
+    @Transactional(readOnly = true)
+    public DashboardDto getCenterDashboard() {
+        // Ensure only admins can access center dashboard
+        SecurityContextUtil.requireAdmin();
+        
+        Long totalRequestsCount = seniorRequestRepository.countAllRequests();
+        Long pendingRequestsCount = seniorRequestRepository.countPendingRequests();
+        Long completedThisMonthCount = seniorRequestRepository.completedThisMonth();
+        Double averageCompletionTime = seniorRequestRepository.averageRequestCompletionTime();
+        List<StringCountDto> requestsByType = seniorRequestRepository.findSeniorRequestsByRequestTypeId();
+        List<StringCountDto> requestsByStaff = seniorRequestRepository.findCountsByAssignedStaffId();
+        List<StringCountDto> requestsByMonth = seniorRequestRepository.findCountsByMonthAndYear();
+        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findCountsByPriority();
+        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findCountsByStatus();
+        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findCountByRequestTypeIdAndStatus();
+
+        return new DashboardDto(
+                totalRequestsCount,
+                pendingRequestsCount,
+                completedThisMonthCount,
+                averageCompletionTime,
+                requestsByStatus,
+                requestsByType,
+                requestsByPriority,
+                requestsByMonth,
+                requestsByStaff,
+                requestTypeStatusCounts
+        );
+    }
+
+    /**
      * Assign a request to a staff member with role-based business rules:
      * - Admin can assign any request to any staff member
      * - Staff can only assign unassigned requests to themselves

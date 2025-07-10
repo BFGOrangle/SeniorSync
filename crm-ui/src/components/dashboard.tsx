@@ -18,11 +18,17 @@ import {
 
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { RefreshCw, Calendar, Download, Plus } from "lucide-react";
-import { useDashboard } from "@/hooks/use-dashboard";
+import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
+import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
+import { useCurrentUser } from "@/contexts/user-context";
 
 import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
+  const { currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === 'ADMIN';
+  
+  // Initialize with personal mode for all users
   const {
     dashboardStats,
     requestTypeSummaries,
@@ -33,10 +39,11 @@ export default function Dashboard() {
     loading,
     error,
     lastUpdated,
-    refreshAll,
+    mode,
+    setMode,
     forceRefresh,
     clearError,
-  } = useDashboard();
+  } = useDashboardWithMode('personal');
 
   const handleRefresh = async () => {
     await forceRefresh();
@@ -47,18 +54,40 @@ export default function Dashboard() {
     forceRefresh();
   };
 
+  const handleModeChange = (newMode: DashboardMode) => {
+    setMode(newMode);
+  };
+
+  // Determine if StaffWorkloadChart should be shown
+  const showStaffWorkload = mode === 'center' && isAdmin;
+
+  // Dynamic title based on mode
+  const dashboardTitle = mode === 'personal' ? 'My Dashboard' : 'Center Dashboard';
+  const dashboardDescription = mode === 'personal' 
+    ? 'Overview of your assigned requests' 
+    : 'Overview of all center requests and staff workload';
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 relative">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{dashboardTitle}</h2>
           <p className="text-muted-foreground">
-            Overview of senior request management system
+            {dashboardDescription}
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Dashboard Mode Toggle - Only for Admins */}
+          {isAdmin && (
+            <DashboardToggle 
+              mode={mode} 
+              onModeChange={handleModeChange}
+              className="mr-4"
+            />
+          )}
+
           {lastUpdated && (
             <Badge variant="secondary" className="text-xs">
               <Calendar className="w-3 h-3 mr-1" />
@@ -141,8 +170,11 @@ export default function Dashboard() {
       </div>
 
       {/* Staff Workload and Request Details */}
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <StaffWorkloadChart data={staffWorkload} loading={loading} />
+      <div className={`grid gap-6 ${showStaffWorkload ? 'md:grid-cols-1 lg:grid-cols-2' : 'md:grid-cols-1'}`}>
+        {/* Only show StaffWorkloadChart in center mode for admins */}
+        {showStaffWorkload && (
+          <StaffWorkloadChart data={staffWorkload} loading={loading} />
+        )}
         <RequestTypeDetails data={requestTypeSummaries} loading={loading} />
       </div>
 

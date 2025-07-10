@@ -133,4 +133,20 @@ public class RequestManagementController {
         log.info("Retrieved dashboard data");
         return ResponseEntity.ok().body(dashboard);
     }
+
+    @GetMapping("/dashboard/personal")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public ResponseEntity<DashboardDto> getPersonalDashboard() {
+        DashboardDto dashboard = requestManagementService.getPersonalDashboard();
+        log.info("Retrieved personal dashboard data");
+        return ResponseEntity.ok().body(dashboard);
+    }
+
+    @GetMapping("/dashboard/center")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DashboardDto> getCenterDashboard() {
+        DashboardDto dashboard = requestManagementService.getCenterDashboard();
+        log.info("Retrieved center dashboard data");
+        return ResponseEntity.ok().body(dashboard);
+    }
 }

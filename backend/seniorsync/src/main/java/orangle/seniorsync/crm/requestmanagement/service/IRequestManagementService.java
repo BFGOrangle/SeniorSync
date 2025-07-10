@@ -16,6 +16,10 @@ public interface IRequestManagementService {
     void deleteRequest(long id);
     DashboardDto getDashboard();
     
+    // Dashboard methods with role-based access
+    DashboardDto getPersonalDashboard();
+    DashboardDto getCenterDashboard();
+    
     // Assignment operations with role-based business rules
     SeniorRequestDto assignRequest(Long requestId, AssignRequestDto assignRequestDto);
     SeniorRequestDto unassignRequest(Long requestId);
