@@ -26,8 +26,8 @@ public class EmailService implements IEmailService{
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
+            message.setSubject("[SeniorSync Reminder]" + subject);
+            message.setText("Hello,\n\nYou have the following reminder:\n\n" + body);
 
             mailSender.send(message);
             log.info("Email sent successfully via Hostinger SMTP to {}", to);
