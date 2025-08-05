@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Create transporter (using Gmail as an example - you can configure this based on your email provider)
     const transporter = nodemailer.createTransport({
-      host: 'smtp.hostinger.com',
+      host: process.env.EMAIL_HOST || 'smtp.hostinger.com',
         port: 587,
       auth: {
         user: process.env.EMAIL_USER, // Your email
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     // Send email to admin
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to: process.env.RECEIPIENT_EMAIL,
+      to: process.env.RECIPIENT_EMAIL,
       subject: `New Vendor Application: ${businessName} - ${serviceType}`,
       html: adminEmailHTML,
     });
