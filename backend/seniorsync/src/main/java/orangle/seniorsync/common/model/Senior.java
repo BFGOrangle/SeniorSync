@@ -1,11 +1,11 @@
 package orangle.seniorsync.common.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
@@ -17,11 +17,17 @@ import orangle.seniorsync.common.converter.StringArrayConverter;
 @Setter
 @Entity
 @Table(name = "seniors", schema = "senior_sync")
+//@FilterDef(name = "tenantFilter", parameters = {@ParamDef(name = "centerId", type = Long.class)})
+//@Filter(name = "tenantFilter", condition = "center_id = :centerId")
 public class Senior {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "center_id")
+    private Center center;
 
     @Column(name = "first_name", nullable = false, length = Integer.MAX_VALUE)
     private String firstName;
