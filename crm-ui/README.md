@@ -2,7 +2,35 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Copy the example environment file and configure your settings:
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` and add your email configuration for the vendor application system:
+
+```bash
+# Email Configuration (required for vendor applications)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+```
+
+**For Gmail Setup:**
+1. Enable 2-factor authentication on your Google account
+2. Go to Google Account Settings > Security > 2-Step Verification > App passwords
+3. Generate an app password for "Mail"
+4. Use the generated app password (not your regular password) in `EMAIL_PASS`
+
+### 3. Run the Development Server
 
 ```bash
 npm run dev
@@ -15,6 +43,26 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Features
+
+### Vendor Landing Page
+- Professional landing page for prospective vendors at `/`
+- Vendor application form at `/vendor-application`
+- Automatic email notifications to `feiyue@seniorsync.fun` for new applications
+- Confirmation emails sent to applicants
+
+### Authentication
+- Existing staff/admin login system at `/login`
+- Role-based dashboard redirection
+
+## Project Structure
+
+- `/` - Vendor landing page
+- `/vendor-application` - Vendor application form
+- `/login` - Staff/Admin login
+- `/dashboard` - Role-based dashboard redirect
+- `/api/vendor-application` - Email API endpoint
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
