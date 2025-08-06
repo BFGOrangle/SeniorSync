@@ -137,6 +137,27 @@ public class SecurityContextUtil {
     }
 
     /**
+     * Get the current authenticated user's center ID
+     * 
+     * @return Optional containing the center ID if authenticated, empty otherwise
+     */
+    public static Optional<Long> getCurrentUserCenterId() {
+        return getCurrentJwtToken()
+                .map(JwtAuthenticationToken::getCenterId);
+    }
+
+    /**
+     * Require authentication and return the current user's center ID
+     * 
+     * @return The current user's center ID
+     * @throws SecurityException if user is not authenticated
+     */
+    public static Long requireCurrentUserCenterId() {
+        return getCurrentUserCenterId()
+                .orElseThrow(() -> new SecurityException("User not authenticated"));
+    }
+
+    /**
      * Require admin access
      * 
      * @throws SecurityException if user is not authenticated or not an admin

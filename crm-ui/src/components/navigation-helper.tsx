@@ -6,8 +6,10 @@ export function useNavigationHelper() {
   const { data: session } = useSession();
   
   const getBasePath = () => {
-    if (session?.user?.role === "ADMIN") return "/admin";
-    if (session?.user?.role === "STAFF") return "/staff";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((session?.user as any)?.role === "ADMIN") return "/admin";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((session?.user as any)?.role === "STAFF") return "/staff";
     return "/admin"; // fallback
   };
   
@@ -23,5 +25,6 @@ export function useNavigationHelper() {
     };
   };
   
-  return { getBasePath, getRoutes, userRole: session?.user?.role };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { getBasePath, getRoutes, userRole: (session?.user as any)?.role };
 } 

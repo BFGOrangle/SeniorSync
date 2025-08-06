@@ -1,11 +1,11 @@
 package orangle.seniorsync.common.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
@@ -22,6 +22,10 @@ public class Senior {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "center_id", nullable = false)
+    private Center center;
 
     @Column(name = "first_name", nullable = false, length = Integer.MAX_VALUE)
     private String firstName;

@@ -1,6 +1,5 @@
-import NextAuth from 'next-auth'
+import NextAuth from 'next-auth/next'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { NextAuthOptions } from 'next-auth'
 import jwt from 'jsonwebtoken'
 
 /**
@@ -12,7 +11,7 @@ import jwt from 'jsonwebtoken'
  * - Industry standard JWT format
  * - Backward compatibility with legacy format
  */
-const authOptions: NextAuthOptions = {
+const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -69,11 +68,12 @@ const authOptions: NextAuthOptions = {
     error: '/login',
   },
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    async jwt({ token, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: any) {
       if (user) {
         token.role = user.role
         token.jobTitle = user.jobTitle
@@ -82,7 +82,8 @@ const authOptions: NextAuthOptions = {
       }
       return token
     },
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
       if (token) {
         session.user.id = token.sub as string
         session.user.role = token.role as string
@@ -138,6 +139,7 @@ const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 }
 
-const handler = NextAuth(authOptions)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handler = NextAuth(authOptions) as any
 
 export { handler as GET, handler as POST } 

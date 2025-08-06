@@ -28,14 +28,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (session?.user) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sessionUser = session.user as any;
       const user: CurrentUser = {
-        id: parseInt(session.user.id),
-        firstName: session.user.firstName,
-        lastName: session.user.lastName,
-        role: session.user.role,
-        jobTitle: session.user.jobTitle,
-        email: session.user.email,
-        fullName: `${session.user.firstName} ${session.user.lastName}`
+        id: parseInt(sessionUser.id),
+        firstName: sessionUser.firstName,
+        lastName: sessionUser.lastName,
+        role: sessionUser.role,
+        jobTitle: sessionUser.jobTitle,
+        email: sessionUser.email,
+        fullName: `${sessionUser.firstName} ${sessionUser.lastName}`
       };
       setCurrentUser(user);
     } else if (status === 'unauthenticated') {

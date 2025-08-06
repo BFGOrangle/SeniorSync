@@ -20,10 +20,11 @@ export default function DashboardLayout({
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated" && session?.user?.role !== "ADMIN") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if (status === "authenticated" && (session?.user as any)?.role !== "ADMIN") {
       router.push("/unauthorized");
     }
-  }, [status, router, session?.user?.role]);
+  }, [status, router, session?.user]);
 
   // Show loading while checking authentication
   if (status === "loading") {
@@ -38,7 +39,8 @@ export default function DashboardLayout({
   }
 
   // Don't render anything if not authenticated or not an admin (will redirect)
-  if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "ADMIN")) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (status === "unauthenticated" || (status === "authenticated" && (session?.user as any)?.role !== "ADMIN")) {
     return null;
   }
 
