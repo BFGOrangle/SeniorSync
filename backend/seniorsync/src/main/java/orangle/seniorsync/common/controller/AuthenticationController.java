@@ -29,7 +29,6 @@ import java.util.Optional;
 public class AuthenticationController {
     
     private final AuthenticationService authenticationService;
-    private final JwtUtil jwtUtil;
     
     /**
      * Authenticate staff member
@@ -43,26 +42,6 @@ public class AuthenticationController {
             
             if (staffOpt.isPresent()) {
                 Staff staff = staffOpt.get();
-                
-                // Generate JWT token with center ID
-                Long centerId = staff.getCenter() != null ? staff.getCenter().getId() : null;
-                String centerName = staff.getCenter() != null ? staff.getCenter().getName() : null;
-                
-                if (centerId == null) {
-                    log.error("Staff {} has no center assigned", staff.getFullName());
-                    return ResponseEntity.status(500).body(
-                        LoginResponse.error("Staff has no center assigned")
-                    );
-                }
-                
-                String token = jwtUtil.generateToken(
-                    staff.getId(),
-                    staff.getRoleType().name(),
-                    staff.getContactEmail(),
-                    staff.getFullName(),
-                    centerId
-                );
-                
                 LoginResponse response = LoginResponse.success(
                     staff.getId(),
                     staff.getContactEmail(),
@@ -70,13 +49,10 @@ public class AuthenticationController {
                     staff.getLastName(),
                     staff.getJobTitle(),
                     staff.getRoleType(),
-                    centerId,
-                    centerName,
-                    token,
                     staff.getLastLoginAt()
                 );
                 
-                log.info("Successful login for staff: {} from center: {}", staff.getFullName(), centerName);
+                log.info("Successful login for staff: {}", staff.getFullName());
                 return ResponseEntity.ok(response);
             } else {
                 log.debug("Invalid credentials for email: {}", request.email());

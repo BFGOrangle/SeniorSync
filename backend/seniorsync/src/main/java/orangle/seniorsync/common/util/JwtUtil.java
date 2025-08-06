@@ -3,7 +3,6 @@ package orangle.seniorsync.common.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,42 +36,6 @@ public class JwtUtil {
     
     @Value("${security.jwt.secret:#{null}}")
     private String jwtSecret;
-    
-    @Value("${security.jwt.expiration:86400}") // 24 hours in seconds
-    private long jwtExpirationSeconds;
-    
-    /**
-     * Generate a secure JWT token for a staff member
-     * 
-     * @param staffId The staff member's ID
-     * @param role The staff member's role (ADMIN or STAFF)
-     * @param email The staff member's email
-     * @param name The staff member's full name
-     * @param centerId The center ID the staff belongs to
-     * @return The generated JWT token
-     */
-    public String generateToken(Long staffId, String role, String email, String name, Long centerId) {
-        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
-            throw new IllegalStateException("JWT secret not configured");
-        }
-        
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + (jwtExpirationSeconds * 1000));
-        
-        return Jwts.builder()
-                .setSubject(staffId.toString())
-                .claim("role", role)
-                .claim("email", email)
-                .claim("name", name)
-                .claim("centerId", centerId)
-                .setIssuer("seniorsync-crm")
-                .setAudience("seniorsync-api")
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
     
     /**
      * Extract JWT token from Authorization header
@@ -159,7 +122,6 @@ public class JwtUtil {
             String userRole = claims.get("role", String.class);
             String userEmail = claims.get("email", String.class);
             String userName = claims.get("name", String.class);
-            Long centerId = claims.get("centerId", Long.class);
             
             // Validate required fields
             if (userIdStr == null || userRole == null) {
@@ -189,9 +151,9 @@ public class JwtUtil {
                 return Optional.empty();
             }
             
-            log.debug("Successfully parsed secure JWT for user: {} with role: {} and centerId: {}", userId, userRole, centerId);
+            log.debug("Successfully parsed secure JWT for user: {} with role: {}", userId, userRole);
             
-            return Optional.of(new NextAuthTokenData(userId, userRole, userEmail, userName, centerId, true));
+            return Optional.of(new NextAuthTokenData(userId, userRole, userEmail, userName, true));
             
         } catch (JwtException e) {
             log.debug("JWT parsing failed: {}", e.getMessage());
@@ -243,7 +205,7 @@ public class JwtUtil {
             
             log.warn("Using deprecated legacy token format for user: {} with role: {}. Please upgrade to secure JWT tokens.", userIdLong, userRole);
             
-            return Optional.of(new NextAuthTokenData(userIdLong, userRole, null, null, null, false));
+            return Optional.of(new NextAuthTokenData(userIdLong, userRole, null, null, false));
             
         } catch (Exception e) {
             log.debug("Error parsing legacy token: {}", e.getMessage());
@@ -301,21 +263,19 @@ public class JwtUtil {
         private final String userRole;
         private final String userEmail;
         private final String userName;
-        private final Long centerId;
         private final boolean isSecureJwt;
         
-        public NextAuthTokenData(Long userId, String userRole, String userEmail, String userName, Long centerId, boolean isSecureJwt) {
+        public NextAuthTokenData(Long userId, String userRole, String userEmail, String userName, boolean isSecureJwt) {
             this.userId = userId;
             this.userRole = userRole;
             this.userEmail = userEmail;
             this.userName = userName;
-            this.centerId = centerId;
             this.isSecureJwt = isSecureJwt;
         }
         
         // Backward compatibility constructor
         public NextAuthTokenData(Long userId, String userRole) {
-            this(userId, userRole, null, null, null, false);
+            this(userId, userRole, null, null, false);
         }
         
         public Long getUserId() {
@@ -334,10 +294,6 @@ public class JwtUtil {
             return userName;
         }
         
-        public Long getCenterId() {
-            return centerId;
-        }
-        
         public boolean isSecureJwt() {
             return isSecureJwt;
         }
@@ -352,8 +308,8 @@ public class JwtUtil {
         
         @Override
         public String toString() {
-            return String.format("NextAuthTokenData{userId=%d, userRole='%s', centerId=%d, isSecureJwt=%s}", 
-                               userId, userRole, centerId, isSecureJwt);
+            return String.format("NextAuthTokenData{userId=%d, userRole='%s', isSecureJwt=%s}", 
+                               userId, userRole, isSecureJwt);
         }
     }
 } 

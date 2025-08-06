@@ -33,7 +33,7 @@ public class AuthenticationService {
     public Optional<Staff> authenticate(String email, String password) {
         log.debug("Authentication attempt for email: {}", email);
         
-        Optional<Staff> staffOpt = staffRepository.findByContactEmailWithCenter(email);
+        Optional<Staff> staffOpt = staffRepository.findByContactEmailAndIsActiveTrue(email);
         
         if (staffOpt.isEmpty()) {
             log.debug("No active staff found with email: {}", email);

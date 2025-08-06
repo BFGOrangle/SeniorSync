@@ -4,10 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import orangle.seniorsync.common.model.Center;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -17,7 +15,6 @@ import java.time.OffsetDateTime;
 @Setter
 @Entity
 @Table(name = "senior_requests", schema = "senior_sync")
-@Filter(name = "tenantFilter", condition = "center_id = :centerId")
 public class SeniorRequest {
     // FYI:
     // With GenerationType.IDENTITY, the database is responsible for assigning the primary key value—Hibernate will:
@@ -38,10 +35,6 @@ public class SeniorRequest {
 
     @Column(name = "request_type_id")
     private Long requestTypeId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "center_id")
-    private Center center;
 
     @NotNull
     @Column(name = "title", nullable = false, length = Integer.MAX_VALUE)

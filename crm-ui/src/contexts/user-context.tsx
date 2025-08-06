@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -12,8 +11,6 @@ export interface CurrentUser {
   jobTitle: string;
   email: string;
   fullName: string;
-  centerId: number;
-  centerName: string;
 }
 
 interface UserContextType {
@@ -32,15 +29,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (session?.user) {
       const user: CurrentUser = {
-        id: parseInt((session.user as any).id),
-        firstName: (session.user as any).firstName,
-        lastName: (session.user as any).lastName,
-        role: (session.user as any).role,
-        jobTitle: (session.user as any).jobTitle,
-        email: session.user.email || '',
-        centerId: (session.user as any).centerId,
-        centerName: (session.user as any).centerName,
-        fullName: `${(session.user as any).firstName} ${(session.user as any).lastName}`
+        id: parseInt(session.user.id),
+        firstName: session.user.firstName,
+        lastName: session.user.lastName,
+        role: session.user.role,
+        jobTitle: session.user.jobTitle,
+        email: session.user.email,
+        fullName: `${session.user.firstName} ${session.user.lastName}`
       };
       setCurrentUser(user);
     } else if (status === 'unauthenticated') {

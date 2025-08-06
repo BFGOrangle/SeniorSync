@@ -122,15 +122,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         return tokenData != null && tokenData.isStaff();
     }
 
-    /**
-     * Get the center ID from the token
-     * 
-     * @return The center ID, or null if not authenticated
-     */
-    public Long getCenterId() {
-        return tokenData != null ? tokenData.getCenterId() : null;
-    }
-
     @Override
     public String toString() {
         if (tokenData != null) {
