@@ -17,8 +17,6 @@ import orangle.seniorsync.common.converter.StringArrayConverter;
 @Setter
 @Entity
 @Table(name = "seniors", schema = "senior_sync")
-//@FilterDef(name = "tenantFilter", parameters = {@ParamDef(name = "centerId", type = Long.class)})
-//@Filter(name = "tenantFilter", condition = "center_id = :centerId")
 public class Senior {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +24,7 @@ public class Senior {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "center_id")
+    @JoinColumn(name = "center_id", nullable = false)
     private Center center;
 
     @Column(name = "first_name", nullable = false, length = Integer.MAX_VALUE)

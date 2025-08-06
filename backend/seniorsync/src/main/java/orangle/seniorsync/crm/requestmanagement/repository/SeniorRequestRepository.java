@@ -43,6 +43,16 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
     @Query("SELECT COUNT(1) FROM SeniorRequest r where r.status = 'COMPLETED' AND EXTRACT(MONTH FROM r.completedAt) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM r.completedAt) = EXTRACT(YEAR FROM CURRENT_DATE)")
     Long completedThisMonth();
 
+    @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.centerId = :centerId")
+    Long countAllRequestsByCenter(@Param("centerId") Long centerId);
+
+    @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.status = 'PENDING' AND r.centerId = :centerId")
+    Long countPendingRequestsByCenter(@Param("centerId") Long centerId);
+
+    @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.status = 'COMPLETED' AND r.centerId = :centerId AND EXTRACT(MONTH FROM r.completedAt) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM r.completedAt) = EXTRACT(YEAR FROM CURRENT_DATE)")
+    Long completedThisMonthByCenter(@Param("centerId") Long centerId);
+
+
     @Query("SELECT COUNT(1) FROM SeniorRequest r")
     Long countAllRequests();
 

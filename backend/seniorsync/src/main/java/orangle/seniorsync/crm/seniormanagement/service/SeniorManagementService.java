@@ -1,6 +1,8 @@
 package orangle.seniorsync.crm.seniormanagement.service;
 
+import orangle.seniorsync.common.model.Center;
 import orangle.seniorsync.common.model.Senior;
+import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.crm.seniormanagement.mapper.CreateSeniorMapper;
 import orangle.seniorsync.crm.seniormanagement.dto.CreateSeniorDto;
 import orangle.seniorsync.crm.seniormanagement.dto.SeniorDto;
@@ -46,6 +48,13 @@ public class SeniorManagementService implements ISeniorManagementService {
     @Override
     public SeniorDto createSenior(CreateSeniorDto createSeniorDto) {
         Senior seniorToCreate = createSeniorMapper.toEntity(createSeniorDto);
+        
+        // Automatically set center from current user
+        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Center center = new Center();
+        center.setId(currentCenterId);
+        seniorToCreate.setCenter(center);
+        
         Senior createdSenior = seniorRepository.save(seniorToCreate);
         return seniorMapper.toDto(createdSenior);
     }
@@ -58,21 +67,27 @@ public class SeniorManagementService implements ISeniorManagementService {
      */
     @Override
     public Page<SeniorDto> findSeniorsPaginated(SeniorFilterDto filter, Pageable pageable) {
+        // Get current user's center ID for filtering
+        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        
         Page<Senior> seniorsPage;
 
         if (filter == null || isEmptyFilter(filter)) {
-            // Even for "all" seniors, we use pagination - NEVER fetch all without limits
-            seniorsPage = seniorRepository.findAll(pageable);
+            // Apply only center filtering for "all" seniors
+            var centerSpec = SeniorSpecs.belongsToCenter(currentCenterId);
+            seniorsPage = seniorRepository.findAll(centerSpec, pageable);
         } else {
+            // Apply both center filtering AND user filters
             var spec = Specification.allOf(
+                    SeniorSpecs.belongsToCenter(currentCenterId), // Always apply center filter
                     SeniorSpecs.hasFirstNameLike(filter.firstName()),
                     SeniorSpecs.hasLastNameLike(filter.lastName()),
                     SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
                     SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
                     SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
-                    SeniorSpecs.hasCareLevel(filter.careLevel()),           // ADD THIS
-                    SeniorSpecs.hasCareLevelColor(filter.careLevelColor()), // ADD THIS
-                    SeniorSpecs.hasCharacteristics(filter.characteristics()) // ADD THIS
+                    SeniorSpecs.hasCareLevel(filter.careLevel()),           
+                    SeniorSpecs.hasCareLevelColor(filter.careLevelColor()), 
+                    SeniorSpecs.hasCharacteristics(filter.characteristics()) 
             );
             seniorsPage = seniorRepository.findAll(spec, pageable);
         }
@@ -94,7 +109,11 @@ public class SeniorManagementService implements ISeniorManagementService {
             return Page.empty(pageable);
         }
 
+        // Get current user's center ID for filtering
+        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+
         var spec = Specification.allOf(
+                SeniorSpecs.belongsToCenter(currentCenterId), // Always apply center filter
                 SeniorSpecs.hasFirstNameLike(firstName),
                 SeniorSpecs.hasLastNameLike(lastName)
         );

@@ -4,6 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import orangle.seniorsync.common.model.Staff;
+import orangle.seniorsync.common.repository.StaffRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,12 +27,15 @@ import java.util.Optional;
  * for backward compatibility during migration.
  */
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
     
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
     
     private static final String LEGACY_TOKEN_PREFIX = "nextauth.";
     private static final String BEARER_PREFIX = "Bearer ";
+    
+    private final StaffRepository staffRepository;
     
     @Value("${security.jwt.enabled:true}")
     private boolean jwtEnabled;
@@ -150,10 +156,26 @@ public class JwtUtil {
                 log.debug("JWT token expired at: {}", expiration);
                 return Optional.empty();
             }
+
+            // Look up center ID from staff record
+            Long centerId = null;
+            try {
+                Optional<Staff> staffOpt = staffRepository.findById(userId);
+                if (staffOpt.isPresent()) {
+                    Staff staff = staffOpt.get();
+                    if (staff.getCenter() != null) {
+                        centerId = staff.getCenter().getId();
+                    }
+                } else {
+                    log.warn("Staff record not found for user ID: {}", userId);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to look up center ID for user {}: {}", userId, e.getMessage());
+            }
             
-            log.debug("Successfully parsed secure JWT for user: {} with role: {}", userId, userRole);
+            log.debug("Successfully parsed secure JWT for user: {} with role: {} and center: {}", userId, userRole, centerId);
             
-            return Optional.of(new NextAuthTokenData(userId, userRole, userEmail, userName, true));
+            return Optional.of(new NextAuthTokenData(userId, userRole, userEmail, userName, centerId, true));
             
         } catch (JwtException e) {
             log.debug("JWT parsing failed: {}", e.getMessage());
@@ -205,7 +227,7 @@ public class JwtUtil {
             
             log.warn("Using deprecated legacy token format for user: {} with role: {}. Please upgrade to secure JWT tokens.", userIdLong, userRole);
             
-            return Optional.of(new NextAuthTokenData(userIdLong, userRole, null, null, false));
+            return Optional.of(new NextAuthTokenData(userIdLong, userRole, null, null, null, false));
             
         } catch (Exception e) {
             log.debug("Error parsing legacy token: {}", e.getMessage());
@@ -263,19 +285,21 @@ public class JwtUtil {
         private final String userRole;
         private final String userEmail;
         private final String userName;
+        private final Long centerId;
         private final boolean isSecureJwt;
         
-        public NextAuthTokenData(Long userId, String userRole, String userEmail, String userName, boolean isSecureJwt) {
+        public NextAuthTokenData(Long userId, String userRole, String userEmail, String userName, Long centerId, boolean isSecureJwt) {
             this.userId = userId;
             this.userRole = userRole;
             this.userEmail = userEmail;
             this.userName = userName;
+            this.centerId = centerId;
             this.isSecureJwt = isSecureJwt;
         }
         
         // Backward compatibility constructor
         public NextAuthTokenData(Long userId, String userRole) {
-            this(userId, userRole, null, null, false);
+            this(userId, userRole, null, null, null, false);
         }
         
         public Long getUserId() {
@@ -294,6 +318,10 @@ public class JwtUtil {
             return userName;
         }
         
+        public Long getCenterId() {
+            return centerId;
+        }
+        
         public boolean isSecureJwt() {
             return isSecureJwt;
         }
@@ -308,8 +336,8 @@ public class JwtUtil {
         
         @Override
         public String toString() {
-            return String.format("NextAuthTokenData{userId=%d, userRole='%s', isSecureJwt=%s}", 
-                               userId, userRole, isSecureJwt);
+            return String.format("NextAuthTokenData{userId=%d, userRole='%s', centerId=%d, isSecureJwt=%s}", 
+                               userId, userRole, centerId, isSecureJwt);
         }
     }
 } 

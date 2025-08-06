@@ -55,6 +55,11 @@ public class RequestManagementService implements IRequestManagementService {
      */
     public SeniorRequestDto createRequest(CreateSeniorRequestDto createSeniorRequestDto) {
         SeniorRequest seniorRequestToCreate = createSeniorRequestMapper.toEntity(createSeniorRequestDto);
+        
+        // Automatically set center ID from current user
+        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        seniorRequestToCreate.setCenterId(currentCenterId);
+        
         SeniorRequest createdSeniorRequest = seniorRequestRepository.save(seniorRequestToCreate);
         return seniorRequestMapper.toDto(createdSeniorRequest);
     }

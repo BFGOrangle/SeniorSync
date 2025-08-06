@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 
 import java.time.OffsetDateTime;
 
@@ -16,12 +19,18 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "staff", schema = "senior_sync")
+@FilterDef(name = "staffCenterFilter", parameters = @ParamDef(name = "centerId", type = Long.class))
+@Filter(name = "centerFilter", condition = "center_id = :centerId")
 public class Staff {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "center_id", nullable = false)
+    private Center center;
 
     @NotBlank
     @Column(name = "first_name", nullable = false)

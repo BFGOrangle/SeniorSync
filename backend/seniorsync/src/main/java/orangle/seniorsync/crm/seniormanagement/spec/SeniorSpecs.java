@@ -13,6 +13,19 @@ import java.time.LocalDate;
  */
 public class SeniorSpecs {
 
+    /**
+     * Filter seniors by center ID for multi-tenant isolation
+     * 
+     * @param centerId The center ID to filter by
+     * @return Specification for center filtering
+     */
+    public static Specification<Senior> belongsToCenter(Long centerId) {
+        return (root, query, cb) ->
+                centerId == null
+                        ? cb.conjunction()
+                        : cb.equal(root.get("center").get("id"), centerId);
+    }
+
     public static Specification<Senior> hasFirstNameLike(String firstName) {
         return (root, query, cb) ->
                 firstName == null || firstName.isEmpty()

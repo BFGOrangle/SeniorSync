@@ -11,6 +11,8 @@ export interface CurrentUser {
   jobTitle: string;
   email: string;
   fullName: string;
+  centerId?: number;
+  centerName?: string;
 }
 
 interface UserContextType {
