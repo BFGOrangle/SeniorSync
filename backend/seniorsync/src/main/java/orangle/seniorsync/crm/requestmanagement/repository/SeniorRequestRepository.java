@@ -15,6 +15,14 @@ import java.util.List;
 public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Long>, JpaSpecificationExecutor<SeniorRequest> {
     // Read‐only projection by status for high‐QPS
     List<SeniorRequestView> findByStatus(RequestStatus status);
+    
+    // Interface projection with Specification support for center filtering
+    @Query("SELECT r.id as id, r.seniorId as seniorId, r.assignedStaffId as assignedStaffId, " +
+           "r.requestTypeId as requestTypeId, r.title as title, r.description as description, " +
+           "r.priority as priority, r.createdAt as createdAt, r.updatedAt as updatedAt, " +
+           "r.completedAt as completedAt, r.status as status " +
+           "FROM SeniorRequest r WHERE r.status = :status AND r.centerId = :centerId")
+    List<SeniorRequestView> findByStatusAndCenterId(@Param("status") RequestStatus status, @Param("centerId") Long centerId);
 
     @Query("SELECT r FROM SeniorRequest r WHERE r.seniorId = ?1")
     List<SeniorRequest> findRequestsBySenior(long seniorId);

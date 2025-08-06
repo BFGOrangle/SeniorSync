@@ -2,6 +2,7 @@ package orangle.seniorsync.crm.seniormanagement.service;
 
 import orangle.seniorsync.common.model.Center;
 import orangle.seniorsync.common.model.Senior;
+import orangle.seniorsync.common.service.AbstractCenterFilteredService;
 import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.crm.seniormanagement.mapper.CreateSeniorMapper;
 import orangle.seniorsync.crm.seniormanagement.dto.CreateSeniorDto;
@@ -15,12 +16,13 @@ import orangle.seniorsync.crm.seniormanagement.spec.SeniorSpecs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class SeniorManagementService implements ISeniorManagementService {
+public class SeniorManagementService extends AbstractCenterFilteredService<Senior, Long> implements ISeniorManagementService {
 
     private final SeniorRepository seniorRepository;
     private final CreateSeniorMapper createSeniorMapper;
@@ -36,6 +38,22 @@ public class SeniorManagementService implements ISeniorManagementService {
         this.createSeniorMapper = createSeniorMapper;
         this.seniorMapper = seniorMapper;
         this.updateSeniorMapper = updateSeniorMapper;
+    }
+
+    /**
+     * Get the repository for the abstract base service
+     */
+    @Override
+    protected JpaSpecificationExecutor<Senior> getRepository() {
+        return seniorRepository;
+    }
+
+    /**
+     * Create center filter specification for seniors
+     */
+    @Override
+    protected Specification<Senior> createCenterFilterSpec(Long centerId) {
+        return SeniorSpecs.belongsToCenter(centerId);
     }
 
     /**
@@ -67,19 +85,11 @@ public class SeniorManagementService implements ISeniorManagementService {
      */
     @Override
     public Page<SeniorDto> findSeniorsPaginated(SeniorFilterDto filter, Pageable pageable) {
-        // Get current user's center ID for filtering
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Specification<Senior> userSpec = null;
         
-        Page<Senior> seniorsPage;
-
-        if (filter == null || isEmptyFilter(filter)) {
-            // Apply only center filtering for "all" seniors
-            var centerSpec = SeniorSpecs.belongsToCenter(currentCenterId);
-            seniorsPage = seniorRepository.findAll(centerSpec, pageable);
-        } else {
-            // Apply both center filtering AND user filters
-            var spec = Specification.allOf(
-                    SeniorSpecs.belongsToCenter(currentCenterId), // Always apply center filter
+        // Build user specification only if filter is provided and not empty
+        if (filter != null && !isEmptyFilter(filter)) {
+            userSpec = Specification.allOf(
                     SeniorSpecs.hasFirstNameLike(filter.firstName()),
                     SeniorSpecs.hasLastNameLike(filter.lastName()),
                     SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
@@ -89,8 +99,10 @@ public class SeniorManagementService implements ISeniorManagementService {
                     SeniorSpecs.hasCareLevelColor(filter.careLevelColor()), 
                     SeniorSpecs.hasCharacteristics(filter.characteristics()) 
             );
-            seniorsPage = seniorRepository.findAll(spec, pageable);
         }
+        
+        // Use abstracted method that automatically applies center filtering
+        Page<Senior> seniorsPage = findAllWithCenterFilter(userSpec, pageable);
 
         return seniorsPage.map(seniorMapper::toDto);
     }
@@ -109,16 +121,14 @@ public class SeniorManagementService implements ISeniorManagementService {
             return Page.empty(pageable);
         }
 
-        // Get current user's center ID for filtering
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
-
-        var spec = Specification.allOf(
-                SeniorSpecs.belongsToCenter(currentCenterId), // Always apply center filter
+        // Build name search specification
+        var nameSpec = Specification.allOf(
                 SeniorSpecs.hasFirstNameLike(firstName),
                 SeniorSpecs.hasLastNameLike(lastName)
         );
 
-        Page<Senior> seniorsPage = seniorRepository.findAll(spec, pageable);
+        // Use abstracted method that automatically applies center filtering
+        Page<Senior> seniorsPage = findAllWithCenterFilter(nameSpec, pageable);
 
         // Map the Senior entities to SeniorDto
         return seniorsPage.map(seniorMapper::toDto);
@@ -131,22 +141,24 @@ public class SeniorManagementService implements ISeniorManagementService {
      */
     @Override
     public long countSeniors(SeniorFilterDto filter) {
-        if (filter == null || isEmptyFilter(filter)) {
-            return seniorRepository.count();
+        Specification<Senior> userSpec = null;
+        
+        // Build user specification if filter is provided and not empty
+        if (filter != null && !isEmptyFilter(filter)) {
+            userSpec = Specification.allOf(
+                    SeniorSpecs.hasFirstNameLike(filter.firstName()),
+                    SeniorSpecs.hasLastNameLike(filter.lastName()),
+                    SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
+                    SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
+                    SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
+                    SeniorSpecs.hasCareLevel(filter.careLevel()),
+                    SeniorSpecs.hasCareLevelColor(filter.careLevelColor()),
+                    SeniorSpecs.hasCharacteristics(filter.characteristics())
+            );
         }
 
-        var spec = Specification.allOf(
-                SeniorSpecs.hasFirstNameLike(filter.firstName()),
-                SeniorSpecs.hasLastNameLike(filter.lastName()),
-                SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
-                SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
-                SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
-                SeniorSpecs.hasCareLevel(filter.careLevel()),
-                SeniorSpecs.hasCareLevelColor(filter.careLevelColor()),
-                SeniorSpecs.hasCharacteristics(filter.characteristics())
-        );
-
-        return seniorRepository.count(spec);
+        // Use abstracted method that automatically applies center filtering
+        return countWithCenterFilter(userSpec);
     }
 
     /**
@@ -186,20 +198,21 @@ public class SeniorManagementService implements ISeniorManagementService {
      */
     @Override
     public List<SeniorDto> findSeniors(SeniorFilterDto filter) {
-        List<Senior> seniorsQueryResult;
-        // If no filter is provided, return all seniors.
-        if (filter == null) {
-            seniorsQueryResult = seniorRepository.findAll();
-        } else {
-            var spec = Specification.allOf(
+        Specification<Senior> userSpec = null;
+        
+        // Build user specification if filter is provided
+        if (filter != null) {
+            userSpec = Specification.allOf(
                     SeniorSpecs.hasFirstNameLike(filter.firstName()),
                     SeniorSpecs.hasLastNameLike(filter.lastName()),
                     SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
                     SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
                     SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth())
             );
-            seniorsQueryResult = seniorRepository.findAll(spec);
         }
+
+        // Use abstracted method that automatically applies center filtering
+        List<Senior> seniorsQueryResult = findAllWithCenterFilter(userSpec);
 
         return seniorsQueryResult.stream()
                 .map(seniorMapper::toDto)
@@ -208,16 +221,25 @@ public class SeniorManagementService implements ISeniorManagementService {
 
     /**
      * Updates a senior based on the provided DTO.
-     * If the senior does not exist, an IllegalArgumentException is thrown.
+     * If the senior does not exist or doesn't belong to the current user's center, an IllegalArgumentException is thrown.
      *
      * @param updateSeniorDto the DTO containing the updated details of the senior
      * @return the updated SeniorDto
-     * @throws IllegalArgumentException if the senior with the specified ID is not found
+     * @throws IllegalArgumentException if the senior with the specified ID is not found in the current user's center
      */
     @Override
     public SeniorDto updateSenior(UpdateSeniorDto updateSeniorDto) {
-        Senior existingSenior = seniorRepository.findById(updateSeniorDto.id())
-                .orElseThrow(() -> new IllegalArgumentException("Senior not found with ID: " + updateSeniorDto.id()));
+        // Create specification for ID and center filtering
+        var spec = (Specification<Senior>) (root, query, cb) -> cb.equal(root.get("id"), updateSeniorDto.id());
+        
+        // Use abstracted method that automatically applies center filtering
+        List<Senior> seniors = findAllWithCenterFilter(spec);
+        
+        if (seniors.isEmpty()) {
+            throw new IllegalArgumentException("Senior not found with ID: " + updateSeniorDto.id() + " in your center");
+        }
+        
+        Senior existingSenior = seniors.get(0);
         
         // Update existing senior object with the new values from the DTO in place
         updateSeniorMapper.updateExistingSeniorFromDto(updateSeniorDto, existingSenior);
@@ -228,30 +250,47 @@ public class SeniorManagementService implements ISeniorManagementService {
 
     /**
      * Deletes a senior by its ID.
-     * If the senior does not exist, an IllegalArgumentException is thrown.
+     * If the senior does not exist or doesn't belong to the current user's center, an IllegalArgumentException is thrown.
      *
      * @param id the ID of the senior to delete
-     * @throws IllegalArgumentException if the senior with the specified ID is not found
+     * @throws IllegalArgumentException if the senior with the specified ID is not found in the current user's center
      */
     @Override
     public void deleteSenior(long id) {
-        Senior existingSenior = seniorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Senior not found with ID: " + id));
+        // Create specification for ID and center filtering
+        var spec = (Specification<Senior>) (root, query, cb) -> cb.equal(root.get("id"), id);
+        
+        // Use abstracted method that automatically applies center filtering
+        List<Senior> seniors = findAllWithCenterFilter(spec);
+        
+        if (seniors.isEmpty()) {
+            throw new IllegalArgumentException("Senior not found with ID: " + id + " in your center");
+        }
+        
+        Senior existingSenior = seniors.get(0);
         seniorRepository.delete(existingSenior);
     }
 
     /**
      * Find a single senior by its ID.
-     * If the senior does not exist, an IllegalArgumentException is thrown.
+     * If the senior does not exist or doesn't belong to the current user's center, an IllegalArgumentException is thrown.
      *
      * @param id the ID of the senior to find
      * @return the SeniorDto
-     * @throws IllegalArgumentException if the senior with the specified ID is not found
+     * @throws IllegalArgumentException if the senior with the specified ID is not found in the current user's center
      */
     @Override
     public SeniorDto findSeniorById(long id) {
-        Senior senior = seniorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Senior not found with ID: " + id));
-        return seniorMapper.toDto(senior);
+        // Create specification for ID and center filtering
+        var spec = (Specification<Senior>) (root, query, cb) -> cb.equal(root.get("id"), id);
+        
+        // Use abstracted method that automatically applies center filtering
+        List<Senior> seniors = findAllWithCenterFilter(spec);
+        
+        if (seniors.isEmpty()) {
+            throw new IllegalArgumentException("Senior not found with ID: " + id + " in your center");
+        }
+        
+        return seniorMapper.toDto(seniors.get(0));
     }
 }

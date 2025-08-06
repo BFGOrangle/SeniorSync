@@ -1,5 +1,6 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
+import orangle.seniorsync.common.service.AbstractCenterFilteredService;
 import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.common.util.TimeUtils;
 import orangle.seniorsync.crm.requestmanagement.dto.*;
@@ -10,19 +11,22 @@ import orangle.seniorsync.crm.requestmanagement.mapper.UpdateSeniorRequestMapper
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import orangle.seniorsync.crm.requestmanagement.model.RequestType;
 import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestView;
+import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestViewImpl;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
 import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository;
 import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
 import orangle.seniorsync.common.model.Staff;
 import orangle.seniorsync.common.repository.StaffRepository;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
-public class RequestManagementService implements IRequestManagementService {
+public class RequestManagementService extends AbstractCenterFilteredService<SeniorRequest, Long> implements IRequestManagementService {
 
     private final SeniorRequestRepository seniorRequestRepository;
     private final CreateSeniorRequestMapper createSeniorRequestMapper;
@@ -44,6 +48,22 @@ public class RequestManagementService implements IRequestManagementService {
         this.updateSeniorRequestMapper = updateSeniorRequestMapper;
         this.staffRepository = staffRepository;
         this.requestTypeRepository = requestTypeRepository;
+    }
+
+    /**
+     * Get the repository for the abstract base service
+     */
+    @Override
+    protected JpaSpecificationExecutor<SeniorRequest> getRepository() {
+        return seniorRequestRepository;
+    }
+
+    /**
+     * Create center filter specification for senior requests
+     */
+    @Override
+    protected Specification<SeniorRequest> createCenterFilterSpec(Long centerId) {
+        return SeniorRequestSpecs.belongsToCenter(centerId);
     }
 
     /**
@@ -85,12 +105,11 @@ public class RequestManagementService implements IRequestManagementService {
      * @return a list of SeniorRequestDto matching the filter criteria
      */
     public List<SeniorRequestDto> findRequests(SeniorRequestFilterDto filter) {
-        List<SeniorRequest> seniorRequestsQueryResult;
-        // If no filter is provided, return all senior requests.
-        if (filter == null) {
-            seniorRequestsQueryResult = seniorRequestRepository.findAll();
-        } else {
-            var spec = Specification.allOf(
+        Specification<SeniorRequest> userSpec = null;
+        
+        // Build user specification if filter is provided
+        if (filter != null) {
+            userSpec = Specification.allOf(
                     SeniorRequestSpecs.hasStatus(filter.status()),
                     SeniorRequestSpecs.hasSeniorId(filter.seniorId()),
                     SeniorRequestSpecs.hasAssignedStaffId(filter.assignedStaffId()),
@@ -98,8 +117,10 @@ public class RequestManagementService implements IRequestManagementService {
                     SeniorRequestSpecs.priorityBetween(filter.minPriority(), filter.maxPriority()),
                     SeniorRequestSpecs.createdInRange(filter.createdAfter(), filter.createdBefore())
             );
-            seniorRequestsQueryResult = seniorRequestRepository.findAll(spec);
         }
+        
+        // Use abstracted method that automatically applies center filtering
+        List<SeniorRequest> seniorRequestsQueryResult = findAllWithCenterFilter(userSpec);
 
         return seniorRequestsQueryResult.stream()
                 .map(seniorRequestMapper::toDto)
@@ -114,6 +135,7 @@ public class RequestManagementService implements IRequestManagementService {
      *   <li>No full entity hydration or persistence-context overhead occurs.</li>
      *   <li>No extra Java-level mapping step is required.</li>
      * </ul>
+     * Center filtering is automatically applied to ensure multi-tenant isolation.
      *
      * @param status the status of the senior requests to filter by
      * @return a list of SeniorRequestView projections for the specified status
@@ -122,12 +144,25 @@ public class RequestManagementService implements IRequestManagementService {
         // Why use Interface projection here? (Notice how we use SeniorRequestView instead of SeniorRequestDto)
         // For High QPS endpoints, switching your hot read paths from loading full SeniorRequest entities to using interface (or constructor) projections can yield substantially better throughput and lower latency.
         // Furthermore, we want to avoid the overhead of mapping the entire entity to a DTO.
-        return seniorRequestRepository.findByStatus(status);
+        
+        // Apply center filtering for multi-tenant isolation
+        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        return seniorRequestRepository.findByStatusAndCenterId(status, currentCenterId);
     }
 
     public SeniorRequestDto updateRequest(UpdateSeniorRequestDto updateSeniorRequestDto) {
-        SeniorRequest existingSeniorRequest = seniorRequestRepository.findById(updateSeniorRequestDto.id())
-                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + updateSeniorRequestDto.id()));
+        // Create specification for ID and center filtering
+        var spec = (Specification<SeniorRequest>) (root, query, cb) -> cb.equal(root.get("id"), updateSeniorRequestDto.id());
+        
+        // Use abstracted method that automatically applies center filtering
+        List<SeniorRequest> requests = findAllWithCenterFilter(spec);
+        
+        if (requests.isEmpty()) {
+            throw new IllegalArgumentException("Request not found with ID: " + updateSeniorRequestDto.id() + " in your center");
+        }
+        
+        SeniorRequest existingSeniorRequest = requests.get(0);
+        
         // Update existing request object with the new values from the DTO in place
         updateSeniorRequestMapper.updateExitingSeniorRequestFromDto(updateSeniorRequestDto, existingSeniorRequest);
         if (existingSeniorRequest.getStatus() == RequestStatus.COMPLETED) {
@@ -138,7 +173,10 @@ public class RequestManagementService implements IRequestManagementService {
     }
 
     public List<SeniorRequestDto> findRequestsBySenior(long id) {
-        List<SeniorRequest> seniorRequests = seniorRequestRepository.findRequestsBySenior(id);
+        // Use specification to filter by senior ID with automatic center filtering
+        var seniorSpec = SeniorRequestSpecs.hasSeniorId(id);
+        List<SeniorRequest> seniorRequests = findAllWithCenterFilter(seniorSpec);
+        
         return seniorRequests.stream()
                 .map(seniorRequestMapper::toDto)
                 .toList();
@@ -146,20 +184,37 @@ public class RequestManagementService implements IRequestManagementService {
 
     /**
      * Deletes a senior request by its ID.
-     * If the request does not exist, an IllegalArgumentException is thrown.
+     * If the request does not exist or doesn't belong to the current user's center, an IllegalArgumentException is thrown.
      *
      * @param id the ID of the senior request to delete
      */
     public void deleteRequest(long id) {
-        SeniorRequest existingSeniorRequest = seniorRequestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + id));
+        // Create specification for ID and center filtering
+        var spec = (Specification<SeniorRequest>) (root, query, cb) -> cb.equal(root.get("id"), id);
+        
+        // Use abstracted method that automatically applies center filtering
+        List<SeniorRequest> requests = findAllWithCenterFilter(spec);
+        
+        if (requests.isEmpty()) {
+            throw new IllegalArgumentException("Request not found with ID: " + id + " in your center");
+        }
+        
+        SeniorRequest existingSeniorRequest = requests.get(0);
         seniorRequestRepository.delete(existingSeniorRequest);
     }
 
     public SeniorRequestDto findRequestById(long id) {
-        SeniorRequest seniorRequest = seniorRequestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + id));
-        return seniorRequestMapper.toDto(seniorRequest);
+        // Create specification for ID and center filtering
+        var spec = (Specification<SeniorRequest>) (root, query, cb) -> cb.equal(root.get("id"), id);
+        
+        // Use abstracted method that automatically applies center filtering
+        List<SeniorRequest> requests = findAllWithCenterFilter(spec);
+        
+        if (requests.isEmpty()) {
+            throw new IllegalArgumentException("Request not found with ID: " + id + " in your center");
+        }
+        
+        return seniorRequestMapper.toDto(requests.get(0));
     }
 
     @Transactional(readOnly = true)
@@ -273,8 +328,17 @@ public class RequestManagementService implements IRequestManagementService {
      */
     @Transactional
     public SeniorRequestDto assignRequest(Long requestId, AssignRequestDto assignRequestDto) {
-        SeniorRequest request = seniorRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
+        // Create specification for ID and center filtering
+        var spec = (Specification<SeniorRequest>) (root, query, cb) -> cb.equal(root.get("id"), requestId);
+        
+        // Use abstracted method that automatically applies center filtering
+        List<SeniorRequest> requests = findAllWithCenterFilter(spec);
+        
+        if (requests.isEmpty()) {
+            throw new IllegalArgumentException("Request not found with ID: " + requestId + " in your center");
+        }
+        
+        SeniorRequest request = requests.get(0);
 
         Long currentUserId = SecurityContextUtil.requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
@@ -313,8 +377,17 @@ public class RequestManagementService implements IRequestManagementService {
      */
     @Transactional
     public SeniorRequestDto unassignRequest(Long requestId) {
-        SeniorRequest request = seniorRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
+        // Create specification for ID and center filtering
+        var spec = (Specification<SeniorRequest>) (root, query, cb) -> cb.equal(root.get("id"), requestId);
+        
+        // Use abstracted method that automatically applies center filtering
+        List<SeniorRequest> requests = findAllWithCenterFilter(spec);
+        
+        if (requests.isEmpty()) {
+            throw new IllegalArgumentException("Request not found with ID: " + requestId + " in your center");
+        }
+        
+        SeniorRequest request = requests.get(0);
 
         Long currentUserId = SecurityContextUtil.requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();

@@ -15,8 +15,6 @@ import java.time.OffsetDateTime;
 @Setter
 @Entity
 @Table(name = "senior_requests", schema = "senior_sync")
-@FilterDef(name = "centerFilter", parameters = @ParamDef(name = "centerId", type = Long.class))
-@Filter(name = "centerFilter", condition = "center_id = :centerId")
 public class SeniorRequest {
     // FYI:
     // With GenerationType.IDENTITY, the database is responsible for assigning the primary key value—Hibernate will:
