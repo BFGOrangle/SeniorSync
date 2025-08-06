@@ -11,9 +11,11 @@ export default function UnauthorizedPage() {
   const router = useRouter();
 
   const handleGoToDashboard = () => {
-    if (session?.user?.role === "ADMIN") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((session?.user as any)?.role === "ADMIN") {
       router.push("/admin/dashboard");
-    } else if (session?.user?.role === "STAFF") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((session?.user as any)?.role === "STAFF") {
       router.push("/staff/dashboard");
     } else {
       router.push("/login");
@@ -34,7 +36,8 @@ export default function UnauthorizedPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Unauthorized Access:</strong> This page is restricted to {session?.user?.role === "ADMIN" ? "staff members" : "administrators"} only. 
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <strong>Unauthorized Access:</strong> This page is restricted to {(session?.user as any)?.role === "ADMIN" ? "staff members" : "administrators"} only. 
             Please contact your system administrator if you believe this is an error.
           </AlertDescription>
         </Alert>
@@ -51,7 +54,8 @@ export default function UnauthorizedPage() {
         </div>
 
         <div className="text-center text-sm text-gray-500">
-          <p>Current Role: <span className="font-medium">{session?.user?.role}</span></p>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <p>Current Role: <span className="font-medium">{(session?.user as any)?.role}</span></p>
           <p>User: <span className="font-medium">{session?.user?.name}</span></p>
         </div>
       </div>

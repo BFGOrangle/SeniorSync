@@ -1,4 +1,3 @@
-// NextAuth.js type declarations
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -9,8 +8,6 @@ declare module 'next-auth' {
       jobTitle: string
       firstName: string
       lastName: string
-      centerId?: string
-      centerName?: string
     }
     accessToken?: string
   }
@@ -23,8 +20,6 @@ declare module 'next-auth' {
     jobTitle: string
     firstName: string
     lastName: string
-    centerId?: string
-    centerName?: string
   }
 }
 
@@ -34,7 +29,5 @@ declare module 'next-auth/jwt' {
     jobTitle?: string
     firstName?: string
     lastName?: string
-    centerId?: string
-    centerName?: string
   }
 } 

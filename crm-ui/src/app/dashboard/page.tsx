@@ -18,9 +18,11 @@ export default function DashboardRedirect() {
     }
 
     // Redirect based on user role
-    if (session?.user?.role === "ADMIN") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((session?.user as any)?.role === "ADMIN") {
       router.push("/admin/dashboard");
-    } else if (session?.user?.role === "STAFF") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((session?.user as any)?.role === "STAFF") {
       router.push("/staff/dashboard");
     } else {
       // Fallback for unknown roles or missing role

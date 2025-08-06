@@ -50,8 +50,10 @@ export class AuthenticatedApiClient {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       // Add JWT token if available
-      ...(session?.accessToken && {
-        'Authorization': `Bearer ${session.accessToken}`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...((session as any)?.accessToken && {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'Authorization': `Bearer ${(session as any).accessToken}`
       })
     };
 
