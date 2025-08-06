@@ -1,5 +1,3 @@
-import NextAuth from 'next-auth'
-
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -10,6 +8,8 @@ declare module 'next-auth' {
       jobTitle: string
       firstName: string
       lastName: string
+      centerId: number
+      centerName: string
     }
     accessToken?: string
   }
@@ -22,6 +22,9 @@ declare module 'next-auth' {
     jobTitle: string
     firstName: string
     lastName: string
+    centerId: number
+    centerName: string
+    backendToken: string
   }
 }
 
@@ -31,5 +34,8 @@ declare module 'next-auth/jwt' {
     jobTitle?: string
     firstName?: string
     lastName?: string
+    centerId?: number
+    centerName?: string
+    backendToken?: string
   }
 } 

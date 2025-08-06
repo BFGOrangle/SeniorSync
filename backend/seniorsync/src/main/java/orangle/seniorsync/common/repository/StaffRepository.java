@@ -27,6 +27,12 @@ public interface StaffRepository extends JpaRepository<Staff, Long>, JpaSpecific
     Optional<Staff> findByContactEmailAndIsActiveTrue(String contactEmail);
     
     /**
+     * Find active staff by email with center eagerly loaded
+     */
+    @Query("SELECT s FROM Staff s LEFT JOIN FETCH s.center WHERE s.contactEmail = :email AND s.isActive = true")
+    Optional<Staff> findByContactEmailWithCenter(@Param("email") String email);
+    
+    /**
      * Check if email exists
      */
     boolean existsByContactEmail(String contactEmail);

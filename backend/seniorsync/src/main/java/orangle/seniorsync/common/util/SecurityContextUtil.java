@@ -46,6 +46,16 @@ public class SecurityContextUtil {
     }
 
     /**
+     * Get the current authenticated user's center ID
+     * 
+     * @return Optional containing the center ID if authenticated, empty otherwise
+     */
+    public static Optional<Long> getCurrentCenterId() {
+        return getCurrentJwtToken()
+                .map(JwtAuthenticationToken::getCenterId);
+    }
+
+    /**
      * Check if the current user is authenticated
      * 
      * @return true if user is authenticated, false otherwise

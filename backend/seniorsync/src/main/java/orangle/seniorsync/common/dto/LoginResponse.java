@@ -14,6 +14,9 @@ public record LoginResponse(
     String lastName,
     String jobTitle,
     RoleType roleType,
+    Long centerId,
+    String centerName,
+    String token,
     OffsetDateTime lastLoginAt,
     String message
 ) {
@@ -22,10 +25,12 @@ public record LoginResponse(
      * Success response factory method
      */
     public static LoginResponse success(Long staffId, String email, String firstName, 
-                                      String lastName, String jobTitle, RoleType roleType, 
+                                      String lastName, String jobTitle, RoleType roleType,
+                                      Long centerId, String centerName, String token,
                                       OffsetDateTime lastLoginAt) {
         return new LoginResponse(
-            staffId, email, firstName, lastName, jobTitle, roleType, lastLoginAt, 
+            staffId, email, firstName, lastName, jobTitle, roleType, 
+            centerId, centerName, token, lastLoginAt, 
             "Login successful"
         );
     }
@@ -35,7 +40,7 @@ public record LoginResponse(
      */
     public static LoginResponse error(String message) {
         return new LoginResponse(
-            null, null, null, null, null, null, null, message
+            null, null, null, null, null, null, null, null, null, null, message
         );
     }
 } 

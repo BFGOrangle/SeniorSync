@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Filter;
 
 import java.time.OffsetDateTime;
 
@@ -16,6 +17,7 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "staff", schema = "senior_sync")
+@Filter(name = "tenantFilter", condition = "center_id = :centerId")
 public class Staff {
     
     @Id
@@ -43,6 +45,11 @@ public class Staff {
     @Email
     @Column(name = "contact_email", nullable = false, unique = true)
     private String contactEmail;
+
+    // Center relationship for multi-tenancy
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "center_id")
+    private Center center;
 
     // Authentication fields
     @Column(name = "password_hash", nullable = false)

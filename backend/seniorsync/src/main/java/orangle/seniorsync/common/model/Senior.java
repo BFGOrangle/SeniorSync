@@ -17,8 +17,7 @@ import orangle.seniorsync.common.converter.StringArrayConverter;
 @Setter
 @Entity
 @Table(name = "seniors", schema = "senior_sync")
-//@FilterDef(name = "tenantFilter", parameters = {@ParamDef(name = "centerId", type = Long.class)})
-//@Filter(name = "tenantFilter", condition = "center_id = :centerId")
+@Filter(name = "tenantFilter", condition = "center_id = :centerId")
 public class Senior {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
