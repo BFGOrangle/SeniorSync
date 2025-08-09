@@ -17,7 +17,8 @@ import {
 } from "@/components/dashboard-charts";
 
 import { CreateRequestModal } from "@/components/create-request-modal";
-import { RefreshCw, Calendar, Download, Plus } from "lucide-react";
+import { AIRecommendations } from "@/components/ai-recommendations";
+import { RefreshCw, Calendar, Plus } from "lucide-react";
 import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
 import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
 import { useCurrentUser } from "@/contexts/user-context";
@@ -152,6 +153,9 @@ export default function Dashboard() {
           loading={loading}
         />
       </div>
+
+      {/* AI Recommendations Section */}
+      <AIRecommendations className="w-full" />
 
       {/* Charts Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">

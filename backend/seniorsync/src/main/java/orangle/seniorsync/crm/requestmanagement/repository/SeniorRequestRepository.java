@@ -30,6 +30,10 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
     @Query("SELECT rt.name, COUNT(r) FROM SeniorRequest r, RequestType rt where r.requestTypeId = rt.id GROUP BY rt.name")
     List<StringCountDto> findSeniorRequestsByRequestTypeId();
 
+    @Query("SELECT r FROM SeniorRequest r WHERE r.assignedStaffId = ?1 AND r.status != 'COMPLETED'")
+    List<SeniorRequest> findIncompleteRequestsByAssignedStaffId(Long staffId);
+
+
     @Query("SELECT  s.firstName, COUNT(r) FROM SeniorRequest r, Staff s where r.assignedStaffId = s.id GROUP BY s.firstName")
     List<StringCountDto> findCountsByAssignedStaffId();
 
