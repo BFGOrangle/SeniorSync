@@ -86,5 +86,12 @@ public class VendorApplicationService {
     private String paraBlock(String html) { return "<p style=\"margin-top:12px;\">" + html + "</p>"; }
     private String codeBlock(String text, String color) { return "<p style=\"background-color: white; padding: 15px; border-radius: 4px; border-left: 4px solid " + color + ";\">" + escape(text) + "</p>"; }
     private String footer() { return "<p style=\"font-size: 12px; color: #6b7280; text-align: center;\">SeniorSync - Connecting seniors with trusted care service providers<br>This is an automated confirmation email.</p>"; }
-    private String escape(String s) { return s == null ? "" : s.replace("<","&lt;").replace(">","&gt;"); }
+    private String escape(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
 }
