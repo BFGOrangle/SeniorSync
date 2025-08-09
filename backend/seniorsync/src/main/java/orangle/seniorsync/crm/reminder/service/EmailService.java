@@ -6,7 +6,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 @Slf4j
@@ -43,5 +47,21 @@ public class EmailService implements IEmailService{
         String body = "This is a test email to verify the email service functionality.";
         sendEmail(to, subject, body);
         log.info("Test email sent to {}", to);
+    }
+
+    public void sendHtmlEmail(String to, String subject, String htmlBody) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+            mailSender.send(mimeMessage);
+            log.info("HTML email sent to {}", to);
+        } catch (MailException | MessagingException e) {
+            log.error("Failed to send HTML email to {}", to, e);
+            throw new RuntimeException("HTML email sending failed", e);
+        }
     }
 }
