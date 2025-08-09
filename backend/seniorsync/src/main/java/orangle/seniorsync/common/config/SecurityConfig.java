@@ -4,6 +4,7 @@ package orangle.seniorsync.common.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -57,6 +58,8 @@ public class SecurityConfig {
                 // Public endpoints - no authentication required
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
+                // Public vendor application submission (unauthenticated)
+                .requestMatchers(HttpMethod.POST, "/api/vendor-applications").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Protected endpoints - require authentication (including auth test endpoints)
                 .requestMatchers("/api/**").hasAnyRole("ADMIN", "STAFF")
