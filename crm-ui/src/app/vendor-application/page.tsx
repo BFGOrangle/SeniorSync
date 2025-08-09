@@ -16,11 +16,13 @@ import {
   User, 
   Briefcase,
   FileText,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react";
+import { submitVendorApplication, VendorApplicationPayload } from "@/services/vendor-application-api";
 
 export default function VendorApplicationPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<VendorApplicationPayload>({
     businessName: "",
     contactName: "",
     email: "",
@@ -39,22 +41,12 @@ export default function VendorApplicationPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
-    
     try {
-      const response = await fetch('/api/vendor-application', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
+      const result = await submitVendorApplication(formData);
       if (result.success) {
         setIsSubmitted(true);
       } else {
-        setError(result.error || 'Failed to submit application. Please try again.');
+        setError("Failed to submit application. Please try again.");
       }
     } catch {
       setError('Network error. Please check your connection and try again.');
@@ -63,7 +55,7 @@ export default function VendorApplicationPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof VendorApplicationPayload, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -178,6 +170,7 @@ export default function VendorApplicationPage() {
                     <Input
                       id="businessName"
                       value={formData.businessName}
+                      disabled={isSubmitting}
                       onChange={(e) => handleInputChange("businessName", e.target.value)}
                       placeholder="Your business name"
                       required
@@ -189,6 +182,7 @@ export default function VendorApplicationPage() {
                     <Input
                       id="serviceType"
                       value={formData.serviceType}
+                      disabled={isSubmitting}
                       onChange={(e) => handleInputChange("serviceType", e.target.value)}
                       placeholder="e.g., Home Care, Transportation, Meal Delivery"
                       required
@@ -201,6 +195,7 @@ export default function VendorApplicationPage() {
                   <Input
                     id="address"
                     value={formData.address}
+                    disabled={isSubmitting}
                     onChange={(e) => handleInputChange("address", e.target.value)}
                     placeholder="Full business address"
                     required
@@ -221,6 +216,7 @@ export default function VendorApplicationPage() {
                     <Input
                       id="contactName"
                       value={formData.contactName}
+                      disabled={isSubmitting}
                       onChange={(e) => handleInputChange("contactName", e.target.value)}
                       placeholder="Primary contact person"
                       required
@@ -233,6 +229,7 @@ export default function VendorApplicationPage() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
+                      disabled={isSubmitting}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       placeholder="(555) 123-4567"
                       required
@@ -246,6 +243,7 @@ export default function VendorApplicationPage() {
                     id="email"
                     type="email"
                     value={formData.email}
+                    disabled={isSubmitting}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="contact@yourbusiness.com"
                     required
@@ -265,6 +263,7 @@ export default function VendorApplicationPage() {
                   <Input
                     id="experience"
                     value={formData.experience}
+                    disabled={isSubmitting}
                     onChange={(e) => handleInputChange("experience", e.target.value)}
                     placeholder="e.g., 5 years"
                     required
@@ -276,6 +275,7 @@ export default function VendorApplicationPage() {
                   <Textarea
                     id="description"
                     value={formData.description}
+                    disabled={isSubmitting}
                     onChange={(e) => handleInputChange("description", e.target.value)}
                     placeholder="Describe the services you provide and what makes your business unique..."
                     rows={4}
@@ -288,6 +288,7 @@ export default function VendorApplicationPage() {
                   <Textarea
                     id="availability"
                     value={formData.availability}
+                    disabled={isSubmitting}
                     onChange={(e) => handleInputChange("availability", e.target.value)}
                     placeholder="Describe your availability (days, hours, service area)..."
                     rows={3}
@@ -314,12 +315,23 @@ export default function VendorApplicationPage() {
               {/* Submit Button */}
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700" 
+                className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2" 
                 size="lg"
                 disabled={isSubmitting}
               >
+                {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
                 {isSubmitting ? "Submitting Application..." : "Submit Application"}
               </Button>
+
+              {/* Loading overlay */}
+              {isSubmitting && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+                  <div className="flex flex-col items-center gap-4 p-8 rounded-xl shadow-lg bg-white border border-blue-100">
+                    <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+                    <p className="text-sm text-gray-600">Sending your application…</p>
+                  </div>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>
