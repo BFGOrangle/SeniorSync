@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class VendorApplicationService {
+public class VendorApplicationService implements IVendorApplicationService {
 
     private final EmailService emailService;
 
