@@ -10,6 +10,7 @@ import {
   HeartHandshake,
   Layout,
   LogOut,
+  Brain,
 } from "lucide-react";
 
 import {
@@ -38,6 +39,12 @@ const navigationItems = [
     title: "Request Management",
     url: "/staff/request-management",
     icon: FileText,
+  },
+  {
+    title: "AI Recommendations",
+    url: "/staff/ai-recommendations",
+    icon: Brain,
+    badge: "NEW",
   },
   {
     title: "Senior Profiles",
@@ -94,6 +101,11 @@ export function StaffSidebar() {
                       <Link href={item.url} className="flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                        {item.badge && (
+                          <span className="ml-auto text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                            {item.badge}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
