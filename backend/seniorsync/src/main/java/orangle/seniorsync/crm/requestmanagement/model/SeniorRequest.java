@@ -1,12 +1,12 @@
 package orangle.seniorsync.crm.requestmanagement.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.*;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
@@ -29,6 +29,10 @@ public class SeniorRequest {
     @NotNull
     @Column(name = "senior_id", nullable = false)
     private Long seniorId;
+
+    @NotNull
+    @Column(name = "center_id", nullable = false)
+    private Long centerId;
 
     @Column(name = "assigned_staff_id")
     private Long assignedStaffId;

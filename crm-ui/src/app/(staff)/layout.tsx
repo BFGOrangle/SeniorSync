@@ -20,10 +20,11 @@ export default function StaffLayout({
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated" && session?.user?.role !== "STAFF") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if (status === "authenticated" && (session?.user as any)?.role !== "STAFF") {
       router.push("/unauthorized");
     }
-  }, [status, router, session?.user?.role]);
+  }, [status, router, session?.user]);
 
   // Show loading while checking authentication
   if (status === "loading") {
@@ -38,7 +39,8 @@ export default function StaffLayout({
   }
 
   // Don't render anything if not authenticated or not staff (will redirect)
-  if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "STAFF")) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (status === "unauthenticated" || (status === "authenticated" && (session?.user as any)?.role !== "STAFF")) {
     return null;
   }
 

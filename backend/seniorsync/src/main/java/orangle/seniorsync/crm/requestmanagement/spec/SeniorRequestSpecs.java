@@ -12,6 +12,19 @@ import java.time.OffsetDateTime;
  */
 public class SeniorRequestSpecs {
 
+    /**
+     * Filter senior requests by center ID for multi-tenant isolation
+     * 
+     * @param centerId The center ID to filter by
+     * @return Specification for center filtering
+     */
+    public static Specification<SeniorRequest> belongsToCenter(Long centerId) {
+        return (root, query, cb) ->
+                centerId == null
+                        ? cb.conjunction()
+                        : cb.equal(root.get("centerId"), centerId);
+    }
+
     public static Specification<SeniorRequest> hasStatus(RequestStatus status) {
         return (root, query, cb) ->
                 status == null

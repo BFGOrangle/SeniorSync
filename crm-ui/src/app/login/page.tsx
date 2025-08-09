@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,18 +33,10 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
       } else {
-        // Get the user session to check their role
-        const session = await fetch("/api/auth/session").then(res => res.json());
-        
-        if (session?.user?.role === "ADMIN") {
-          router.push("/admin/dashboard");
-        } else if (session?.user?.role === "STAFF") {
-          router.push("/staff/dashboard");
-        } else {
-          router.push("/admin/dashboard"); // Default fallback
-        }
+        // Redirect to dashboard which will handle role-based routing
+        router.push("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred during login. Please try again.");
     } finally {
       setIsLoading(false);
@@ -54,10 +47,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-2 mb-4">
+          <Link href="/" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <Building2 className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900">SeniorSync CRM</h1>
-          </div>
+          </Link>
           <p className="text-gray-600 text-center">
             Senior Care Management System
           </p>
