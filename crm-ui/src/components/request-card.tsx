@@ -11,6 +11,7 @@ import { Clock, Eye } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useCurrentUser } from "@/contexts/user-context";
 import { AssigneeSection } from "@/components/assignee-section";
+import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { cn } from "@/lib/utils";
 
 interface RequestCardProps {
@@ -129,7 +130,7 @@ export function RequestCard({
       >
         <CardContent className="p-4 relative z-20">
           <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge
                 variant="secondary"
                 className="text-xs font-mono bg-gray-50 text-gray-600 hover:bg-gray-50"
@@ -159,6 +160,15 @@ export function RequestCard({
                     .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </Badge>
               )}
+              {/* Spam Detection Badge */}
+              <SpamIndicatorBadge
+                isSpam={request.isSpam}
+                confidenceScore={request.spamConfidenceScore}
+                detectionReason={request.spamDetectionReason}
+                detectedAt={request.spamDetectedAt}
+                size="sm"
+                showText={false}
+              />
             </div>
           </div>
 
