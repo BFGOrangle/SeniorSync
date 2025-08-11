@@ -47,6 +47,16 @@ jobs:
 
       - name: Build application
         run: npm run build
+  
+  frontend-synk-scan:
+    runs-on: ubuntu-latest
+    needs: [frontend-ci]
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   # Status check for PR protection
   ci-status:

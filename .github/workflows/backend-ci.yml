@@ -43,3 +43,12 @@ jobs:
         working-directory: ./backend/seniorsync
         # Like above, we skip tests for now as we don't have unit tests and the postgres setup for tests
         run: mvn package -DskipTests
+  backend-synk-scan:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/maven-3-jdk-21@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
