@@ -4,3 +4,4 @@
 .vscode
 .DS_Store
 package*.json
+.secrets
