@@ -64,11 +64,13 @@ jobs:
         run: mvn -q dependency:go-offline
 
       - name: Snyk test (backend)
-        uses: snyk/actions/maven-3-jdk-21@master
-        with:
-          args: --file=backend/seniorsync/pom.xml --severity-threshold=high --json-file-output=backend-snyk.json
+        working-directory: ./backend/seniorsync
+        run: |
+          chmod +x mvnw || true
+          npx snyk test --severity-threshold=high --json-file-output=../backend-snyk.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        shell: bash
 
       - name: Generate PR comment (backend Snyk summary)
         if: ${{ github.event_name == 'pull_request' }}
@@ -106,9 +108,10 @@ jobs:
 
       - name: Snyk monitor (optional project snapshot)
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: snyk/actions/maven-3-jdk-21@master
-        with:
-          command: monitor
-          args: --file=backend/seniorsync/pom.xml
+        working-directory: ./backend/seniorsync
+        run: |
+          chmod +x mvnw || true
+          npx snyk monitor
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        shell: bash
