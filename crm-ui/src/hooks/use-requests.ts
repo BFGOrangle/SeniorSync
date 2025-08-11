@@ -14,6 +14,7 @@ import {
   SeniorRequestDto,
   RequestUtils
 } from '@/types/request';
+import { spamFilterService } from '@/services/spam-filter-service';
 
 // Hook for managing requests with full CRUD operations
 export function useRequestManagement() {
@@ -33,7 +34,35 @@ export function useRequestManagement() {
       // Load enhanced requests
       const enhancedRequests = await requestManagementApiService.getEnhancedRequests(filter);
       
-      setRequests(enhancedRequests);
+      // Automatically check for spam detection on requests that don't have it yet
+      try {
+        const spamResults = await spamFilterService.autoCheckMissingSpamDetection(enhancedRequests);
+        
+        // Update requests with spam detection results
+        if (spamResults.length > 0) {
+          const updatedRequests = enhancedRequests.map(request => {
+            const spamResult = spamResults.find(result => result.requestId === request.id);
+            if (spamResult) {
+              return {
+                ...request,
+                isSpam: spamResult.isSpam,
+                spamConfidenceScore: spamResult.confidenceScore,
+                spamDetectionReason: spamResult.detectionReason,
+                spamDetectedAt: spamResult.detectedAt,
+              };
+            }
+            return request;
+          });
+          setRequests(updatedRequests);
+        } else {
+          setRequests(enhancedRequests);
+        }
+      } catch (spamError) {
+        // If spam detection fails, still show the requests without spam data
+        console.warn('Spam detection failed, showing requests without spam data:', spamError);
+        setRequests(enhancedRequests);
+      }
+      
       setLastUpdated(new Date());
       
       console.log(`Loaded ${enhancedRequests.length} requests`);
