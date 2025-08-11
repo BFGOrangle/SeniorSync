@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import orangle.seniorsync.common.repository.StaffRepository;
 import orangle.seniorsync.crm.aifeatures.model.SpamDetectionResult;
 import orangle.seniorsync.crm.aifeatures.repository.SpamDetectionResultRepository;
+import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,6 +17,16 @@ public class RequestMappingService {
 
     private final StaffRepository staffRepository;
     private final SpamDetectionResultRepository spamDetectionResultRepository;
+    private final RequestTypeRepository requestTypeRepository;
+
+    public String getRequestTypeName(Long requestTypeId) {
+        if (requestTypeId == null) {
+            return null;
+        }
+        return requestTypeRepository.findById(requestTypeId)
+                .map(requestType -> requestType.getName())
+                .orElse(null);
+    }
 
     public String getStaffName(Long assignedStaffId) {
         if (assignedStaffId == null) {

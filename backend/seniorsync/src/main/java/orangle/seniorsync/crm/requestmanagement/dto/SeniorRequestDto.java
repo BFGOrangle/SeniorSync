@@ -18,6 +18,7 @@ public record SeniorRequestDto(
         OffsetDateTime completedAt,
         RequestStatus status,
         String assignedStaffName,
+        String requestTypeName,
         // Spam detection fields
         Boolean isSpam,
         BigDecimal spamConfidenceScore,

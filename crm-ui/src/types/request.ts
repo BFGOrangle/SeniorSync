@@ -17,6 +17,7 @@ export interface SeniorRequestDto {
   completedAt?: string; // ISO string
   status: RequestStatus;
   assignedStaffName?: string; // Added to match backend DTO
+  requestTypeName?: string; // for request name
   // Spam detection fields
   isSpam?: boolean;
   spamConfidenceScore?: number;

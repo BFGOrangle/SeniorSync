@@ -6,6 +6,7 @@ import orangle.seniorsync.crm.requestmanagement.service.RequestMappingService;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
+import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
