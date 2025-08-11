@@ -48,13 +48,79 @@ jobs:
       - name: Build application
         run: npm run build
   
-  frontend-synk-scan:
+  frontend-snyk-scan:
+    name: Frontend Snyk Scan
     runs-on: ubuntu-latest
     needs: [frontend-ci]
     steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          cache-dependency-path: crm-ui/package-lock.json
+
+      - name: Install dependencies (for Snyk scan)
+        working-directory: ./crm-ui
+        run: npm ci --ignore-scripts
+
+      - name: Snyk test (frontend)
         uses: snyk/actions/node@master
+        with:
+          command: test
+          args: --file=crm-ui/package.json --severity-threshold=high --json-file-output=frontend-snyk.json
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Generate PR comment (frontend Snyk summary)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'frontend-snyk.json';
+            if (!fs.existsSync(path)) {
+              core.warning('No Snyk JSON output found.');
+              return;
+            }
+            let raw = fs.readFileSync(path, 'utf8').trim();
+            if (!raw) { core.warning('Empty Snyk JSON file'); return; }
+            let data;
+            try { data = JSON.parse(raw); } catch (e) { core.setFailed('Failed to parse Snyk JSON: '+e); return; }
+            // Snyk may return single object or array of results
+            const results = Array.isArray(data) ? data : [data];
+            let total = 0; let sevCounts = { critical:0, high:0, medium:0, low:0 }; let projNames = [];
+            for (const r of results) {
+              if (r.projectName) projNames.push(r.projectName);
+              if (r.vulnerabilities) {
+                total += r.vulnerabilities.length;
+                for (const v of r.vulnerabilities) {
+                  const s = (v.severity||'').toLowerCase();
+                  if (sevCounts[s] !== undefined) sevCounts[s]++; }
+              }
+            }
+            const summary = `Frontend Snyk Scan Results\n\nProjects: ${[...new Set(projNames)].join(', ') || 'N/A'}\nTotal Issues: ${total}\nCritical: ${sevCounts.critical} | High: ${sevCounts.high} | Medium: ${sevCounts.medium} | Low: ${sevCounts.low}`;
+            const body = `<!-- SNYK_FRONTEND_REPORT -->\n### 🔐 Frontend Snyk Report\n${summary}\n\n> This comment is updated on each run.`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            // Find existing comment
+            const existing = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const prev = existing.find(c => c.body && c.body.startsWith('<!-- SNYK_FRONTEND_REPORT -->'));
+            if (prev) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: prev.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Snyk monitor (optional project snapshot)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: snyk/actions/node@master
+        with:
+          command: monitor
+          args: --file=crm-ui/package.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
