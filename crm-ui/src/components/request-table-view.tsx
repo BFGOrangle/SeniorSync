@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowUpDown, Clock, Phone, ExternalLink } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { cn } from "@/lib/utils";
+import { AssigneeSection } from "@/components/assignee-section";
 
 interface RequestTableViewProps {
   requests: SeniorRequestDisplayView[];
@@ -253,22 +254,9 @@ export function RequestTableView({
       ),
       cell: ({ row }) => {
         const request = row.original;
-        const staffName = request.assignedStaffName;
-
-        if (!staffName) {
-          return <span className="text-gray-400 text-sm">Unassigned</span>;
-        }
-
         return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
-                {getInitials(staffName)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-gray-900">
-              {staffName}
-            </span>
+          <div className="group inline-flex items-center">
+            <AssigneeSection request={request} onUpdate={onRequestUpdate} />
           </div>
         );
       },
