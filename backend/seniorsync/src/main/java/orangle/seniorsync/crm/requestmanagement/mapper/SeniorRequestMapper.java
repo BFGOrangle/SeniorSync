@@ -6,7 +6,6 @@ import orangle.seniorsync.crm.requestmanagement.service.RequestMappingService;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
-import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
@@ -23,6 +22,7 @@ public abstract class SeniorRequestMapper {
     @Mapping(target = "spamConfidenceScore", source = "id", qualifiedByName = "mapSpamConfidence") 
     @Mapping(target = "spamDetectionReason", source = "id", qualifiedByName = "mapSpamReason")
     @Mapping(target = "spamDetectedAt", source = "id", qualifiedByName = "mapSpamDetectedAt")
+    @Mapping(target = "requestTypeName", source = "requestTypeId", qualifiedByName = "mapRequestTypeName")
     public abstract SeniorRequestDto toDto(SeniorRequest seniorRequest);
 
     @org.mapstruct.Named("mapStaffName")
@@ -48,5 +48,10 @@ public abstract class SeniorRequestMapper {
     @org.mapstruct.Named("mapSpamDetectedAt")
     protected OffsetDateTime mapSpamDetectedAt(Long requestId) {
         return requestMappingService.getSpamDetectedAt(requestId);
+    }
+
+    @org.mapstruct.Named("mapRequestTypeName")
+    protected String mapRequestTypeName(Long requestTypeId) {
+        return requestMappingService.getRequestTypeName(requestTypeId);
     }
 }
