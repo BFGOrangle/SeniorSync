@@ -4,9 +4,10 @@ import orangle.seniorsync.crm.aifeatures.dto.BatchSpamFilterResultDto;
 import orangle.seniorsync.crm.aifeatures.dto.SpamFilterResultDto;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface IAISpamFilterService {
-    SpamFilterResultDto checkSingleRequest(Long requestId);
-    BatchSpamFilterResultDto checkBatchRequests(List<Long> requestIds);
+    CompletableFuture<SpamFilterResultDto> checkSingleRequestAsync(Long requestId);
+    CompletableFuture<BatchSpamFilterResultDto> checkBatchRequestsAsync(List<Long> requestIds);
     List<SpamFilterResultDto> getSpamDetectionHistory();
 }

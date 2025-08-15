@@ -109,20 +109,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.debug("No Authorization header found");
             return Optional.empty();
         }
+        
+        // 🔍 Debug: Log the raw authorization header
+        log.info("🔑 JWT DEBUG: Authorization header received: {}", 
+                 authorizationHeader.length() > 50 ? authorizationHeader.substring(0, 50) + "..." : authorizationHeader);
 
         // Extract and parse token
         Optional<NextAuthTokenData> tokenDataOpt = jwtUtil.extractAndParseToken(authorizationHeader);
         
         if (tokenDataOpt.isEmpty()) {
-            log.debug("Failed to parse JWT token from Authorization header");
+            log.warn("🚫 JWT DEBUG: Failed to parse JWT token from Authorization header");
             return Optional.empty();
         }
 
         NextAuthTokenData tokenData = tokenDataOpt.get();
         String token = jwtUtil.extractTokenFromHeader(authorizationHeader).orElse("");
 
-        log.debug("Successfully parsed JWT token for user: {} with role: {}", 
-                 tokenData.getUserId(), tokenData.getUserRole());
+        log.info("✅ JWT DEBUG: Successfully parsed JWT token for user: {} with role: {} (secure: {})", 
+                 tokenData.getUserId(), tokenData.getUserRole(), tokenData.isSecureJwt());
 
         // Create authenticated token
         return Optional.of(new JwtAuthenticationToken(tokenData, token));

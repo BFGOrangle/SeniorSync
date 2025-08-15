@@ -7,33 +7,36 @@ import orangle.seniorsync.crm.aifeatures.dto.BatchSpamFilterResultDto;
 import orangle.seniorsync.crm.aifeatures.dto.SpamFilterResultDto;
 import orangle.seniorsync.crm.aifeatures.service.IAISpamFilterService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/ai/filter")
+@RequestMapping("/api/aifeatures/spam-filter")
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
 public class AIFilterRequestsController {
 
     private final IAISpamFilterService spamFilterService;
 
-    @PostMapping("/spam/single/{requestId}")
-    public ResponseEntity<SpamFilterResultDto> checkSingleRequestForSpam(@PathVariable Long requestId) {
-        log.info("Checking single request {} for spam", requestId);
-        SpamFilterResultDto result = spamFilterService.checkSingleRequest(requestId);
-        return ResponseEntity.ok(result);
+    @PostMapping("/check/{requestId}")
+    public CompletableFuture<ResponseEntity<SpamFilterResultDto>> checkRequestAsync(@PathVariable Long requestId) {
+        return spamFilterService.checkSingleRequestAsync(requestId)
+                .thenApply(result -> ResponseEntity.ok(result))
+                .exceptionally(ex -> ResponseEntity.badRequest().build());
     }
 
-    @PostMapping("/spam/batch")
-    public ResponseEntity<BatchSpamFilterResultDto> checkBatchRequestsForSpam(@RequestBody BatchSpamFilterRequestDto request) {
-        log.info("Checking {} requests for spam", request.getRequestIds().size());
-        BatchSpamFilterResultDto result = spamFilterService.checkBatchRequests(request.getRequestIds());
-        return ResponseEntity.ok(result);
+    @PostMapping("/check-batch")
+    public CompletableFuture<ResponseEntity<BatchSpamFilterResultDto>> checkBatchRequestsAsync(@RequestBody List<Long> requestIds) {
+        return spamFilterService.checkBatchRequestsAsync(requestIds)
+                .thenApply(result -> ResponseEntity.ok(result))
+                .exceptionally(ex -> ResponseEntity.badRequest().build());
     }
 
-    @GetMapping("/spam/history")
+    @GetMapping("/history")
     public ResponseEntity<List<SpamFilterResultDto>> getSpamDetectionHistory() {
         log.info("Retrieving spam detection history");
         List<SpamFilterResultDto> history = spamFilterService.getSpamDetectionHistory();

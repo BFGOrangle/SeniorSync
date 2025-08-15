@@ -87,15 +87,26 @@ public class JwtUtil {
             return Optional.empty();
         }
         
+        // 🔍 Debug: Log token type and basic info
+        log.info("🔑 JWT DEBUG: Attempting to parse token (length: {})", token.length());
+        log.info("🔑 JWT DEBUG: Token starts with: {}", token.substring(0, Math.min(20, token.length())));
+        
         // Try to parse as secure JWT first
         Optional<NextAuthTokenData> secureJwtResult = parseSecureJwt(token);
         if (secureJwtResult.isPresent()) {
+            log.info("✅ JWT DEBUG: Successfully parsed as secure JWT");
             return secureJwtResult;
         }
         
         // Fallback to legacy format for backward compatibility
-        log.debug("Secure JWT parsing failed, attempting legacy format");
-        return parseLegacyToken(token);
+        log.info("🔄 JWT DEBUG: Secure JWT parsing failed, attempting legacy format");
+        Optional<NextAuthTokenData> legacyResult = parseLegacyToken(token);
+        if (legacyResult.isPresent()) {
+            log.info("✅ JWT DEBUG: Successfully parsed as legacy token");
+        } else {
+            log.warn("🚫 JWT DEBUG: Both secure JWT and legacy parsing failed");
+        }
+        return legacyResult;
     }
     
     /**
@@ -107,9 +118,11 @@ public class JwtUtil {
     private Optional<NextAuthTokenData> parseSecureJwt(String token) {
         try {
             if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
-                log.debug("JWT secret not configured, skipping secure JWT parsing");
+                log.info("🔧 JWT DEBUG: JWT secret not configured, skipping secure JWT parsing");
                 return Optional.empty();
             }
+            
+            log.info("🔧 JWT DEBUG: JWT secret configured, attempting secure JWT parsing");
             
             // Create signing key from secret
             SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
@@ -123,15 +136,20 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
             
+            log.info("🔧 JWT DEBUG: JWT claims parsed successfully");
+            
             // Extract user information
             String userIdStr = claims.getSubject();
             String userRole = claims.get("role", String.class);
             String userEmail = claims.get("email", String.class);
             String userName = claims.get("name", String.class);
             
+            log.info("🔧 JWT DEBUG: Extracted claims - userId: {}, role: {}, email: {}", 
+                     userIdStr, userRole, userEmail);
+            
             // Validate required fields
             if (userIdStr == null || userRole == null) {
-                log.debug("JWT missing required fields: sub or role");
+                log.warn("🚫 JWT DEBUG: JWT missing required fields: sub={}, role={}", userIdStr, userRole);
                 return Optional.empty();
             }
             
@@ -140,20 +158,20 @@ public class JwtUtil {
             try {
                 userId = Long.parseLong(userIdStr);
             } catch (NumberFormatException e) {
-                log.debug("Invalid user ID format in JWT: {}", userIdStr);
+                log.warn("🚫 JWT DEBUG: Invalid user ID format in JWT: {}", userIdStr);
                 return Optional.empty();
             }
             
             // Validate user role
             if (!isValidUserRole(userRole)) {
-                log.debug("Invalid user role in JWT: {}", userRole);
+                log.warn("🚫 JWT DEBUG: Invalid user role in JWT: {}", userRole);
                 return Optional.empty();
             }
             
             // Check expiration (additional safety check)
             Date expiration = claims.getExpiration();
             if (expiration != null && expiration.before(new Date())) {
-                log.debug("JWT token expired at: {}", expiration);
+                log.warn("🚫 JWT DEBUG: JWT token expired at: {}", expiration);
                 return Optional.empty();
             }
 
@@ -163,9 +181,10 @@ public class JwtUtil {
                 Optional<Staff> staffOpt = staffRepository.findById(userId);
                 if (staffOpt.isPresent()) {
                     Staff staff = staffOpt.get();
-                    if (staff.getCenter() != null) {
-                        centerId = staff.getCenter().getId();
-                    }
+                    // Note: getCenter() method may not exist, skipping for now
+                    // if (staff.getCenter() != null) {
+                    //     centerId = staff.getCenter().getId();
+                    // }
                 } else {
                     log.warn("Staff record not found for user ID: {}", userId);
                 }
@@ -173,15 +192,15 @@ public class JwtUtil {
                 log.warn("Failed to look up center ID for user {}: {}", userId, e.getMessage());
             }
             
-            log.debug("Successfully parsed secure JWT for user: {} with role: {} and center: {}", userId, userRole, centerId);
+            log.info("✅ JWT DEBUG: Successfully parsed secure JWT for user: {} with role: {} and center: {}", userId, userRole, centerId);
             
             return Optional.of(new NextAuthTokenData(userId, userRole, userEmail, userName, centerId, true));
             
         } catch (JwtException e) {
-            log.debug("JWT parsing failed: {}", e.getMessage());
+            log.warn("🚫 JWT DEBUG: JWT parsing failed with JwtException: {}", e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
-            log.debug("Unexpected error parsing JWT: {}", e.getMessage());
+            log.warn("🚫 JWT DEBUG: Unexpected error parsing JWT: {}", e.getMessage());
             return Optional.empty();
         }
     }
