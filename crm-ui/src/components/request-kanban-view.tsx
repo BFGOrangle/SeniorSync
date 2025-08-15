@@ -28,6 +28,7 @@ type Status = "todo" | "in-progress" | "completed";
 interface RequestKanbanViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
+  spamDetectionStatus?: Map<number, 'pending' | 'completed'>; // PHASE 4: Add spam detection status
 }
 
 interface Column {
@@ -61,6 +62,7 @@ const allColumns: Column[] = [
 export function RequestKanbanView({
   requests,
   onRequestUpdate,
+  spamDetectionStatus = new Map(), // PHASE 4: Default to empty map
 }: RequestKanbanViewProps) {
   const [activeRequest, setActiveRequest] =
     useState<SeniorRequestDisplayView | null>(null);
@@ -208,6 +210,7 @@ export function RequestKanbanView({
                               request={request}
                               isKanban
                               onUpdate={onRequestUpdate}
+                              spamDetectionStatus={spamDetectionStatus.get(request.id)} // PHASE 4: Pass spam status
                             />
                           ))}
                           {columnRequests.length === 0 && (
@@ -232,6 +235,7 @@ export function RequestKanbanView({
               request={activeRequest}
               isKanban
               onUpdate={onRequestUpdate}
+              spamDetectionStatus={spamDetectionStatus.get(activeRequest.id)} // PHASE 4: Pass spam status
             />
           </div>
         ) : null}

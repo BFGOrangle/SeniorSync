@@ -42,9 +42,22 @@ export class AuthenticatedApiClient {
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
+    console.log('🔐 AuthenticatedApiClient: Making request to', url);
+    
     // 🔑 JWT Authentication from NextAuth session
     const { getSession } = await import('next-auth/react');
     const session = await getSession();
+    
+    console.log('🔐 AuthenticatedApiClient: Session exists?', !!session);
+    console.log('🔐 AuthenticatedApiClient: Access token exists?', !!((session as any)?.accessToken));
+    
+    if (session) {
+      console.log('🔐 AuthenticatedApiClient: Full session object:', {
+        user: (session as any)?.user,
+        accessToken: (session as any)?.accessToken ? 'EXISTS' : 'MISSING',
+        tokenLength: (session as any)?.accessToken?.length || 0
+      });
+    }
     
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -65,8 +78,12 @@ export class AuthenticatedApiClient {
       },
     };
 
+    console.log('🔐 AuthenticatedApiClient: Request config headers:', Object.keys(config.headers || {}));
+
     try {
       const response = await fetch(url, config);
+      
+      console.log('🔐 AuthenticatedApiClient: Response status:', response.status, response.statusText);
       
       if (!response.ok) {
         await this.handleErrorResponse(response);
@@ -74,12 +91,16 @@ export class AuthenticatedApiClient {
 
       // Handle empty responses (204 No Content)
       if (response.status === 204) {
+        console.log('🔐 AuthenticatedApiClient: 204 No Content response');
         return null as T;
       }
 
       const data = await response.json();
+      console.log('🔐 AuthenticatedApiClient: Response data type:', typeof data, 'length:', Array.isArray(data) ? data.length : 'N/A');
       return data;
     } catch (error) {
+      console.error('🔐 AuthenticatedApiClient: Request failed:', error);
+      
       if (error instanceof BaseApiError) {
         throw error;
       }
@@ -97,11 +118,20 @@ export class AuthenticatedApiClient {
    * Default error handling - can be overridden by service-specific clients
    */
   protected async handleErrorResponse(response: Response): Promise<never> {
+    console.error('🚨 API Error Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
     let errorData: any;
     
     try {
       errorData = await response.json();
+      console.error('🚨 Error Response Body:', errorData);
     } catch {
+      console.error('🚨 Could not parse error response as JSON');
       // If JSON parsing fails, create a generic error
       throw new BaseApiError(
         response.status,

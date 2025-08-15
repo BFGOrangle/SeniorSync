@@ -5,25 +5,25 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Clock, Eye } from "lucide-react";
+import { Clock } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useCurrentUser } from "@/contexts/user-context";
 import { AssigneeSection } from "@/components/assignee-section";
-import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
+import { SpamDetectionIndicator } from "@/components/spam-detection-indicator";
 import { cn } from "@/lib/utils";
 
 interface RequestCardProps {
   request: SeniorRequestDisplayView;
   isKanban?: boolean;
   onUpdate?: (request: SeniorRequestDisplayView) => void;
+  spamDetectionStatus?: 'pending' | 'completed'; // PHASE 4: Add spam detection status
 }
 
 export function RequestCard({
   request,
   isKanban = false,
   onUpdate,
+  spamDetectionStatus, // PHASE 4: Accept spam detection status
 }: RequestCardProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
@@ -160,14 +160,15 @@ export function RequestCard({
                     .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </Badge>
               )}
-              {/* Spam Detection Badge */}
-              <SpamIndicatorBadge
+              {/* PHASE 4: Enhanced Spam Detection Indicator */}
+              <SpamDetectionIndicator
                 isSpam={request.isSpam}
                 confidenceScore={request.spamConfidenceScore}
                 detectionReason={request.spamDetectionReason}
                 detectedAt={request.spamDetectedAt}
+                detectionStatus={spamDetectionStatus}
                 size="sm"
-                showText={false}
+                showText={true}
               />
             </div>
           </div>
