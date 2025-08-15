@@ -60,7 +60,6 @@ export function RequestFilters({
     requestTypeOptions: [],
   });
   const [loading, setLoading] = useState(true);
-  const { currentUser } = useCurrentUser();
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
   const statusOptions: Status[] = [

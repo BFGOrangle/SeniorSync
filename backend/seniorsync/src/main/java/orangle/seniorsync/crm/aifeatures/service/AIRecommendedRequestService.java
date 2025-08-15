@@ -10,7 +10,7 @@ import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestReposito
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -59,24 +59,9 @@ public class AIRecommendedRequestService implements IAIRecommendedRequestService
     }
 
     private List<SeniorRequestDto> getMyIncompletedSeniorRequests() {
-        // 🎯 This is how you'd get the current user ID
-        Optional<Long> currentUserId = SecurityContextUtil.getCurrentUserId();
-        Long userId = currentUserId.orElseThrow(() -> new IllegalStateException("No user logged in"));
-        
-        log.info("🔍 DEBUG: Current user ID: {}", userId);
-        
-        // Get incomplete requests for this user
-        List<SeniorRequest> mySeniorRequests = seniorRequestRepository.findIncompleteRequestsByAssignedStaffId(userId);
-        log.info("🔍 DEBUG: Found {} incomplete requests for user {}", mySeniorRequests.size(), userId);
-        
-        if (mySeniorRequests.isEmpty()) {
-            log.warn("� DEBUG: No incomplete requests found for user {}. This could mean:", userId);
-            log.warn("  1. User has no assigned requests");
-            log.warn("  2. All user's requests are completed");
-            log.warn("  3. User ID might not match any assigned_staff_id in database");
-            return new ArrayList<>();
-        }
-        
+        // Use Cognito sub directly as the user identifier
+        UUID currentUserCognitoSub = SecurityContextUtil.requireCurrentCognitoSubUUID();
+        List<SeniorRequest> mySeniorRequests = seniorRequestRepository.findIncompleteRequestsByAssignedStaffCognitoSub(currentUserCognitoSub);
         String prompt = buildPrompt(mySeniorRequests);
         String response = getRankedResponse(prompt);
         return parseAndRankRequests(response, mySeniorRequests);

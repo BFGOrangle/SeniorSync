@@ -106,26 +106,13 @@ class SpamFilterService extends AuthenticatedApiClient {
     try {
       console.log(`Initiating async spam detection for ${requestIds.length} requests`);
       
-      // Get session for authorization
-      const { getSession } = await import('next-auth/react');
-      const session = await getSession();
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-
-      // Add authorization header if session exists
-      if (session && (session as SessionWithToken)?.accessToken) {
-        headers['Authorization'] = `Bearer ${(session as SessionWithToken).accessToken}`;
-      }
-      
-      // Fire async request without waiting - using the correct endpoint
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aifeatures/spam-filter/check-batch`, {
+      this.request<SpamFilterResult>(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aifeatures/spam-filter/check-batch`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(requestIds) // Backend expects array directly
       });
-      
       // Don't await - let it process in background
       console.log('Spam detection initiated successfully (async)');
     } catch (error) {

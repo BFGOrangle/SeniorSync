@@ -36,7 +36,7 @@ export function useSeniorsPaginated(initialFilter?: SeniorFilterDto) {
       const response = await seniorApiService.getSeniorsPaginated(filter);
       setPaginatedResponse(response);
     } catch (err) {
-      const apiError = err instanceof SeniorApiError ? err : new SeniorApiError(500, 'Unknown error');
+      const apiError = err instanceof SeniorApiError ? err : new SeniorApiError(0, 'Unknown Error', [{ message: 'Unknown error', timestamp: new Date().toISOString() }]);
       setError(apiError);
       toast({
         title: 'Error Loading Seniors',
@@ -234,7 +234,7 @@ export function useSeniorSearchPaginated() {
       const results = await seniorApiService.searchSeniorsByName(newSearchParams);
       setPaginatedResults(results);
     } catch (err) {
-      const apiError = err instanceof SeniorApiError ? err : new SeniorApiError(500, 'Search failed');
+      const apiError = err instanceof SeniorApiError ? err : new SeniorApiError(0, 'Search Failed', [{ message: 'Search failed', timestamp: new Date().toISOString() }]);
       setError(apiError);
       toast({
         title: 'Search Error',
@@ -256,7 +256,7 @@ export function useSeniorSearchPaginated() {
       const results = await seniorApiService.searchSeniorsByName(newParams);
       setPaginatedResults(results);
     } catch (err) {
-      const apiError = err instanceof SeniorApiError ? err : new SeniorApiError(500, 'Search failed');
+      const apiError = err instanceof SeniorApiError ? err : new SeniorApiError(0, 'Search Failed', [{ message: 'Search failed', timestamp: new Date().toISOString() }]);
       setError(apiError);
     } finally {
       setLoading(false);

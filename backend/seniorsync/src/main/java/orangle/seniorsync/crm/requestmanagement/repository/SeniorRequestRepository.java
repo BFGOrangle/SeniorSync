@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Long>, JpaSpecificationExecutor<SeniorRequest> {
     // Read‐only projection by status for high‐QPS
@@ -33,8 +34,10 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
     @Query("SELECT r FROM SeniorRequest r WHERE r.assignedStaffId = ?1 AND r.status != 'COMPLETED'")
     List<SeniorRequest> findIncompleteRequestsByAssignedStaffId(Long staffId);
 
+    @Query(value = "SELECT r.* FROM senior_sync.senior_requests r JOIN senior_sync.staff s ON r.assigned_staff_id = s.id WHERE s.cognito_sub = :cognitoSub AND r.status != 'COMPLETED'", nativeQuery = true)
+    List<SeniorRequest> findIncompleteRequestsByAssignedStaffCognitoSub(@Param("cognitoSub") UUID cognitoSub);
 
-    @Query("SELECT  s.firstName, COUNT(r) FROM SeniorRequest r, Staff s where r.assignedStaffId = s.id GROUP BY s.firstName")
+    @Query(value = "SELECT s.first_name, COUNT(r.*) FROM senior_sync.senior_requests r JOIN senior_sync.staff s ON r.assigned_staff_id = s.id GROUP BY s.first_name", nativeQuery = true)
     List<StringCountDto> findCountsByAssignedStaffId();
 
     @Query("SELECT to_char(r.createdAt, 'mm/yyyy'), COUNT(r) FROM SeniorRequest r GROUP BY to_char(r.createdAt, 'mm/yyyy')")

@@ -68,7 +68,10 @@ export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWi
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [{ 
+              message: err instanceof Error ? err.message : "Unknown error occurred", 
+              timestamp: new Date().toISOString() 
+            }]);
       setError(apiError);
       console.error(`Error loading ${mode} dashboard statistics:`, apiError);
 
@@ -97,7 +100,10 @@ export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWi
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [{ 
+              message: err instanceof Error ? err.message : "Unknown error occurred", 
+              timestamp: new Date().toISOString() 
+            }]);
       setError(apiError);
       console.error(`Error loading ${mode} request type summaries:`, apiError);
 
@@ -136,7 +142,10 @@ export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWi
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [{ 
+              message: err instanceof Error ? err.message : "Unknown error occurred", 
+              timestamp: new Date().toISOString() 
+            }]);
       setError(apiError);
       console.error(`Error loading ${mode} dashboard distributions:`, apiError);
 
@@ -169,7 +178,10 @@ export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWi
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [{ 
+              message: err instanceof Error ? err.message : "Unknown error occurred", 
+              timestamp: new Date().toISOString() 
+            }]);
       setError(apiError);
       console.error(`Error refreshing ${mode} dashboard:`, apiError);
 
@@ -211,7 +223,10 @@ export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWi
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [{ 
+              message: err instanceof Error ? err.message : "Unknown error occurred", 
+              timestamp: new Date().toISOString() 
+            }]);
       setError(apiError);
       console.error(`Error force refreshing ${mode} dashboard:`, apiError);
 
@@ -261,4 +276,4 @@ export function useDashboardWithMode(initialMode: DashboardMode): UseDashboardWi
     clearError,
     setMode,
   };
-} 
+}

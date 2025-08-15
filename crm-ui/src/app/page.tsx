@@ -17,6 +17,7 @@ import {
   Mail
 } from "lucide-react";
 import Link from "next/link";
+import { Route } from "@/enums/Route";
 
 export default function LandingPage() {
   const features = [
@@ -72,9 +73,9 @@ export default function LandingPage() {
             <Badge variant="secondary" className="ml-2">For Vendors</Badge>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login">
+            <Link href={Route.Signin}>
               <Button variant="outline" size="sm">
-                Vendor Login
+                Vendor Sign in
               </Button>
             </Link>
           </div>
@@ -220,7 +221,7 @@ export default function LandingPage() {
             <div>
               <h3 className="font-semibold mb-4">For Vendors</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>Vendor Login</li>
+                <li>Vendor Sign in</li>
                 <li>Apply to Join</li>
                 <li>Success Stories</li>
                 <li>Support</li>

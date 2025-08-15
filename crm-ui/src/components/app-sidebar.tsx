@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { useCurrentUser } from "@/contexts/user-context";
 import {
   FileText,
   Users,
@@ -11,6 +11,8 @@ import {
   Layout,
   LogOut,
   Brain,
+  UserCog,
+  UserCircle,
 } from "lucide-react";
 
 import {
@@ -53,12 +55,26 @@ const navigationItems = [
   },
 ];
 
+const settingsItems = [
+  {
+    title: "Staff Management",
+    url: "/admin/staff",
+    icon: UserCog,
+  }
+];
+
 export function AppSidebar() {
   const pathname = usePathname();
+  const { signOut, currentUser } = useCurrentUser();
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/login" });
-  };
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            // Amplify will handle the redirect via auth state change
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+    };
 
   return (
     <Sidebar collapsible="icon" className="border-r z-30">
@@ -110,6 +126,21 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t p-4">
         <div className="space-y-3 group-data-[collapsible=icon]:hidden">
+          {/* Profile Button */}
+          {/* {currentUser && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+            >
+              <Link href={`/admin/staff/${currentUser.id}`}>
+                <UserCircle className="h-4 w-4 mr-2" />
+                My Profile
+              </Link>
+            </Button>
+          )} */}
+
           <Button
             onClick={handleSignOut}
             variant="outline"
@@ -124,15 +155,30 @@ export function AppSidebar() {
             <p>v1.0.0</p>
           </div>
         </div>
-        
-        {/* Icon-only mode sign out button */}
-        <div className="group-data-[collapsible=icon]:block hidden">
+
+        {/* Icon-only mode buttons */}
+        <div className="group-data-[collapsible=icon]:block hidden space-y-2">
+          {/* Profile Button - Icon Only */}
+          {/* {currentUser && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full p-2"
+              title="My Profile"
+            >
+              <Link href={`/admin/staff/${currentUser.id}`}>
+                <UserCircle className="h-4 w-4" />
+              </Link>
+            </Button>
+          )} */}
+
           <Button
             onClick={handleSignOut}
             variant="ghost"
             size="sm"
             className="w-full p-2"
-            title="Sign Out" 
+            title="Sign Out"
           >
             <LogOut className="h-4 w-4" />
           </Button>

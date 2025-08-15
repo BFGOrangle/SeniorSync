@@ -59,6 +59,7 @@ import { seniorUtils } from "@/services/senior-api"
 import { SeniorRequestsModal } from "@/components/senior-requests-modal"
 import { Badge } from "@/components/ui/badge"
 import InitialsAvatar from "@/components/initials-avatar"
+import { ErrorMessageCallout } from "@/components/error-message-callout"
 
 export default function SeniorProfiles() {
   // Backend integration hooks with pagination
@@ -432,17 +433,18 @@ export default function SeniorProfiles() {
   if (seniorsError) {
     return (
       <div className="container mx-auto p-6">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-red-800">Error Loading Seniors</h3>
-              <p className="text-red-600 mt-2">{seniorsError.message}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4">
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <ErrorMessageCallout
+          errorHeader="Senior Profiles Error"
+          errorMessage="Failed to load senior profiles"
+          errorCode={seniorsError.status}
+          statusText={seniorsError.statusText}
+          errors={seniorsError.errors}
+        />
+        <div className="flex justify-center mt-4">
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }

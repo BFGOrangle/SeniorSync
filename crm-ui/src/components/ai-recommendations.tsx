@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -20,6 +19,7 @@ import {
 import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
 import { AIRecommendationUtils } from "@/types/ai-recommendations";
 import { AIRecommendationsView } from "@/components/ai-recommendations-view";
+import { ErrorMessageCallout } from "@/components/error-message-callout";
 import { cn } from "@/lib/utils";
 
 interface AIRecommendationsProps {
@@ -31,9 +31,9 @@ interface AIRecommendationsProps {
  * Main AI Recommendations component - wrapper around the new AIRecommendationsView
  * Maintains backward compatibility while providing access to new features
  */
-export function AIRecommendations({ 
-  className, 
-  showAdvancedFeatures = true 
+export function AIRecommendations({
+  className,
+  showAdvancedFeatures = true
 }: AIRecommendationsProps) {
   const {
     recommendations,
@@ -51,7 +51,7 @@ export function AIRecommendations({
 
   if (showNewInterface || showAdvancedFeatures) {
     return (
-      <AIRecommendationsView 
+      <AIRecommendationsView
         className={className}
         showBatchProcessing={showAdvancedFeatures}
         showPriorityRanking={showAdvancedFeatures}
@@ -146,20 +146,21 @@ export function AIRecommendations({
 
       <CardContent>
         {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
+          <div className="mb-4">
+            <ErrorMessageCallout
+              errorHeader="AI Recommendations Error"
+              errorMessage={`Failed to load AI recommendations: ${error}. Please try again or refresh the recommendations.`}
+            />
+            <div className="flex justify-end mt-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={clearError}
-                className="ml-2"
               >
                 Dismiss
               </Button>
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
 
         {!hasRecommendations && !loading && (
@@ -348,27 +349,27 @@ function LegacyRecommendationCard({ recommendation, rank }: LegacyRecommendation
               <TrendingUp className="h-3 w-3" />
               #{rank}
             </Badge>
-            
-            <Badge 
-              variant="outline" 
+
+            <Badge
+              variant="outline"
               className={cn("text-xs", AIRecommendationUtils.getStatusColor(recommendation.status))}
             >
               {recommendation.status}
             </Badge>
-            
+
             {recommendation.urgencyLevel && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={cn("text-xs", AIRecommendationUtils.getUrgencyColor(recommendation.urgencyLevel))}
               >
                 {AIRecommendationUtils.formatUrgencyLevel(recommendation.urgencyLevel)}
               </Badge>
             )}
           </div>
-          
+
           {recommendation.priorityScore && (
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={cn("text-xs", AIRecommendationUtils.getPriorityScoreColor(recommendation.priorityScore))}
             >
               {AIRecommendationUtils.formatPriorityScore(recommendation.priorityScore)}
@@ -380,13 +381,13 @@ function LegacyRecommendationCard({ recommendation, rank }: LegacyRecommendation
           <div className="text-sm font-medium text-gray-900">
             Request #{recommendation.requestId}
           </div>
-          
+
           {recommendation.recommendationText && (
             <p className="text-sm text-gray-600 line-clamp-3">
               {recommendation.recommendationText}
             </p>
           )}
-          
+
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

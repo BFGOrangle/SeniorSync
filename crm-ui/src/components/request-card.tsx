@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useNavigationHelper } from "@/components/navigation-helper";
+import { useNavigationHelper } from "@/lib/navigation-helper";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,7 +58,7 @@ export function RequestCard({
       // Update the request with current user assignment
       const updatedRequest = {
         ...request,
-        assignedStaffId: currentUser.id,
+        assignedStaffId: parseInt(currentUser.id),
         assignedStaffName: currentUser.fullName,
       };
       

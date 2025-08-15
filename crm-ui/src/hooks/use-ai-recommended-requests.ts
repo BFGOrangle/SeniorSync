@@ -202,7 +202,7 @@ export function useAIRecommendedRequests(): UseAIRecommendedRequestsReturn {
     
     // Check cache first (unless force refresh)
     if (!forceRefresh) {
-      const cachedData = cache.get('my', currentUser.id, filters);
+      const cachedData = cache.get('my', Number(currentUser.id), filters);
       if (cachedData) {
         console.log('💾 Using cached data for my AI recommended requests:', cachedData.length, 'items');
         setRecommendations(cachedData);
@@ -221,7 +221,7 @@ export function useAIRecommendedRequests(): UseAIRecommendedRequestsReturn {
       const data = await seniorRequestsAIService.getMyAIRecommendedRequests(filters);
       
       // Cache the results
-      cache.set('my', data, currentUser.id, filters);
+      cache.set('my', data, Number(currentUser.id), filters);
       setRecommendations(data);
       
       console.log('✅ Retrieved my AI recommended requests:', data.length);

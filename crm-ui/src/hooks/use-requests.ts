@@ -163,7 +163,7 @@ export function useRequestManagement() {
       setLastUpdated(new Date());
       
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to load requests');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Failed to load requests', [{ message: 'Failed to load requests', timestamp: new Date().toISOString() }]);
       setError(apiError);
       setLoading(false); // Make sure loading is false on error
       console.error('❌ Error loading requests:', apiError);
@@ -227,7 +227,7 @@ export function useRequestManagement() {
 
       return true;
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to update request');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Failed to update request', [{ message: 'Failed to update request', timestamp: new Date().toISOString() }]);
       setError(apiError);
       
       if (err instanceof RequestValidationError) {
@@ -270,7 +270,7 @@ export function useRequestManagement() {
 
       return true;
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to delete request');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Failed to delete request', [{ message: 'Failed to delete request', timestamp: new Date().toISOString() }]);
       setError(apiError);
       
       toast({
@@ -363,7 +363,7 @@ export function useRequestDashboard() {
       setLastUpdated(new Date());
 
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to load dashboard data');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Failed to load dashboard data', [{ message: 'Failed to load dashboard data', timestamp: new Date().toISOString() }]);
       setError(apiError);
       console.error('Error loading dashboard data:', apiError);
     } finally {
@@ -403,7 +403,7 @@ export function useSeniorRequests(seniorId: number | null) {
       const data = await requestManagementApiService.getRequestsBySenior(seniorId);
       setRequests(data);
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Unknown error');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Unknown error', [{ message: 'Unknown error', timestamp: new Date().toISOString() }]);
       setError(apiError);
       toast({
         title: 'Error Loading Requests',
@@ -516,7 +516,7 @@ export function useRequest(requestId: number | null) {
       }
       
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Unknown error');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Unknown error', [{ message: 'Unknown error', timestamp: new Date().toISOString() }]);
       setError(apiError);
       toast({
         title: 'Error Loading Request',
@@ -567,7 +567,7 @@ export function useRequest(requestId: number | null) {
 
       return true;
     } catch (err) {
-      const apiError = err instanceof RequestApiError ? err : new RequestApiError(500, 'Failed to update request');
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Failed to update request', [{ message: 'Failed to update request', timestamp: new Date().toISOString() }]);
       setError(apiError);
       
       if (err instanceof RequestValidationError) {

@@ -3,6 +3,7 @@
 import { useState, useEffect, ReactNode } from "react";
 import { ChevronDown, User, UserX } from "lucide-react";
 import { useCurrentUser } from "@/contexts/user-context";
+import { useStaffDropdown } from "@/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,13 +16,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-interface StaffMember {
-  id: number;
-  fullName: string;
-  jobTitle: string;
-  isActive: boolean;
-}
 
 interface StaffAssignmentDropdownProps {
   request: SeniorRequestDisplayView;
@@ -58,25 +52,10 @@ export function StaffAssignmentDropdown({
   tooltipText,
 }: StaffAssignmentDropdownProps) {
   const { currentUser } = useCurrentUser();
-  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const { staffOptions, loading: staffLoading } = useStaffDropdown();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  // TODO: Replace with actual API call to get staff list
-  useEffect(() => {
-    const fetchStaffList = async () => {
-      // Placeholder - replace with actual API call
-      const mockStaff: StaffMember[] = [
-        { id: 1, fullName: "John Smith", jobTitle: "Care Coordinator", isActive: true },
-        { id: 2, fullName: "Emily Johnson", jobTitle: "Nurse", isActive: true },
-        { id: 3, fullName: "Michael Williams", jobTitle: "Social Worker", isActive: true },
-        { id: 4, fullName: "Sarah Brown", jobTitle: "Administrator", isActive: true },
-      ];
-      setStaffList(mockStaff);
-    };
-
-    fetchStaffList();
-  }, []);
+  const currentUserNumericId = currentUser ? parseInt(currentUser.id, 10) : undefined;
 
   const handleAssignToStaff = async (staffId: number, staffName: string) => {
     if (isLoading) return;
@@ -149,75 +128,105 @@ export function StaffAssignmentDropdown({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      
+      <DropdownMenuTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={disabled || isLoading || staffLoading}
+          className={cn("h-6 px-2 text-xs", className)}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <User className="h-3 w-3 mr-1" />
+          {isLoading ? "Updating..." : request.assignedStaffId ? "Reassign" : "Assign"}
+          <ChevronDown className="h-3 w-3 ml-1" />
+        </Button>
+      </DropdownMenuTrigger>
+
       <DropdownMenuContent 
         align="end" 
         className="w-48"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Assign to Me option for admins */}
-        {includeAssignToMe && currentUser && (
-          <>
-            <DropdownMenuItem
-              onClick={() => handleAssignToStaff(currentUser.id, currentUser.fullName)}
-              disabled={isLoading || request.assignedStaffId === currentUser.id}
-              className="flex items-center gap-2 cursor-pointer font-medium"
-            >
-              <Avatar className="h-5 w-5">
-                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                  {getInitials(currentUser.fullName)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">
-                  {request.assignedStaffId ? "Reassign to Me" : "Assign to Me"}
-                </span>
-                <span className="text-xs text-gray-500">{currentUser.fullName}</span>
-              </div>
-              {request.assignedStaffId === currentUser.id && (
-                <span className="text-xs text-blue-600 ml-auto">Current</span>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        
-        {staffList.map((staff) => (
-          <DropdownMenuItem
-            key={staff.id}
-            onClick={() => handleAssignToStaff(staff.id, staff.fullName)}
-            disabled={isLoading || request.assignedStaffId === staff.id}
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-xs bg-gray-100">
-                {getInitials(staff.fullName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{staff.fullName}</span>
-              <span className="text-xs text-gray-500">{staff.jobTitle}</span>
+        {staffLoading ? (
+          <DropdownMenuItem disabled>
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <span>Loading staff...</span>
             </div>
-            {request.assignedStaffId === staff.id && (
-              <span className="text-xs text-blue-600 ml-auto">Current</span>
-            )}
           </DropdownMenuItem>
-        ))}
-        
-        {showUnassignOption && request.assignedStaffId && (
+        ) : (
           <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleUnassign}
-              disabled={isLoading}
-              className="flex items-center gap-2 cursor-pointer text-red-600"
-            >
-              <UserX className="h-4 w-4" />
-              <span>Unassign</span>
-            </DropdownMenuItem>
+            {/* Assign to Me option for admins */}
+            {includeAssignToMe && currentUser && currentUserNumericId !== undefined && !Number.isNaN(currentUserNumericId) && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => handleAssignToStaff(currentUserNumericId, currentUser.fullName)}
+                  disabled={isLoading || request.assignedStaffId === currentUserNumericId}
+                  className="flex items-center gap-2 cursor-pointer font-medium"
+                >
+                  <Avatar className="h-5 w-5">
+                    <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                      {getInitials(currentUser.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {request.assignedStaffId ? "Reassign to Me" : "Assign to Me"}
+                    </span>
+                    <span className="text-xs text-gray-500">{currentUser.fullName}</span>
+                  </div>
+                  {request.assignedStaffId === currentUserNumericId && (
+                    <span className="text-xs text-blue-600 ml-auto">Current</span>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
+            {staffOptions.length === 0 ? (
+              <DropdownMenuItem disabled>
+                <span className="text-sm text-muted-foreground">No staff available</span>
+              </DropdownMenuItem>
+            ) : (
+              staffOptions.map((staff) => (
+                <DropdownMenuItem
+                  key={staff.id}
+                  onClick={() => handleAssignToStaff(staff.id, staff.fullName)}
+                  disabled={isLoading || request.assignedStaffId === staff.id}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Avatar className="h-5 w-5">
+                    <AvatarFallback className="text-xs bg-gray-100">
+                      {getInitials(staff.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{staff.fullName}</span>
+                    <span className="text-xs text-gray-500">{staff.jobTitle}</span>
+                  </div>
+                  {request.assignedStaffId === staff.id && (
+                    <span className="text-xs text-blue-600 ml-auto">Current</span>
+                  )}
+                </DropdownMenuItem>
+              ))
+            )}
+
+            {showUnassignOption && request.assignedStaffId && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleUnassign}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 cursor-pointer text-red-600"
+                >
+                  <UserX className="h-4 w-4" />
+                  <span>Unassign</span>
+                </DropdownMenuItem>
+              </>
+            )}
           </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

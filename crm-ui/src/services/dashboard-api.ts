@@ -230,17 +230,7 @@ export class DashboardApiService extends AuthenticatedApiClient {
       return DashboardUtils.transformDashboardResponse(rawData);
     } catch (error) {
       console.error("Failed to get personal dashboard stats:", error);
-      return {
-        statusCounts: {},
-        requestTypeCounts: {},
-        priorityCounts: {},
-        monthlyTrend: {},
-        totalRequests: 0,
-        totalCompletedThisMonth: 0,
-        totalPendingRequests: 0,
-        averageCompletionTime: 0,
-        staffWorkload: {},
-      };
+      throw error;
     }
   }
 

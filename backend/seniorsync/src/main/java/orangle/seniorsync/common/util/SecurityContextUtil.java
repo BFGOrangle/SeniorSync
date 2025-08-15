@@ -1,48 +1,147 @@
 package orangle.seniorsync.common.util;
 
+import orangle.seniorsync.crm.staffmanagement.model.Staff;
+import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import orangle.seniorsync.common.security.JwtAuthenticationToken;
-import orangle.seniorsync.common.util.JwtUtil.NextAuthTokenData;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Utility class for accessing authenticated user information from the Security Context
  * 
  * This utility provides convenient methods to retrieve the current authenticated user's
- * information from Spring Security's SecurityContext, specifically for JWT-authenticated users.
+ * information from Spring Security's SecurityContext, specifically for Cognito JWT-authenticated users.
  */
+@Component
 public class SecurityContextUtil {
 
-    /**
-     * Get the current authenticated user's ID
-     * 
-     * @return Optional containing the user ID if authenticated, empty otherwise
-     */
-    public static Optional<Long> getCurrentUserId() {
-        return getCurrentJwtToken()
-                .map(JwtAuthenticationToken::getUserId);
+    private final StaffRepository staffRepository;
+
+    public SecurityContextUtil(StaffRepository staffRepository) {
+        this.staffRepository = staffRepository;
     }
 
     /**
-     * Get the current authenticated user's role
-     * 
+     * Get the current authenticated user's Cognito subject (UUID)
+     *
+     * @return Optional containing the Cognito sub if authenticated, empty otherwise
+     */
+    public static Optional<String> getCurrentCognitoSub() {
+        return getCurrentJwt()
+                .map(Jwt::getSubject);
+    }
+
+    /**
+     * Get the current authenticated user's Cognito subject as UUID
+     *
+     * @return Optional containing the Cognito sub as UUID if authenticated, empty otherwise
+     */
+    public static Optional<UUID> getCurrentCognitoSubUUID() {
+        return getCurrentCognitoSub()
+                .map(sub -> {
+                    try {
+                        return UUID.fromString(sub);
+                    } catch (IllegalArgumentException e) {
+                        return null;
+                    }
+                });
+    }
+
+    /**
+     * Get the current authenticated user's staff ID, with fallback to Cognito sub lookup
+     * This method requires a StaffRepository to perform the fallback lookup
+     * @param staffRepository The repository to lookup staff by Cognito sub
+     * @return Optional containing the staff ID if authenticated, empty otherwise
+     */
+    public static Optional<Long> getCurrentUserIdWithFallback(org.springframework.data.jpa.repository.JpaRepository<orangle.seniorsync.crm.staffmanagement.model.Staff, Long> staffRepository) {
+        // Try to lookup staff by Cognito sub in the database
+        return getCurrentCognitoSubUUID().flatMap(cognitoSub -> {
+            try {
+                // Use reflection to call findByCognitoSub method
+                java.lang.reflect.Method method = staffRepository.getClass().getMethod("findByCognitoSub", java.util.UUID.class);
+                @SuppressWarnings("unchecked")
+                Optional<orangle.seniorsync.crm.staffmanagement.model.Staff> staffOpt =
+                    (Optional<orangle.seniorsync.crm.staffmanagement.model.Staff>) method.invoke(staffRepository, cognitoSub);
+                return staffOpt.map(staff -> staff.getId());
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+        });
+    }
+
+    /**
+     * Get the current authenticated user's username
+     *
+     * @return Optional containing the username if authenticated, empty otherwise
+     */
+    public static Optional<String> getCurrentUserUsername() {
+        return getCurrentJwt()
+                .map(jwt -> jwt.getClaimAsString("username"));
+    }
+
+    /**
+     * Get the current authenticated user's email
+     *
+     * @return Optional containing the user email if authenticated, empty otherwise
+     */
+    public static Optional<String> getCurrentUserEmail() {
+        return getCurrentJwt()
+                .map(jwt -> jwt.getClaimAsString("email"));
+    }
+
+    /**
+     * Get the current authenticated user's role from custom attributes or groups
+     *
      * @return Optional containing the user role if authenticated, empty otherwise
      */
     public static Optional<String> getCurrentUserRole() {
-        return getCurrentJwtToken()
-                .map(JwtAuthenticationToken::getUserRole);
+        return getCurrentJwt().map(jwt -> {
+            // Try custom role first
+            String customRole = jwt.getClaimAsString("custom:role");
+            if (customRole != null) {
+                return customRole.toUpperCase();
+            }
+
+            // Fall back to first group
+            List<String> groups = jwt.getClaimAsStringList("cognito:groups");
+            if (groups != null && !groups.isEmpty()) {
+                return groups.get(0).toUpperCase();
+            }
+
+            return null;
+        });
     }
 
     /**
-     * Get the current authenticated user's token data
-     * 
-     * @return Optional containing the token data if authenticated, empty otherwise
+     * Get the current authenticated user's Cognito sub as the user identifier
+     *
+     * @return Optional containing the Cognito sub as Long (hash-based) if authenticated, empty otherwise
      */
-    public static Optional<NextAuthTokenData> getCurrentTokenData() {
+    public static Optional<UUID> getCurrentCognitoUserSub() {
+        return getCurrentCognitoSub()
+                .flatMap(sub -> {
+                    try {
+                        return Optional.of(UUID.fromString(sub));
+                    } catch (IllegalArgumentException e) {
+                        return Optional.empty();
+                    }
+                });
+    }
+
+    /**
+     * Get the current JWT
+     *
+     * @return Optional containing the JWT if authenticated, empty otherwise
+     */
+    public static Optional<Jwt> getCurrentJwt() {
         return getCurrentJwtToken()
-                .map(JwtAuthenticationToken::getTokenData);
+                .map(JwtAuthenticationToken::getToken);
     }
 
     /**
@@ -52,178 +151,121 @@ public class SecurityContextUtil {
      */
     public static boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && 
-               authentication.isAuthenticated() && 
-               authentication instanceof JwtAuthenticationToken;
+        return authentication != null && authentication.isAuthenticated();
     }
 
     /**
      * Check if the current user is an admin
      * 
-     * @return true if user is authenticated and has admin role, false otherwise
+     * @return true if user is admin, false otherwise
      */
-    public static boolean isCurrentUserAdmin() {
-        return getCurrentJwtToken()
-                .map(JwtAuthenticationToken::isAdmin)
+    public static boolean isAdmin() {
+        return getCurrentUserRole()
+                .map(role -> "ADMIN".equals(role))
                 .orElse(false);
     }
 
     /**
      * Check if the current user is staff
      * 
-     * @return true if user is authenticated and has staff role, false otherwise
+     * @return true if user is staff, false otherwise
      */
-    public static boolean isCurrentUserStaff() {
-        return getCurrentJwtToken()
-                .map(JwtAuthenticationToken::isStaff)
+    public static boolean isStaff() {
+        return getCurrentUserRole()
+                .map(role -> "STAFF".equals(role))
                 .orElse(false);
     }
 
     /**
-     * Check if the current user has access to a specific user's data
-     * This implements basic authorization logic where:
-     * - Admins can access any user's data
-     * - Staff can only access their own data
-     * 
-     * @param targetUserId The ID of the user whose data is being accessed
-     * @return true if access is allowed, false otherwise
+     * Check if the current user has a specific role
+     *
+     * @param role The role to check for
+     * @return true if user has the role, false otherwise
      */
-    public static boolean canAccessUserData(Long targetUserId) {
-        if (targetUserId == null) {
-            return false;
-        }
-
-        Optional<JwtAuthenticationToken> tokenOpt = getCurrentJwtToken();
-        if (tokenOpt.isEmpty()) {
-            return false;
-        }
-
-        JwtAuthenticationToken token = tokenOpt.get();
-        
-        // Admins can access any user's data
-        if (token.isAdmin()) {
-            return true;
-        }
-        
-        // Staff can only access their own data
-        if (token.isStaff()) {
-            Long currentUserId = token.getUserId();
-            return currentUserId != null && currentUserId.equals(targetUserId);
-        }
-        
-        return false;
-    }
-
-    /**
-     * Require authentication and return the current user ID
-     * 
-     * @return The current user ID
-     * @throws SecurityException if user is not authenticated
-     */
-    public static Long requireCurrentUserId() {
-        return getCurrentUserId()
-                .orElseThrow(() -> new SecurityException("User not authenticated"));
-    }
-
-    /**
-     * Require authentication and return the current user role
-     * 
-     * @return The current user role
-     * @throws SecurityException if user is not authenticated
-     */
-    public static String requireCurrentUserRole() {
+    public static boolean hasRole(String role) {
         return getCurrentUserRole()
-                .orElseThrow(() -> new SecurityException("User not authenticated"));
+                .map(userRole -> userRole.equals(role))
+                .orElse(false);
     }
 
     /**
-     * Get the current authenticated user's center ID
-     * 
-     * @return Optional containing the center ID if authenticated, empty otherwise
+     * Check if the current user is in a specific Cognito group
+     *
+     * @param group The group to check for
+     * @return true if user is in the group, false otherwise
      */
-    public static Optional<Long> getCurrentUserCenterId() {
-        return getCurrentJwtToken()
-                .map(JwtAuthenticationToken::getCenterId);
-    }
-
-    /**
-     * Require authentication and return the current user's center ID
-     * 
-     * @return The current user's center ID
-     * @throws SecurityException if user is not authenticated
-     */
-    public static Long requireCurrentUserCenterId() {
-        // Enhanced debugging for center ID requirement
-        if (!isAuthenticated()) {
-            throw new SecurityException("User not authenticated - no valid JWT token found in security context");
-        }
-
-        Optional<Long> centerIdOpt = getCurrentUserCenterId();
-        if (centerIdOpt.isEmpty()) {
-            Optional<JwtAuthenticationToken> tokenOpt = getCurrentJwtToken();
-            if (tokenOpt.isPresent()) {
-                JwtAuthenticationToken token = tokenOpt.get();
-                throw new SecurityException(String.format(
-                    "User authenticated but no center ID found in token. User ID: %s, Role: %s, Token data available: %s",
-                    token.getUserId(),
-                    token.getUserRole(),
-                    token.getTokenData() != null
-                ));
-            } else {
-                throw new SecurityException("User authenticated but JWT token is not available");
-            }
-        }
-
-        return centerIdOpt.get();
-    }
-
-    /**
-     * Require admin access
-     * 
-     * @throws SecurityException if user is not authenticated or not an admin
-     */
-    public static void requireAdmin() {
-        if (!isCurrentUserAdmin()) {
-            throw new SecurityException("Admin access required");
-        }
+    public static boolean isInGroup(String group) {
+        return getCurrentJwt().map(jwt -> {
+            List<String> groups = jwt.getClaimAsStringList("cognito:groups");
+            return groups != null && groups.contains(group);
+        }).orElse(false);
     }
 
     /**
      * Get the current JWT authentication token
      * 
-     * @return Optional containing the JWT token if present and valid
+     * @return Optional containing the JWT authentication token if authenticated, empty otherwise
      */
-    private static Optional<JwtAuthenticationToken> getCurrentJwtToken() {
+    public static Optional<JwtAuthenticationToken> getCurrentJwtToken() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
-        if (authentication instanceof JwtAuthenticationToken jwtToken && jwtToken.isAuthenticated()) {
-            return Optional.of(jwtToken);
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            return Optional.of(jwtAuth);
         }
         
         return Optional.empty();
     }
 
     /**
-     * Get a string representation of the current authentication context
-     * Useful for logging and debugging
-     * 
-     * @return String representation of current authentication
+     * Require the current user's center ID
+     *
+     * @return The center ID
+     * @throws IllegalStateException if user is not authenticated or center ID is not available
      */
-    public static String getCurrentAuthenticationInfo() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication == null) {
-            return "No authentication";
+    public Long requireCurrentUserCenterId() {
+        try {
+            return getCurrentUserCenterId();
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("User center ID not available", e);
         }
-        
-        if (authentication instanceof JwtAuthenticationToken jwtToken) {
-            return String.format("JWT Auth - User: %s, Role: %s, Authenticated: %s",
-                    jwtToken.getUserId(), jwtToken.getUserRole(), jwtToken.isAuthenticated());
+    }
+
+    public Long getCurrentUserCenterId() {
+        UUID cognitoSub = getCurrentCognitoSubUUID()
+                .orElseThrow(() -> new RuntimeException("User not authenticated or Cognito sub not available"));
+        Staff staff = staffRepository.findByCognitoSub(cognitoSub)
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
+        return staff.getCenter().getId();
+    }
+
+    /**
+     * Require the current user's Cognito sub as UUID
+     *
+     * @return The Cognito sub as UUID
+     * @throws IllegalStateException if user is not authenticated
+     */
+    public static UUID requireCurrentCognitoSubUUID() {
+        return getCurrentCognitoSubUUID()
+                .orElseThrow(() -> new IllegalStateException("Cognito sub not available - user may not be authenticated"));
+    }
+
+    /**
+     * Require admin role for the current user
+     *
+     * @throws SecurityException if user is not admin
+     */
+    public static void requireAdmin() {
+        if (!isAdmin()) {
+            throw new SecurityException("Admin role required");
         }
-        
-        return String.format("Other Auth - Type: %s, Principal: %s, Authenticated: %s",
-                authentication.getClass().getSimpleName(), 
-                authentication.getPrincipal(), 
-                authentication.isAuthenticated());
+    }
+
+    /**
+     * Check if the current user is an admin (alternative method name for compatibility)
+     *
+     * @return true if user is admin, false otherwise
+     */
+    public static boolean isCurrentUserAdmin() {
+        return isAdmin();
     }
 }
