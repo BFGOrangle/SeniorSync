@@ -182,9 +182,9 @@ public class JwtUtil {
                 if (staffOpt.isPresent()) {
                     Staff staff = staffOpt.get();
                     // Note: getCenter() method may not exist, skipping for now
-                    // if (staff.getCenter() != null) {
-                    //     centerId = staff.getCenter().getId();
-                    // }
+                     if (staff.getCenter() != null) {
+                         centerId = staff.getCenter().getId();
+                     }
                 } else {
                     log.warn("Staff record not found for user ID: {}", userId);
                 }

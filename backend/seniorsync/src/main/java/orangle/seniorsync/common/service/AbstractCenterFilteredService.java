@@ -5,6 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base service that automatically applies center-based filtering for multi-tenant operations.
@@ -16,6 +20,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * @param <ID> The ID type of the entity
  */
 public abstract class AbstractCenterFilteredService<T, ID> {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractCenterFilteredService.class);
 
     /**
      * Get the repository for this service. Must be implemented by subclasses.
@@ -41,14 +47,40 @@ public abstract class AbstractCenterFilteredService<T, ID> {
      * @return Combined specification with center filtering
      */
     protected Specification<T> applyCenterFilter(Specification<T> userSpec) {
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
-        Specification<T> centerSpec = createCenterFilterSpec(currentCenterId);
-        
-        if (userSpec == null) {
-            return centerSpec;
+        // Debug authentication state
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        log.debug("=== Authentication Debug Info ===");
+        log.debug("Authentication present: {}", auth != null);
+
+        if (auth != null) {
+            log.debug("Authentication type: {}", auth.getClass().getSimpleName());
+            log.debug("Is authenticated: {}", auth.isAuthenticated());
+            log.debug("Principal: {}", auth.getPrincipal());
+            log.debug("Authorities: {}", auth.getAuthorities());
         }
-        
-        return Specification.allOf(centerSpec, userSpec);
+
+        log.debug("SecurityContextUtil.isAuthenticated(): {}", SecurityContextUtil.isAuthenticated());
+        log.debug("Current user ID: {}", SecurityContextUtil.getCurrentUserId().orElse(null));
+        log.debug("Current user role: {}", SecurityContextUtil.getCurrentUserRole().orElse("NONE"));
+        log.debug("Current user center ID: {}", SecurityContextUtil.getCurrentUserCenterId().orElse(null));
+        log.debug("================================");
+
+        try {
+            Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+            log.debug("Successfully obtained center ID: {}", currentCenterId);
+
+            Specification<T> centerSpec = createCenterFilterSpec(currentCenterId);
+
+            if (userSpec == null) {
+                return centerSpec;
+            }
+
+            return Specification.allOf(centerSpec, userSpec);
+        } catch (SecurityException e) {
+            log.error("Authentication failed in applyCenterFilter: {}", e.getMessage());
+            log.error("This suggests the request is not properly authenticated or the JWT token is invalid/expired");
+            throw e;
+        }
     }
 
     /**

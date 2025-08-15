@@ -79,6 +79,18 @@ export class AuthenticatedApiClient {
     };
 
     console.log('🔐 AuthenticatedApiClient: Request config headers:', Object.keys(config.headers || {}));
+    
+    // Enhanced debugging for authentication
+    if (config.headers && 'Authorization' in config.headers) {
+      const authHeader = (config.headers as any).Authorization;
+      console.log('🔐 AuthenticatedApiClient: Authorization header present:', !!authHeader);
+      if (authHeader) {
+        console.log('🔐 AuthenticatedApiClient: Auth header length:', authHeader.length);
+        console.log('🔐 AuthenticatedApiClient: Auth header starts with Bearer:', authHeader.startsWith('Bearer '));
+      }
+    } else {
+      console.log('🚨 AuthenticatedApiClient: NO Authorization header found!');
+    }
 
     try {
       const response = await fetch(url, config);
