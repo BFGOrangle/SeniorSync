@@ -12,18 +12,29 @@ import {
   TrendingUp, 
   AlertCircle, 
   CheckCircle,
-  Clock
+  Clock,
+  Zap,
+  BarChart3
 } from "lucide-react";
 import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
-import { RecommendedRequestCard } from "@/components/recommended-request-card";
+import { AIRecommendationUtils } from "@/types/ai-recommendations";
+import { AIRecommendationsView } from "@/components/ai-recommendations-view";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
 import { cn } from "@/lib/utils";
 
 interface AIRecommendationsProps {
   className?: string;
+  showAdvancedFeatures?: boolean;
 }
 
-export function AIRecommendations({ className }: AIRecommendationsProps) {
+/**
+ * Main AI Recommendations component - wrapper around the new AIRecommendationsView
+ * Maintains backward compatibility while providing access to new features
+ */
+export function AIRecommendations({
+  className,
+  showAdvancedFeatures = true
+}: AIRecommendationsProps) {
   const {
     recommendations,
     loading,
@@ -34,7 +45,23 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
     clearError,
   } = useAIRecommendations();
 
+  // For backward compatibility, provide a simplified interface
+  const [showNewInterface, setShowNewInterface] = useState(false);
   const [showAll, setShowAll] = useState(false);
+
+  if (showNewInterface || showAdvancedFeatures) {
+    return (
+      <AIRecommendationsView
+        className={className}
+        showBatchProcessing={showAdvancedFeatures}
+        showPriorityRanking={showAdvancedFeatures}
+      />
+    );
+  }
+
+  // Legacy interface for backward compatibility
+  const sortedRecommendations = AIRecommendationUtils.sortRecommendations(recommendations);
+  const displayedRecommendations = showAll ? sortedRecommendations : sortedRecommendations.slice(0, 5);
 
   const handleGetRecommendations = async () => {
     await fetchRecommendations();
@@ -49,32 +76,16 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
     setShowAll(false);
   };
 
-  const displayedRecommendations = showAll ? recommendations : recommendations.slice(0, 5);
+  const getStatistics = () => {
+    const total = recommendations.length;
+    const completed = recommendations.filter(r => r.status === 'COMPLETED').length;
+    const highPriority = recommendations.filter(r => (r.priorityScore || 0) >= 80).length;
+    const critical = recommendations.filter(r => r.urgencyLevel === 'CRITICAL').length;
 
-  const getStatusStats = () => {
-    const stats = recommendations.reduce((acc, req) => {
-      acc[req.status] = (acc[req.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return [
-      { label: 'To Do', count: stats.TODO || 0, color: 'text-gray-600' },
-      { label: 'In Progress', count: stats.IN_PROGRESS || 0, color: 'text-blue-600' },
-      { label: 'Completed', count: stats.COMPLETED || 0, color: 'text-green-600' },
-    ];
+    return { total, completed, highPriority, critical };
   };
 
-  const getPriorityStats = () => {
-    const highPriority = recommendations.filter(req => req.priority >= 4).length;
-    const mediumPriority = recommendations.filter(req => req.priority === 3).length;
-    const lowPriority = recommendations.filter(req => req.priority <= 2).length;
-
-    return [
-      { label: 'High Priority', count: highPriority, color: 'text-red-600' },
-      { label: 'Medium Priority', count: mediumPriority, color: 'text-orange-600' },
-      { label: 'Low Priority', count: lowPriority, color: 'text-green-600' },
-    ];
-  };
+  const stats = getStatistics();
 
   return (
     <Card className={cn("w-full", className)}>
@@ -112,6 +123,17 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
                 >
                   Clear
                 </Button>
+                {showAdvancedFeatures && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNewInterface(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    Advanced
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -152,14 +174,28 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               Let our AI analyze your tasks and suggest the most important ones to focus on based on priority, deadlines, and your work patterns.
             </p>
-            <Button
-              onClick={handleGetRecommendations}
-              disabled={loading}
-              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-            >
-              <TrendingUp className="h-4 w-4" />
-              Get Recommended Tasks
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={handleGetRecommendations}
+                disabled={loading}
+                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Get Recommended Tasks
+              </Button>
+              {showAdvancedFeatures && (
+                <div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNewInterface(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    Try Advanced Features
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -177,28 +213,14 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
         {hasRecommendations && (
           <div className="space-y-6">
             {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-purple-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Recommendations</p>
-                      <p className="text-2xl font-bold text-purple-700">{recommendations.length}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">High Priority</p>
-                      <p className="text-2xl font-bold text-blue-700">
-                        {recommendations.filter(req => req.priority >= 4).length}
-                      </p>
+                      <p className="text-sm font-medium text-gray-600">Total</p>
+                      <p className="text-2xl font-bold text-purple-700">{stats.total}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -209,56 +231,33 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Ready to Start</p>
-                      <p className="text-2xl font-bold text-green-700">
-                        {recommendations.filter(req => req.status === 'TODO').length}
-                      </p>
+                      <p className="text-sm font-medium text-gray-600">Completed</p>
+                      <p className="text-2xl font-bold text-green-700">{stats.completed}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Status and Priority Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Status Breakdown
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-2">
-                    {getStatusStats().map((stat) => (
-                      <div key={stat.label} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{stat.label}</span>
-                        <span className={cn("text-sm font-medium", stat.color)}>
-                          {stat.count}
-                        </span>
-                      </div>
-                    ))}
+              <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">High Priority</p>
+                      <p className="text-2xl font-bold text-orange-700">{stats.highPriority}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    Priority Breakdown
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-2">
-                    {getPriorityStats().map((stat) => (
-                      <div key={stat.label} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{stat.label}</span>
-                        <span className={cn("text-sm font-medium", stat.color)}>
-                          {stat.count}
-                        </span>
-                      </div>
-                    ))}
+              <Card className="bg-gradient-to-r from-red-50 to-pink-50 border-red-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-red-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Critical</p>
+                      <p className="text-2xl font-bold text-red-700">{stats.critical}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -270,27 +269,37 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Recommended Tasks
                 </h3>
-                {recommendations.length > 5 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAll(!showAll)}
-                  >
-                    {showAll ? 'Show Less' : `Show All (${recommendations.length})`}
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {recommendations.length > 5 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAll(!showAll)}
+                    >
+                      {showAll ? 'Show Less' : `Show All (${recommendations.length})`}
+                    </Button>
+                  )}
+                  {showAdvancedFeatures && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowNewInterface(true)}
+                      className="flex items-center gap-1"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Advanced View
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <ScrollArea className="max-h-[600px]">
                 <div className="space-y-3">
-                  {displayedRecommendations.map((request, index) => (
-                    <RecommendedRequestCard
-                      key={request.id}
-                      request={request}
+                  {displayedRecommendations.map((recommendation, index) => (
+                    <LegacyRecommendationCard
+                      key={recommendation.id}
+                      recommendation={recommendation}
                       rank={index + 1}
-                      onView={(request) => {
-                        console.log('Viewing recommended request:', request);
-                      }}
                     />
                   ))}
                 </div>
@@ -306,6 +315,86 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
             </div>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Simple legacy card component for backward compatibility
+interface LegacyRecommendationCardProps {
+  recommendation: import("@/types/ai-recommendations").AIRecommendationDto;
+  rank: number;
+}
+
+function LegacyRecommendationCard({ recommendation, rank }: LegacyRecommendationCardProps) {
+  const getRankColor = (rank: number) => {
+    if (rank === 1) return "bg-gradient-to-r from-yellow-400 to-orange-500 text-white";
+    if (rank === 2) return "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800";
+    if (rank === 3) return "bg-gradient-to-r from-orange-300 to-orange-400 text-orange-900";
+    return "bg-gradient-to-r from-blue-500 to-purple-500 text-white";
+  };
+
+  return (
+    <Card className={cn(
+      "border-l-4 transition-all duration-200",
+      rank === 1 ? "border-l-yellow-500 bg-gradient-to-r from-yellow-50 to-orange-50" :
+      rank === 2 ? "border-l-gray-400 bg-gradient-to-r from-gray-50 to-gray-100" :
+      rank === 3 ? "border-l-orange-400 bg-gradient-to-r from-orange-50 to-orange-100" :
+      "border-l-blue-500 bg-gradient-to-r from-blue-50 to-purple-50"
+    )}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Badge className={cn("flex items-center gap-1 text-xs", getRankColor(rank))}>
+              <TrendingUp className="h-3 w-3" />
+              #{rank}
+            </Badge>
+
+            <Badge
+              variant="outline"
+              className={cn("text-xs", AIRecommendationUtils.getStatusColor(recommendation.status))}
+            >
+              {recommendation.status}
+            </Badge>
+
+            {recommendation.urgencyLevel && (
+              <Badge
+                variant="outline"
+                className={cn("text-xs", AIRecommendationUtils.getUrgencyColor(recommendation.urgencyLevel))}
+              >
+                {AIRecommendationUtils.formatUrgencyLevel(recommendation.urgencyLevel)}
+              </Badge>
+            )}
+          </div>
+
+          {recommendation.priorityScore && (
+            <Badge
+              variant="outline"
+              className={cn("text-xs", AIRecommendationUtils.getPriorityScoreColor(recommendation.priorityScore))}
+            >
+              {AIRecommendationUtils.formatPriorityScore(recommendation.priorityScore)}
+            </Badge>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium text-gray-900">
+            Request #{recommendation.requestId}
+          </div>
+
+          {recommendation.recommendationText && (
+            <p className="text-sm text-gray-600 line-clamp-3">
+              {recommendation.recommendationText}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {new Date(recommendation.updatedAt).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

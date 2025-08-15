@@ -9,18 +9,21 @@ import { Clock } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useCurrentUser } from "@/contexts/user-context";
 import { AssigneeSection } from "@/components/assignee-section";
+import { SpamDetectionIndicator } from "@/components/spam-detection-indicator";
 import { cn } from "@/lib/utils";
 
 interface RequestCardProps {
   request: SeniorRequestDisplayView;
   isKanban?: boolean;
   onUpdate?: (request: SeniorRequestDisplayView) => void;
+  spamDetectionStatus?: 'pending' | 'completed'; // PHASE 4: Add spam detection status
 }
 
 export function RequestCard({
   request,
   isKanban = false,
   onUpdate,
+  spamDetectionStatus, // PHASE 4: Accept spam detection status
 }: RequestCardProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
@@ -127,7 +130,7 @@ export function RequestCard({
       >
         <CardContent className="p-4 relative z-20">
           <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge
                 variant="secondary"
                 className="text-xs font-mono bg-gray-50 text-gray-600 hover:bg-gray-50"
@@ -157,6 +160,16 @@ export function RequestCard({
                     .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </Badge>
               )}
+              {/* PHASE 4: Enhanced Spam Detection Indicator */}
+              <SpamDetectionIndicator
+                isSpam={request.isSpam}
+                confidenceScore={request.spamConfidenceScore}
+                detectionReason={request.spamDetectionReason}
+                detectedAt={request.spamDetectedAt}
+                detectionStatus={spamDetectionStatus}
+                size="sm"
+                showText={true}
+              />
             </div>
           </div>
 

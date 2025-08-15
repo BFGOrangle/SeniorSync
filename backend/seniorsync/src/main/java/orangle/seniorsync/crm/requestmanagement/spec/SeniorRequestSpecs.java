@@ -32,17 +32,21 @@ public class SeniorRequestSpecs {
                         :cb.equal(root.get("status"), status);
     }
     public static Specification<SeniorRequest> hasSeniorId(Long seniorId) {
-        return (root, query, cb) ->
-                seniorId == null
-                        ? cb.conjunction()
-                        : cb.equal(root.get("senior").get("id"), seniorId);
+    // NOTE: SeniorRequest stores the foreign key as a scalar field "seniorId" (Long) – there is
+    // no JPA association named "senior". Attempting root.get("senior").get("id") caused
+    // PathElementException: Could not resolve attribute 'senior'. Use the scalar column instead.
+    return (root, query, cb) ->
+        seniorId == null
+            ? cb.conjunction()
+            : cb.equal(root.get("seniorId"), seniorId);
     }
 
     public static Specification<SeniorRequest> hasAssignedStaffId(Long staffId) {
-        return (root, query, cb) ->
-                staffId == null
-                        ? cb.conjunction()
-                        : cb.equal(root.get("assignedStaff").get("id"), staffId);
+    // Same reasoning as hasSeniorId: field is stored as scalar "assignedStaffId"
+    return (root, query, cb) ->
+        staffId == null
+            ? cb.conjunction()
+            : cb.equal(root.get("assignedStaffId"), staffId);
     }
 
     public static Specification<SeniorRequest> hasRequestTypeId(Long requestTypeId) {

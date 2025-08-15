@@ -101,4 +101,33 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
 
     @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (r.completed_at - r.created_at)) / 3600) FROM senior_sync.senior_requests r WHERE r.status = 'COMPLETED' AND r.assigned_staff_id = :staffId", nativeQuery = true)
     Double averagePersonalRequestCompletionTime(@Param("staffId") Long staffId);
+
+    // Center dashboard methods - filtered by center ID
+    @Query("SELECT COUNT(1) FROM SeniorRequest r where r.status = 'IN_PROGRESS' and r.centerId = :centerId")
+    Long countPendingRequestsByCenterId(Long centerId);
+
+    @Query("SELECT COUNT(1) FROM SeniorRequest r where r.status = 'COMPLETED' and r.centerId = :centerId AND EXTRACT(MONTH FROM r.completedAt) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM r.completedAt) = EXTRACT(YEAR FROM CURRENT_DATE)")
+    Long centerCompletedThisMonth(Long centerId);
+
+    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (r.completed_at - r.created_at)) / 3600) FROM senior_sync.senior_requests r WHERE r.status = 'COMPLETED' and r.centerId = :centerId", nativeQuery = true)
+    Double averageCenterRequestCompletionTime(Long centerId);
+
+    @Query("SELECT rt.name, COUNT(r) FROM SeniorRequest r, RequestType rt where r.requestTypeId = rt.id and r.centerId = :centerId GROUP BY rt.name")
+    List<StringCountDto> findCenterSeniorRequestsByRequestTypeId(Long centerId);
+
+    @Query("SELECT  s.firstName, COUNT(r) FROM SeniorRequest r, Staff s where r.assignedStaffId = s.id and r.centerId = :centerId GROUP BY s.firstName")
+    List<StringCountDto> findCenterCountsByAssignedStaffId(Long centerId);
+
+    @Query("SELECT to_char(r.createdAt, 'mm/yyyy'), COUNT(r) FROM SeniorRequest r where r.centerId = :centerId GROUP BY to_char(r.createdAt, 'mm/yyyy')")
+    List<StringCountDto> findCenterCountsByMonthAndYear(Long centerId);
+
+    @Query("SELECT r.priority, COUNT(r) FROM SeniorRequest r where r.centerId = :centerId GROUP BY r.priority")
+    List<ShortCountDto>  findCenterCountsByPriority(Long centerId);
+
+    @Query("SELECT r.status, COUNT(r) FROM SeniorRequest r where r.centerId = :centerId GROUP BY r.status")
+    List<StatusCountDto> findCenterCountsByStatus(Long centerId);
+
+    @Query("SELECT rt.name, r.status, COUNT(r) FROM SeniorRequest r, RequestType rt where r.requestTypeId = rt.id and r.centerId = :centerId GROUP BY rt.name, r.status")
+    List<RequestTypeStatusDto> findCenterCountByRequestTypeIdAndStatus(Long centerId);
+
 }

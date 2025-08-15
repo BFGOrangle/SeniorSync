@@ -35,6 +35,7 @@ import { useRequestDetails } from "@/hooks/use-requests";
 import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
 import InitialsAvatar from "@/components/initials-avatar";
+import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
 
 type Priority = "low" | "medium" | "high" | "urgent";
@@ -224,8 +225,8 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
 
       <Card>
         <CardContent className="p-6 space-y-6">
-          {/* Request Status & Priority */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Request Status, Priority & Spam Detection */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               {isEditing && canEdit ? (
@@ -322,6 +323,20 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
                   </Badge>
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Spam Detection</Label>
+              <div className="flex items-center gap-2">
+                <SpamIndicatorBadge
+                  isSpam={editedRequest.isSpam}
+                  confidenceScore={editedRequest.spamConfidenceScore}
+                  detectionReason={editedRequest.spamDetectionReason}
+                  detectedAt={editedRequest.spamDetectedAt}
+                  size="md"
+                  showText={true}
+                />
+              </div>
             </div>
           </div>
 

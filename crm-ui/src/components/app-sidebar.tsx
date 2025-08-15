@@ -60,27 +60,21 @@ const settingsItems = [
     title: "Staff Management",
     url: "/admin/staff",
     icon: UserCog,
-  },
-  {
-    title: "Settings",
-    url: "/admin/settings",
-    icon: Settings,
-    badge: "Coming Soon",
-  },
+  }
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { signOut, currentUser } = useCurrentUser();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      // Amplify will handle the redirect via auth state change
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
-  };
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            // Amplify will handle the redirect via auth state change
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+    };
 
   return (
     <Sidebar collapsible="icon" className="border-r z-30">
@@ -128,35 +122,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Administration</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => {
-                const isActive = pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                    >
-                      <Link href={item.url} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
@@ -210,7 +175,7 @@ export function AppSidebar() {
 
           <Button
             onClick={handleSignOut}
-            variant="outline"
+            variant="ghost"
             size="sm"
             className="w-full p-2"
             title="Sign Out"

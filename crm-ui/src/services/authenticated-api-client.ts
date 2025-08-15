@@ -44,23 +44,11 @@ export class AuthenticatedApiClient {
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
-    // 🐛 DEBUG: Log all request details
-    console.group('🌐 API Request Debug');
-    console.log('📍 URL:', url);
-    console.log('🔧 Method:', options.method || 'GET');
-    console.log('🌍 Current location:', window.location.href);
-    
-    // Check if URL looks like it might be going to Next.js instead of backend
-    const urlObj = new URL(url, window.location.origin);
-    console.log('🎯 Resolved URL:', urlObj.href);
-    console.log('🏠 Target host:', urlObj.host);
-    console.log('📡 Target port:', urlObj.port);
-
     // Use existing auth-utils function for authentication
     const method = (options.method as "GET" | "POST" | "PUT" | "DELETE" | "PATCH") || "GET";
     const body = options.body ? JSON.parse(options.body as string) : undefined;
     const config = await createAuthenticatedRequestConfig(method, body);
-    
+
     // Merge with any additional options (preserving custom headers)
     const finalConfig: RequestInit = {
       ...config,
@@ -71,25 +59,8 @@ export class AuthenticatedApiClient {
       },
     };
 
-    console.log('📤 Final headers:', finalConfig.headers);
-
     try {
-      console.log('🚀 Sending fetch request...');
       const response = await fetch(url, finalConfig);
-      
-      // 🐛 DEBUG: Log detailed response information
-      console.log('📡 Response received!');
-      console.log('📊 Status:', response.status);
-      console.log('📝 Status Text:', response.statusText);
-      console.log('🌐 Response URL:', response.url);
-      console.log('📋 Response Headers:', Object.fromEntries(response.headers.entries()));
-      
-      // Check if response URL differs from request URL (redirects)
-      if (response.url !== url) {
-        console.warn('🔄 Request was redirected!');
-        console.warn('🎯 Original URL:', url);
-        console.warn('📍 Final URL:', response.url);
-      }
 
       console.groupEnd();
       
@@ -111,29 +82,9 @@ export class AuthenticatedApiClient {
         return text as unknown as T;
       }
     } catch (error) {
-      console.groupEnd();
-      
-      // 🐛 DEBUG: Log the actual error details
-      console.group('❌ API Request Error');
-      // console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error instanceof Error ? error.message : error);
-      console.error('Full error:', error);
-      
-      // Check if it's a network error vs API error
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.error('🌐 This looks like a network/CORS error');
-        console.error('🔍 Possible causes:');
-        console.error('   1. Backend server is not running');
-        console.error('   2. CORS configuration issue');
-        console.error('   3. Network connectivity problem');
-      }
-      
-      console.groupEnd();
-      
       if (error instanceof BaseApiError) {
         throw error;
       }
-      
       // Network or other errors
       throw new BaseApiError(0, 'Network Error', [{
         message: error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -146,27 +97,27 @@ export class AuthenticatedApiClient {
    * Default error handling - can be overridden by service-specific clients
    */
   protected async handleErrorResponse(response: Response): Promise<never> {
+    console.error('🚨 API Error Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
     let errorData: any;
-    
-    // 🐛 DEBUG: Log error response details
-    console.group('❌ API Error Response Debug');
-    console.log('📊 Error Status:', response.status);
-    console.log('📝 Error Status Text:', response.statusText);
-    console.log('🌐 Error Response URL:', response.url);
-    console.log('📋 Error Response Headers:', Object.fromEntries(response.headers.entries()));
     
     try {
       errorData = await response.json();
-      console.log('📄 Error Response Body:', errorData);
+      console.error('🚨 Error Response Body:', errorData);
     } catch (parseError) {
       console.log('❌ Failed to parse error response as JSON');
       console.log('🔍 Parse Error:', parseError);
-      
+
       // Try to get the response as text
       try {
         const textResponse = await response.text();
         console.log('📄 Error Response Text:', textResponse);
-        
+
         // Check if this looks like an HTML error page (Next.js default error)
         if (textResponse.includes('<html') || textResponse.includes('<!DOCTYPE')) {
           console.warn('🚨 Received HTML response - this might be a Next.js error page!');
@@ -175,9 +126,9 @@ export class AuthenticatedApiClient {
       } catch (textError) {
         console.log('❌ Failed to get error response as text:', textError);
       }
-      
+
       console.groupEnd();
-      
+
       // If JSON parsing fails, create a generic error
       throw new BaseApiError(
         response.status,
@@ -185,7 +136,7 @@ export class AuthenticatedApiClient {
         [{ message: 'An unexpected error occurred', timestamp: new Date().toISOString() }]
       );
     }
-    
+
     console.groupEnd();
 
     // Handle validation errors (400)

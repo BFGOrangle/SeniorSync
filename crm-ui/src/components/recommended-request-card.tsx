@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Clock, Eye, Star, TrendingUp, User, Calendar } from "lucide-react";
 import { SeniorRequestDto } from "@/types/request";
+import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { cn } from "@/lib/utils";
 
 interface RecommendedRequestCardProps {
@@ -98,7 +99,7 @@ export function RecommendedRequestCard({
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* AI Ranking Badge */}
             <Badge 
               variant="secondary" 
@@ -126,6 +127,16 @@ export function RecommendedRequestCard({
             >
               {request.status.replace('_', ' ')}
             </Badge>
+            
+            {/* Spam Detection Badge */}
+            <SpamIndicatorBadge
+              isSpam={request.isSpam}
+              confidenceScore={request.spamConfidenceScore}
+              detectionReason={request.spamDetectionReason}
+              detectedAt={request.spamDetectedAt}
+              size="sm"
+              showText={false}
+            />
           </div>
           
           <Button

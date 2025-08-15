@@ -321,7 +321,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         if (staff.isPresent()) {
             return staff.get().getId();
         }
-        
+
         throw new IllegalStateException("User ID not available - user may not be authenticated or not have a corresponding staff record");
     }
 
@@ -343,17 +343,18 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     public DashboardDto getCenterDashboard() {
         // Ensure only admins can access center dashboard
         SecurityContextUtil.requireAdmin();
-        
-        Long totalRequestsCount = seniorRequestRepository.countAllRequests();
-        Long pendingRequestsCount = seniorRequestRepository.countPendingRequests();
-        Long completedThisMonthCount = seniorRequestRepository.completedThisMonth();
-        Double averageCompletionTime = seniorRequestRepository.averageRequestCompletionTime();
-        List<StringCountDto> requestsByType = seniorRequestRepository.findSeniorRequestsByRequestTypeId();
-        List<StringCountDto> requestsByStaff = seniorRequestRepository.findCountsByAssignedStaffId();
-        List<StringCountDto> requestsByMonth = seniorRequestRepository.findCountsByMonthAndYear();
-        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findCountsByPriority();
-        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findCountsByStatus();
-        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findCountByRequestTypeIdAndStatus();
+        Long currentUserCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+
+        Long totalRequestsCount = seniorRequestRepository.countAllRequestsByCenter(currentUserCenterId);
+        Long pendingRequestsCount = seniorRequestRepository.countPendingRequestsByCenter(currentUserCenterId);
+        Long completedThisMonthCount = seniorRequestRepository.centerCompletedThisMonth(currentUserCenterId);
+        Double averageCompletionTime = seniorRequestRepository.averageCenterRequestCompletionTime(currentUserCenterId);
+        List<StringCountDto> requestsByType = seniorRequestRepository.findCenterSeniorRequestsByRequestTypeId(currentUserCenterId);
+        List<StringCountDto> requestsByStaff = seniorRequestRepository.findCenterCountsByAssignedStaffId(currentUserCenterId);
+        List<StringCountDto> requestsByMonth = seniorRequestRepository.findCenterCountsByMonthAndYear(currentUserCenterId);
+        List<ShortCountDto> requestsByPriority = seniorRequestRepository.findCenterCountsByPriority(currentUserCenterId);
+        List<StatusCountDto> requestsByStatus = seniorRequestRepository.findCenterCountsByStatus(currentUserCenterId);
+        List<RequestTypeStatusDto> requestTypeStatusCounts = seniorRequestRepository.findCenterCountByRequestTypeIdAndStatus(currentUserCenterId);
 
         return new DashboardDto(
                 totalRequestsCount,

@@ -17,6 +17,12 @@ export interface SeniorRequestDto {
   completedAt?: string; // ISO string
   status: RequestStatus;
   assignedStaffName?: string; // Added to match backend DTO
+  requestTypeName?: string; // for request name
+  // Spam detection fields
+  isSpam?: boolean;
+  spamConfidenceScore?: number;
+  spamDetectionReason?: string;
+  spamDetectedAt?: string; // ISO string
 }
 
 export interface CreateSeniorRequestDto {
@@ -101,6 +107,12 @@ export interface SeniorRequestDisplayView extends SeniorRequestView {
 
   // Reminder information
   reminders?: Reminder[];
+
+  // Spam detection fields
+  isSpam?: boolean;
+  spamConfidenceScore?: number;
+  spamDetectionReason?: string;
+  spamDetectedAt?: string;
 }
 
 // Utility functions for converting between backend and frontend formats
@@ -204,6 +216,11 @@ export const RequestUtils = {
       assignedStaffName: request.assignedStaffName || additionalInfo?.assignedStaffName,
       frontendStatus: this.backendToFrontendStatus(request.status),
       frontendPriority: this.backendToFrontendPriority(request.priority),
+      // Include spam detection fields
+      isSpam: request.isSpam,
+      spamConfidenceScore: request.spamConfidenceScore,
+      spamDetectionReason: request.spamDetectionReason,
+      spamDetectedAt: request.spamDetectedAt,
     };
   },
 };

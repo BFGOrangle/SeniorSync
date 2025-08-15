@@ -154,7 +154,7 @@ export function RequestFilters({
   ].reduce((sum: number, count) => sum + (count || 0), 0);
 
   return (
-    <div className="flex flex-row justify-between items-center gap-4 p-4 bg-white border-b border-gray-200">
+    <div className="flex flex-row justify-between items-center gap-4 pb-2 bg-white border-b border-gray-200">
       {/* Quick Filters */}
       <div className="flex gap-2 lg:gap-3 items-center">
       <span className="text-sm text-gray-500">Quick Filters:</span>

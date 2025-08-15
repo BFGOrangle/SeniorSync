@@ -74,32 +74,25 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
   if (isUnassigned) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
-          <User className="h-3 w-3 text-gray-400" />
-        </div>
-        
-        {/* Different UI for Admin vs Staff */}
-        {currentUser && isAdmin ? (
-          /* Admin: Single assign button that can assign to self or others */
-          <StaffAssignmentDropdown 
-            request={request} 
-            onUpdate={onUpdate}
-            disabled={isLoading}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-            includeAssignToMe={true}
-          />
-        ) : currentUser ? (
-          /* Staff: Simple "Assign To Me" button */
-          <Button
-            size="sm"
-            variant="default"
-            onClick={handleAssignToMe}
-            disabled={isLoading}
-            className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            {isLoading ? "..." : "Assign To Me"}
-          </Button>
-        ) : null}
+        <StaffAssignmentDropdown
+          request={request}
+          onUpdate={onUpdate}
+          disabled={isLoading}
+          includeAssignToMe={true}
+          showUnassignOption={false}
+          useNameAsTrigger={true}
+          triggerContent={
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
+                <User className="h-3 w-3 text-gray-400" />
+              </div>
+              <span className="text-xs text-gray-700 cursor-pointer">
+                Unassigned
+              </span>
+            </div>
+          }
+          tooltipText="Assign"
+        />
       </div>
     );
   }
@@ -107,42 +100,27 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
   // Assigned state
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <Avatar className="h-6 w-6">
-        <AvatarFallback className="text-xs bg-blue-100 text-blue-700 font-medium">
-          {getInitials(request.assignedStaffName || "U")}
-        </AvatarFallback>
-      </Avatar>
-      
-      <span className="text-xs text-gray-700 font-medium">
-        {request.assignedStaffName}
-      </span>
-      
-      {/* Staff can unassign requests assigned to themselves */}
-      {!isAdmin && isAssignedToMe && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleUnassign}
-          disabled={isLoading}
-          className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-        >
-          <UserMinus className="h-3 w-3 mr-1" />
-          {isLoading ? "..." : "Unassign"}
-        </Button>
-      )}
-      
-      {/* Admin can reassign to anyone including themselves */}
-      {isAdmin && (
-        <div className="flex items-center ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-          <StaffAssignmentDropdown 
-            request={request} 
-            onUpdate={onUpdate}
-            disabled={isLoading}
-            showUnassignOption={true}
-            includeAssignToMe={true}
-          />
-        </div>
-      )}
+      <StaffAssignmentDropdown
+        request={request}
+        onUpdate={onUpdate}
+        disabled={isLoading}
+        includeAssignToMe={true}
+        showUnassignOption={isAdmin || isAssignedToMe}
+        useNameAsTrigger={true}
+        triggerContent={
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="text-xs bg-blue-100 text-blue-700 font-medium">
+                {getInitials(request.assignedStaffName || "U")}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-gray-700 font-medium cursor-pointer">
+              {request.assignedStaffName}
+            </span>
+          </div>
+        }
+        tooltipText={isUnassigned ? "Assign" : "Reassign"}
+      />
     </div>
   );
 }

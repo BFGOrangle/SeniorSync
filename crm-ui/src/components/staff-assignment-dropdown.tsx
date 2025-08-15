@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { ChevronDown, User, UserX } from "lucide-react";
 import { useCurrentUser } from "@/contexts/user-context";
 import { useStaffDropdown } from "@/hooks/use-staff";
@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface StaffAssignmentDropdownProps {
   request: SeniorRequestDisplayView;
@@ -23,6 +24,11 @@ interface StaffAssignmentDropdownProps {
   disabled?: boolean;
   showUnassignOption?: boolean;
   includeAssignToMe?: boolean;
+  // When true, use a custom trigger (e.g., assignee name) instead of the button
+  useNameAsTrigger?: boolean;
+  triggerContent?: ReactNode;
+  triggerClassName?: string;
+  tooltipText?: string;
 }
 
 function getInitials(name: string): string {
@@ -39,7 +45,11 @@ export function StaffAssignmentDropdown({
   className, 
   disabled,
   showUnassignOption = false,
-  includeAssignToMe = false
+  includeAssignToMe = false,
+  useNameAsTrigger,
+  triggerContent,
+  triggerClassName,
+  tooltipText,
 }: StaffAssignmentDropdownProps) {
   const { currentUser } = useCurrentUser();
   const { staffOptions, loading: staffLoading } = useStaffDropdown();
@@ -87,6 +97,37 @@ export function StaffAssignmentDropdown({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <TooltipProvider>
+        <Tooltip>
+          <DropdownMenuTrigger asChild>
+            <TooltipTrigger asChild>
+              {useNameAsTrigger && triggerContent ? (
+                <div
+                  className={cn("inline-flex items-center gap-1 cursor-pointer", triggerClassName)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {triggerContent}
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled || isLoading}
+                  className={cn("h-6 px-2 text-xs", className)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <User className="h-3 w-3 mr-1" />
+                  {request.assignedStaffId ? "Reassign" : "Assign"}
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              )}
+            </TooltipTrigger>
+          </DropdownMenuTrigger>
+          <TooltipContent>
+            {tooltipText || (request.assignedStaffId ? "Reassign" : "Assign")}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DropdownMenuTrigger asChild>
         <Button
           size="sm"
@@ -100,7 +141,7 @@ export function StaffAssignmentDropdown({
           <ChevronDown className="h-3 w-3 ml-1" />
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent 
         align="end" 
         className="w-48"
@@ -141,7 +182,7 @@ export function StaffAssignmentDropdown({
                 <DropdownMenuSeparator />
               </>
             )}
-            
+
             {staffOptions.length === 0 ? (
               <DropdownMenuItem disabled>
                 <span className="text-sm text-muted-foreground">No staff available</span>
@@ -169,7 +210,7 @@ export function StaffAssignmentDropdown({
                 </DropdownMenuItem>
               ))
             )}
-            
+
             {showUnassignOption && request.assignedStaffId && (
               <>
                 <DropdownMenuSeparator />

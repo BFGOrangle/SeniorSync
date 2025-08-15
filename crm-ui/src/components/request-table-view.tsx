@@ -23,18 +23,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, Clock, Phone, ExternalLink } from "lucide-react";
+import { ArrowUpDown, Clock, Phone } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
+import { SpamDetectionIndicator } from "@/components/spam-detection-indicator";
 import { cn } from "@/lib/utils";
+import { AssigneeSection } from "@/components/assignee-section";
 
 interface RequestTableViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
+  spamDetectionStatus?: Map<number, 'pending' | 'completed'>; // PHASE 4: Add spam detection status
 }
 
 export function RequestTableView({
   requests,
   onRequestUpdate,
+  spamDetectionStatus = new Map(), // PHASE 4: Default to empty map
 }: RequestTableViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -216,6 +220,25 @@ export function RequestTableView({
       },
     },
     {
+      // PHASE 4: Spam Detection Column
+      id: "spamDetection",
+      header: "Spam Check",
+      cell: ({ row }) => {
+        const request = row.original;
+        return (
+          <SpamDetectionIndicator
+            isSpam={request.isSpam}
+            confidenceScore={request.spamConfidenceScore}
+            detectionReason={request.spamDetectionReason}
+            detectedAt={request.spamDetectedAt}
+            detectionStatus={spamDetectionStatus.get(request.id)}
+            size="sm"
+            showText={true}
+          />
+        );
+      },
+    },
+    {
       accessorKey: "frontendStatus",
       header: ({ column }) => (
         <Button
@@ -253,22 +276,9 @@ export function RequestTableView({
       ),
       cell: ({ row }) => {
         const request = row.original;
-        const staffName = request.assignedStaffName;
-
-        if (!staffName) {
-          return <span className="text-gray-400 text-sm">Unassigned</span>;
-        }
-
         return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
-                {getInitials(staffName)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-gray-900">
-              {staffName}
-            </span>
+          <div className="group inline-flex items-center">
+            <AssigneeSection request={request} onUpdate={onRequestUpdate} />
           </div>
         );
       },
