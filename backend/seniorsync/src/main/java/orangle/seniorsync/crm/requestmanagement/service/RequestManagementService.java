@@ -343,7 +343,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     public DashboardDto getCenterDashboard() {
         // Ensure only admins can access center dashboard
         SecurityContextUtil.requireAdmin();
-        Long currentUserCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Long currentUserCenterId = userContextService.getRequestingUserCenterId();
 
         Long totalRequestsCount = seniorRequestRepository.countAllRequestsByCenter(currentUserCenterId);
         Long pendingRequestsCount = seniorRequestRepository.countPendingRequestsByCenter(currentUserCenterId);

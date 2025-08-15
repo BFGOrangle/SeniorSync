@@ -1,10 +1,10 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
 import lombok.RequiredArgsConstructor;
-import orangle.seniorsync.common.repository.StaffRepository;
 import orangle.seniorsync.crm.aifeatures.model.SpamDetectionResult;
 import orangle.seniorsync.crm.aifeatures.repository.SpamDetectionResultRepository;
 import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository;
+import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

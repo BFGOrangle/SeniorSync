@@ -68,7 +68,7 @@ export function useAIRecommendations(): UseAIRecommendationsReturn {
     try {
       // Check cache first
       const cached = aiRecommendationsCache.getCachedRecommendations(
-        currentUser.role === 'ADMIN' ? undefined : currentUser.id
+        currentUser.role === 'ADMIN' ? undefined : Number(currentUser.id)
       );
 
       if (cached) {
@@ -89,8 +89,8 @@ export function useAIRecommendations(): UseAIRecommendationsReturn {
         aiRecommendationsCache.cacheRecommendations(data);
       } else {
         console.log('👤 fetchRecommendations: Calling getMyRecommendations for user', currentUser.id);
-        data = await aiRecommendationsService.getMyRecommendations(currentUser.id);
-        aiRecommendationsCache.cacheRecommendations(data, currentUser.id);
+        data = await aiRecommendationsService.getMyRecommendations(Number(currentUser.id));
+        aiRecommendationsCache.cacheRecommendations(data, Number(currentUser.id));
       }
 
       console.log('✅ fetchRecommendations: API returned', data.length, 'recommendations');
@@ -143,7 +143,7 @@ export function useAIRecommendations(): UseAIRecommendationsReturn {
     try {
       const batchRequest: BatchRecommendationRequestDto = {
         requestIds,
-        userId: currentUser.id,
+        userId: Number(currentUser.id),
         includePriorityRanking: true
       };
 
@@ -283,7 +283,7 @@ export function useAIRecommendations(): UseAIRecommendationsReturn {
     try {
       const batchRequest: BatchRecommendationRequestDto = {
         requestIds,
-        userId: currentUser.id,
+        userId: Number(currentUser.id),
         includePriorityRanking
       };
 
