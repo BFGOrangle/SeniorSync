@@ -40,4 +40,5 @@ jobs:
           -user="${{ env.SUPABASE_USER }}"
           -password="${{ secrets.SUPABASE_PASSWORD }}"
           -schemas=senior_sync
+          -outOfOrder=true
           migrate
