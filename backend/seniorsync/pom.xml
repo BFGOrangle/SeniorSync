@@ -111,11 +111,16 @@
 
 		<dependency>
 			<groupId>io.netty</groupId>
-			<artifactId>netty-bom</artifactId>
-			<version>4.1.124.Final</version>
-			<type>pom</type>
-			<scope>import</scope>
+			<artifactId>netty-codec-http2</artifactId>
+			<!-- no version: comes from the BOM (4.1.124.Final) -->
 		</dependency>
+		<!-- Keep Netty modules aligned to the same version -->
+		<dependency><groupId>io.netty</groupId><artifactId>netty-handler</artifactId></dependency>
+		<dependency><groupId>io.netty</groupId><artifactId>netty-transport</artifactId></dependency>
+		<dependency><groupId>io.netty</groupId><artifactId>netty-codec</artifactId></dependency>
+		<dependency><groupId>io.netty</groupId><artifactId>netty-resolver</artifactId></dependency>
+		<dependency><groupId>io.netty</groupId><artifactId>netty-buffer</artifactId></dependency>
+		<dependency><groupId>io.netty</groupId><artifactId>netty-common</artifactId></dependency>
 	</dependencies>
 
 	<build>
@@ -170,6 +175,13 @@
 				<groupId>org.apache.tomcat.embed</groupId>
 				<artifactId>tomcat-embed-core</artifactId>
 				<version>10.1.44</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-bom</artifactId>
+				<version>4.1.124.Final</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
