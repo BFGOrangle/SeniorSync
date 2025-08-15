@@ -35,6 +35,7 @@ import { useRequestDetails } from "@/hooks/use-requests";
 import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
 import InitialsAvatar from "@/components/initials-avatar";
+import { ErrorMessageCallout } from "@/components/error-message-callout";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "todo" | "in-progress" | "completed";
@@ -131,7 +132,7 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
 
   // Determine if user can edit this request
   const canEdit = isAdmin || 
-    (currentUser && editedRequest?.assignedStaffId === currentUser.id);
+    (currentUser && editedRequest?.assignedStaffId === parseInt(currentUser.id));
 
   if (loading) {
     return (
@@ -147,19 +148,19 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
   if (error || !editedRequest) {
     return (
       <div className="container mx-auto p-6">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-red-800">Error</h3>
-              <p className="text-red-600 mt-2">
-                {error || "Request not found"}
-              </p>
-              <Button onClick={() => router.back()} className="mt-4">
-                Go Back
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <ErrorMessageCallout
+          errorHeader="Request Details Error"
+          errorMessage={error || "Request not found. This request may have been deleted or you may not have permission to view it."}
+          errorCode={hookError?.status}
+          statusText={hookError?.statusText}
+          errors={hookError?.errors}
+        />
+        <div className="flex justify-center mt-4">
+          <Button onClick={() => router.back()} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }

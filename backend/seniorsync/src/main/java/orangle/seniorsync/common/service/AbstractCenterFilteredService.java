@@ -1,6 +1,5 @@
 package orangle.seniorsync.common.service;
 
-import orangle.seniorsync.common.util.SecurityContextUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -16,6 +15,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * @param <ID> The ID type of the entity
  */
 public abstract class AbstractCenterFilteredService<T, ID> {
+
+    protected final IUserContextService userContextService;
+
+    protected AbstractCenterFilteredService(IUserContextService userContextService) {
+        this.userContextService = userContextService;
+    }
 
     /**
      * Get the repository for this service. Must be implemented by subclasses.
@@ -41,7 +46,7 @@ public abstract class AbstractCenterFilteredService<T, ID> {
      * @return Combined specification with center filtering
      */
     protected Specification<T> applyCenterFilter(Specification<T> userSpec) {
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Long currentCenterId = userContextService.getRequestingUserCenterId();
         Specification<T> centerSpec = createCenterFilterSpec(currentCenterId);
         
         if (userSpec == null) {

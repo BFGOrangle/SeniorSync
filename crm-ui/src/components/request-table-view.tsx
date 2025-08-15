@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useNavigationHelper } from "@/components/navigation-helper";
+import { useNavigationHelper } from "@/lib/navigation-helper";
 import {
   ColumnDef,
   ColumnFiltersState,

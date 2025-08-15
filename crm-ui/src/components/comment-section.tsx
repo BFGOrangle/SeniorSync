@@ -39,7 +39,9 @@ const iconMap = {
 
 export function CommentSection({ requestId, className }: CommentSectionProps) {
   const { currentUser } = useCurrentUser();
-  const currentUserId = currentUser?.id || 1; // Fallback to 1 if no user
+  // Ensure numeric ID for API (Cognito IDs are strings). Fallback to 1.
+  const derivedId = currentUser?.id ? parseInt(currentUser.id, 10) : 1;
+  const currentUserId = Number.isNaN(derivedId) ? 1 : derivedId;
   const {
     comments,
     isLoading,

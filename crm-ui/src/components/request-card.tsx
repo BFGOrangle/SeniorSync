@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useNavigationHelper } from "@/components/navigation-helper";
+import { useNavigationHelper } from "@/lib/navigation-helper";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Clock, Eye } from "lucide-react";
+import { Clock } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useCurrentUser } from "@/contexts/user-context";
 import { AssigneeSection } from "@/components/assignee-section";
@@ -57,7 +55,7 @@ export function RequestCard({
       // Update the request with current user assignment
       const updatedRequest = {
         ...request,
-        assignedStaffId: currentUser.id,
+        assignedStaffId: parseInt(currentUser.id),
         assignedStaffName: currentUser.fullName,
       };
       

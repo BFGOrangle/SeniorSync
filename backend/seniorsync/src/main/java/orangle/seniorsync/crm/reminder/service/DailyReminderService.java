@@ -1,15 +1,14 @@
 package orangle.seniorsync.crm.reminder.service;
 
 import lombok.extern.slf4j.Slf4j;
-import orangle.seniorsync.common.model.Staff;
-import orangle.seniorsync.common.repository.StaffRepository;
+import orangle.seniorsync.crm.staffmanagement.model.Staff;
+import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
 import orangle.seniorsync.crm.reminder.model.Reminder;
 import orangle.seniorsync.crm.reminder.repository.ReminderRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j

@@ -1,7 +1,6 @@
 package orangle.seniorsync.crm.requestmanagement.mapper;
 
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
-import orangle.seniorsync.common.repository.StaffRepository;
+import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
 import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestDto;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import org.mapstruct.Mapper;

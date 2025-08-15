@@ -1,44 +1,23 @@
 "use client";
-
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { useCurrentUser } from "@/contexts/user-context";
+import FullPageSpinnerLoader from "@/components/full-page-spinner-loader";
+import { useNavigationHelper } from "@/lib/navigation-helper";
 
 export default function DashboardRedirect() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { currentUser, isLoading } = useCurrentUser();
+  const { goToSignin, goToDashboard } = useNavigationHelper();
 
   useEffect(() => {
-    if (status === "loading") return; // Still loading
-
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
+    if (!isLoading) {
+      if (!currentUser) {
+        goToSignin()
+        return;
+      }
+      // Redirect based on user role
+      goToDashboard();
     }
+  }, [currentUser, isLoading]);
 
-    // Redirect based on user role
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((session?.user as any)?.role === "ADMIN") {
-      router.push("/admin/dashboard");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } else if ((session?.user as any)?.role === "STAFF") {
-      router.push("/staff/dashboard");
-    } else {
-      // Fallback for unknown roles or missing role
-      router.push("/login");
-    }
-  }, [session, status, router]);
-
-  // Show loading while redirecting
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex items-center gap-2">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-        <span className="text-gray-600 font-medium">
-          Redirecting to dashboard...
-        </span>
-      </div>
-    </div>
-  );
+  return <FullPageSpinnerLoader />;
 }

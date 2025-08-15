@@ -22,6 +22,7 @@ import { RefreshCw, Calendar, Plus } from "lucide-react";
 import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
 import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
 import { useCurrentUser } from "@/contexts/user-context";
+import { ErrorMessageCallout } from "@/components/error-message-callout";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -110,28 +111,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Error State */}
+      {/* Error State with ErrorMessageCallout */}
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-sm font-medium text-red-800">
-                Error loading dashboard data
-              </h3>
-              <p className="text-sm text-red-600 mt-1">
-                {error.message}. Please try refreshing the page.
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearError}
-              className="text-red-600 hover:text-red-800"
-            >
-              Dismiss
-            </Button>
-          </div>
-        </div>
+        <ErrorMessageCallout
+          errorHeader="Dashboard Error"
+          errorMessage={`Failed to load ${mode} dashboard data`}
+          errorCode={error.status}
+          statusText={error.statusText}
+          errors={error.errors}
+        />
       )}
 
       {/* Key Metrics Cards */}
@@ -192,4 +180,4 @@ export default function Dashboard() {
       />
     </div>
   );
-} 
+}

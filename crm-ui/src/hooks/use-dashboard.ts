@@ -76,7 +76,12 @@ export function useDashboard(): UseDashboardReturn {
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [
+              {
+                message: "Unknown dashboard statistics error",
+                timestamp: new Date().toISOString(),
+              },
+            ]);
       setError(apiError);
       console.error("Error loading dashboard statistics:", apiError);
 
@@ -105,7 +110,12 @@ export function useDashboard(): UseDashboardReturn {
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [
+              {
+                message: "Unknown request type summaries error",
+                timestamp: new Date().toISOString(),
+              },
+            ]);
       setError(apiError);
       console.error("Error loading request type summaries:", apiError);
 
@@ -144,7 +154,12 @@ export function useDashboard(): UseDashboardReturn {
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [
+              {
+                message: "Unknown dashboard distributions error",
+                timestamp: new Date().toISOString(),
+              },
+            ]);
       setError(apiError);
       console.error("Error loading dashboard distributions:", apiError);
 
@@ -177,7 +192,12 @@ export function useDashboard(): UseDashboardReturn {
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [
+              {
+                message: "Unknown dashboard refresh error",
+                timestamp: new Date().toISOString(),
+              },
+            ]);
       setError(apiError);
       console.error("Error refreshing dashboard:", apiError);
 
@@ -219,7 +239,12 @@ export function useDashboard(): UseDashboardReturn {
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [
+              {
+                message: "Unknown dashboard force refresh error",
+                timestamp: new Date().toISOString(),
+              },
+            ]);
       setError(apiError);
       console.error("Error force refreshing dashboard:", apiError);
 
@@ -285,7 +310,12 @@ export function useStatusCounts() {
       const apiError =
         err instanceof DashboardApiError
           ? err
-          : new DashboardApiError(500, "Unknown Error");
+          : new DashboardApiError(0, "Unknown Error", [
+              {
+                message: "Unknown status counts error",
+                timestamp: new Date().toISOString(),
+              },
+            ]);
       setError(apiError);
       console.error("Error loading status counts:", apiError);
     } finally {

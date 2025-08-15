@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
 import { RecommendedRequestCard } from "@/components/recommended-request-card";
+import { ErrorMessageCallout } from "@/components/error-message-callout";
 import { cn } from "@/lib/utils";
 
 interface AIRecommendationsProps {
@@ -124,20 +124,21 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
 
       <CardContent>
         {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
+          <div className="mb-4">
+            <ErrorMessageCallout
+              errorHeader="AI Recommendations Error"
+              errorMessage={`Failed to load AI recommendations: ${error}. Please try again or refresh the recommendations.`}
+            />
+            <div className="flex justify-end mt-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={clearError}
-                className="ml-2"
               >
                 Dismiss
               </Button>
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
 
         {!hasRecommendations && !loading && (

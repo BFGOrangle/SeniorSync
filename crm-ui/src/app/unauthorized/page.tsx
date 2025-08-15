@@ -1,25 +1,17 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { AlertCircle, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCurrentUser } from "@/contexts/user-context";
+import { useNavigationHelper } from "@/lib/navigation-helper";
 
 export default function UnauthorizedPage() {
-  const { data: session } = useSession();
-  const router = useRouter();
+  const { currentUser } = useCurrentUser();
+  const { goToDashboard } = useNavigationHelper();
 
   const handleGoToDashboard = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((session?.user as any)?.role === "ADMIN") {
-      router.push("/admin/dashboard");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } else if ((session?.user as any)?.role === "STAFF") {
-      router.push("/staff/dashboard");
-    } else {
-      router.push("/login");
-    }
+    goToDashboard();
   };
 
   return (
@@ -36,8 +28,7 @@ export default function UnauthorizedPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <strong>Unauthorized Access:</strong> This page is restricted to {(session?.user as any)?.role === "ADMIN" ? "staff members" : "administrators"} only. 
+            <strong>Unauthorized Access:</strong> This page is restricted to {currentUser?.role === "ADMIN" ? "staff members" : "administrators"} only. 
             Please contact your system administrator if you believe this is an error.
           </AlertDescription>
         </Alert>
@@ -54,11 +45,10 @@ export default function UnauthorizedPage() {
         </div>
 
         <div className="text-center text-sm text-gray-500">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <p>Current Role: <span className="font-medium">{(session?.user as any)?.role}</span></p>
-          <p>User: <span className="font-medium">{session?.user?.name}</span></p>
+          <p>Current Role: <span className="font-medium">{currentUser?.role}</span></p>
+          <p>User: <span className="font-medium">{currentUser?.fullName}</span></p>
         </div>
       </div>
     </div>
   );
-} 
+}

@@ -15,6 +15,7 @@ import { useRequestManagement } from "@/hooks/use-requests";
 import { useToast } from "@/hooks/use-toast";
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { useCurrentUser } from "@/contexts/user-context";
+import { ErrorMessageCallout } from "@/components/error-message-callout";
 
 type ViewMode = "kanban-status" | "kanban-priority" | "table";
 
@@ -89,7 +90,8 @@ export default function RequestManagement() {
 
   const handleMyTicketsClick = () => {
     if (currentUser) {
-      const isMyTicketsActive = filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUser.id;
+      const currentUserId = parseInt(currentUser.id);
+      const isMyTicketsActive = filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUserId;
       
       if (isMyTicketsActive) {
         // Toggle off - remove the assignedStaff filter
@@ -105,7 +107,7 @@ export default function RequestManagement() {
         // Toggle on - show only my requests
         setFilters({
           ...filters,
-          assignedStaff: [currentUser.id],
+          assignedStaff: [currentUserId],
         });
         toast({
           title: "Filter Applied",
@@ -174,13 +176,15 @@ export default function RequestManagement() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="flex items-center gap-2 justify-center mb-4">
-            <span className="text-red-600 font-medium">
-              Error loading requests: {error.errors[0]?.message || 'Unknown error'}
-            </span>
-          </div>
+      <div className="flex flex-col h-full bg-gray-50 p-6">
+        <ErrorMessageCallout
+          errorHeader="Request Management Error"
+          errorMessage="Failed to load requests"
+          errorCode={error.status}
+          statusText={error.statusText}
+          errors={error.errors}
+        />
+        <div className="flex justify-center mt-4">
           <Button onClick={refresh} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
@@ -280,7 +284,7 @@ export default function RequestManagement() {
             sort={sort}
             onMyTicketsClick={handleMyTicketsClick}
             onUnassignedClick={handleUnassignedClick}
-            isMyTicketsActive={currentUser ? filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUser.id : false}
+            isMyTicketsActive={currentUser ? filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === parseInt(currentUser.id) : false}
             isUnassignedActive={filters.assignedStaff?.length === 0}
           />
         </div>
@@ -309,4 +313,4 @@ export default function RequestManagement() {
       </div>
     </div>
   );
-} 
+}

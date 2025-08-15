@@ -20,6 +20,7 @@ import {
   Loader2
 } from "lucide-react";
 import { submitVendorApplication, VendorApplicationPayload } from "@/services/vendor-application-api";
+import { Route } from "@/enums/Route";
 
 export default function VendorApplicationPage() {
   const [formData, setFormData] = useState<VendorApplicationPayload>({
@@ -122,9 +123,9 @@ export default function VendorApplicationPage() {
             <span className="text-2xl font-bold text-gray-900">SeniorSync</span>
             <Badge variant="secondary" className="ml-2">For Vendors</Badge>
           </Link>
-          <Link href="/login">
+          <Link href={Route.Signin}>
             <Button variant="outline" size="sm">
-              Vendor Login
+              Vendor Sign in
             </Button>
           </Link>
         </div>

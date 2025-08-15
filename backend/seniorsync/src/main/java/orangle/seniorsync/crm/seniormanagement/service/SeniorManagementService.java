@@ -3,7 +3,7 @@ package orangle.seniorsync.crm.seniormanagement.service;
 import orangle.seniorsync.common.model.Center;
 import orangle.seniorsync.common.model.Senior;
 import orangle.seniorsync.common.service.AbstractCenterFilteredService;
-import orangle.seniorsync.common.util.SecurityContextUtil;
+import orangle.seniorsync.common.service.IUserContextService;
 import orangle.seniorsync.crm.seniormanagement.mapper.CreateSeniorMapper;
 import orangle.seniorsync.crm.seniormanagement.dto.CreateSeniorDto;
 import orangle.seniorsync.crm.seniormanagement.dto.SeniorDto;
@@ -33,7 +33,9 @@ public class SeniorManagementService extends AbstractCenterFilteredService<Senio
             SeniorRepository seniorRepository,
             CreateSeniorMapper createSeniorMapper,
             SeniorMapper seniorMapper,
-            UpdateSeniorMapper updateSeniorMapper) {
+            UpdateSeniorMapper updateSeniorMapper,
+            IUserContextService userContextService) {
+        super(userContextService);
         this.seniorRepository = seniorRepository;
         this.createSeniorMapper = createSeniorMapper;
         this.seniorMapper = seniorMapper;
@@ -68,7 +70,7 @@ public class SeniorManagementService extends AbstractCenterFilteredService<Senio
         Senior seniorToCreate = createSeniorMapper.toEntity(createSeniorDto);
         
         // Automatically set center from current user
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Long currentCenterId = userContextService.getRequestingUserCenterId();
         Center center = new Center();
         center.setId(currentCenterId);
         seniorToCreate.setCenter(center);
@@ -294,3 +296,4 @@ public class SeniorManagementService extends AbstractCenterFilteredService<Senio
         return seniorMapper.toDto(seniors.get(0));
     }
 }
+

@@ -1,6 +1,7 @@
 package orangle.seniorsync.crm.requestmanagement.service;
 
 import orangle.seniorsync.common.service.AbstractCenterFilteredService;
+import orangle.seniorsync.common.service.IUserContextService;
 import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.common.util.TimeUtils;
 import orangle.seniorsync.crm.requestmanagement.dto.*;
@@ -9,21 +10,20 @@ import orangle.seniorsync.crm.requestmanagement.mapper.CreateSeniorRequestMapper
 import orangle.seniorsync.crm.requestmanagement.mapper.SeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.mapper.UpdateSeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
-import orangle.seniorsync.crm.requestmanagement.model.RequestType;
 import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestView;
-import orangle.seniorsync.crm.requestmanagement.projection.SeniorRequestViewImpl;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
 import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository;
 import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
-import orangle.seniorsync.common.model.Staff;
-import orangle.seniorsync.common.repository.StaffRepository;
+import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
+import orangle.seniorsync.crm.staffmanagement.model.Staff;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RequestManagementService extends AbstractCenterFilteredService<SeniorRequest, Long> implements IRequestManagementService {
@@ -41,7 +41,9 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
             SeniorRequestMapper seniorRequestMapper,
             UpdateSeniorRequestMapper updateSeniorRequestMapper,
             StaffRepository staffRepository,
-            RequestTypeRepository requestTypeRepository) {
+            RequestTypeRepository requestTypeRepository,
+            IUserContextService userContextService) {
+        super(userContextService);
         this.seniorRequestRepository = seniorRequestRepository;
         this.createSeniorRequestMapper = createSeniorRequestMapper;
         this.seniorRequestMapper = seniorRequestMapper;
@@ -77,7 +79,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         SeniorRequest seniorRequestToCreate = createSeniorRequestMapper.toEntity(createSeniorRequestDto);
         
         // Automatically set center ID from current user
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Long currentCenterId = userContextService.getRequestingUserCenterId();
         seniorRequestToCreate.setCenterId(currentCenterId);
         
         SeniorRequest createdSeniorRequest = seniorRequestRepository.save(seniorRequestToCreate);
@@ -146,7 +148,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         // Furthermore, we want to avoid the overhead of mapping the entire entity to a DTO.
         
         // Apply center filtering for multi-tenant isolation
-        Long currentCenterId = SecurityContextUtil.requireCurrentUserCenterId();
+        Long currentCenterId = userContextService.getRequestingUserCenterId();
         return seniorRequestRepository.findByStatusAndCenterId(status, currentCenterId);
     }
 
@@ -251,8 +253,19 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
      */
     @Transactional(readOnly = true)
     public DashboardDto getPersonalDashboard() {
-        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
-        
+        // For authenticated users without staff records, return empty dashboard
+        // This allows authentication to work without requiring database records
+        UUID cognitoSub = SecurityContextUtil.requireCurrentCognitoSubUUID();
+
+        // Try to get staff ID if available, otherwise use empty dashboard
+        Optional<Staff> staff = staffRepository.findByCognitoSub(cognitoSub);
+        if (staff.isEmpty()) {
+            // Return empty dashboard for authenticated users without staff records
+            return createEmptyDashboard();
+        }
+
+        Long currentUserId = staff.get().getId();
+
         Long totalRequestsCount = seniorRequestRepository.countPersonalAllRequests(currentUserId);
         Long pendingRequestsCount = seniorRequestRepository.countPersonalPendingRequests(currentUserId);
         Long completedThisMonthCount = seniorRequestRepository.personalCompletedThisMonth(currentUserId);
@@ -278,6 +291,47 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
                 emptyStaffWorkload,
                 requestTypeStatusCounts
         );
+    }
+
+    /**
+     * Create an empty dashboard for authenticated users without staff records
+     */
+    private DashboardDto createEmptyDashboard() {
+        return new DashboardDto(
+                0L,  // totalRequestsCount
+                0L,  // pendingRequestsCount
+                0L,  // completedThisMonthCount
+                0.0, // averageCompletionTime
+                List.of(), // requestsByStatus
+                List.of(), // requestsByType
+                List.of(), // requestsByPriority
+                List.of(), // requestsByMonth
+                List.of(), // staffWorkload
+                List.of()  // requestTypeStatusCounts
+        );
+    }
+
+    /**
+     * Helper method to get current user ID with fallback to Cognito sub lookup
+     */
+    private Long getCurrentUserIdWithFallback() {
+        // Fallback: lookup staff by Cognito sub
+        UUID cognitoSub = SecurityContextUtil.requireCurrentCognitoSubUUID();
+        Optional<Staff> staff = staffRepository.findByCognitoSub(cognitoSub);
+        if (staff.isPresent()) {
+            return staff.get().getId();
+        }
+        
+        throw new IllegalStateException("User ID not available - user may not be authenticated or not have a corresponding staff record");
+    }
+
+    /**
+     * Get the current user's staff ID
+     * @return The staff ID for the current authenticated user
+     * @throws IllegalStateException if user is not authenticated or doesn't have a staff record
+     */
+    private Long requireCurrentUserId() {
+        return getCurrentUserIdWithFallback();
     }
 
     /**
@@ -340,7 +394,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         
         SeniorRequest request = requests.get(0);
 
-        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        Long currentUserId = requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
         Long targetStaffId = assignRequestDto.assignedStaffId();
 
@@ -389,7 +443,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         
         SeniorRequest request = requests.get(0);
 
-        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
+        Long currentUserId = requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
 
         // Validate business rules
@@ -437,20 +491,43 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
 
     @Transactional(readOnly = true)
     public List<SeniorRequestDto> findMyRequests(SeniorRequestFilterDto filter) {
-        Long currentUserId = SecurityContextUtil.requireCurrentUserId();
-        
-        // Create a new filter with the current user's ID
-        SeniorRequestFilterDto myFilter = new SeniorRequestFilterDto(
-                filter != null ? filter.status() : null,
-                filter != null ? filter.seniorId() : null,
-                currentUserId, // Force to current user
-                filter != null ? filter.requestTypeId() : null,
-                filter != null ? filter.minPriority() : null,
-                filter != null ? filter.maxPriority() : null,
-                filter != null ? filter.createdAfter() : null,
-                filter != null ? filter.createdBefore() : null
-        );
-        
-        return findRequests(myFilter);
+        UUID cognitoSub = SecurityContextUtil.requireCurrentCognitoSubUUID();
+
+        // Use the new repository method that queries by Cognito UUID
+        List<SeniorRequest> myRequests = seniorRequestRepository.findIncompleteRequestsByAssignedStaffCognitoSub(cognitoSub);
+
+        // Apply additional filters if provided
+        if (filter != null) {
+            myRequests = myRequests.stream()
+                .filter(request -> {
+                    if (filter.status() != null && !filter.status().equals(request.getStatus())) {
+                        return false;
+                    }
+                    if (filter.seniorId() != null && !filter.seniorId().equals(request.getSeniorId())) {
+                        return false;
+                    }
+                    if (filter.requestTypeId() != null && !filter.requestTypeId().equals(request.getRequestTypeId())) {
+                        return false;
+                    }
+                    if (filter.minPriority() != null && request.getPriority() < filter.minPriority()) {
+                        return false;
+                    }
+                    if (filter.maxPriority() != null && request.getPriority() > filter.maxPriority()) {
+                        return false;
+                    }
+                    if (filter.createdAfter() != null && request.getCreatedAt().isBefore(filter.createdAfter())) {
+                        return false;
+                    }
+                    if (filter.createdBefore() != null && request.getCreatedAt().isAfter(filter.createdBefore())) {
+                        return false;
+                    }
+                    return true;
+                })
+                .toList();
+        }
+
+        return myRequests.stream()
+                .map(seniorRequestMapper::toDto)
+                .toList();
     }
 }

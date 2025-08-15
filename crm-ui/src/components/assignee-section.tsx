@@ -29,7 +29,8 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
 
   const isAdmin = currentUser?.role === 'ADMIN';
   const isUnassigned = !request.assignedStaffId;
-  const isAssignedToMe = request.assignedStaffId === currentUser?.id;
+  const currentUserNumericId = currentUser ? parseInt(currentUser.id, 10) : undefined;
+  const isAssignedToMe = currentUserNumericId !== undefined && request.assignedStaffId === currentUserNumericId;
 
   const handleAssignToMe = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,7 +40,7 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
     try {
       const updatedRequest = {
         ...request,
-        assignedStaffId: currentUser.id,
+        assignedStaffId: parseInt(currentUser.id, 10),
         assignedStaffName: currentUser.fullName,
       };
       onUpdate?.(updatedRequest);
@@ -144,4 +145,4 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
       )}
     </div>
   );
-} 
+}
