@@ -114,13 +114,6 @@
 			<artifactId>netty-codec-http2</artifactId>
 			<!-- no version: comes from the BOM (4.1.124.Final) -->
 		</dependency>
-		<!-- Keep Netty modules aligned to the same version -->
-		<dependency><groupId>io.netty</groupId><artifactId>netty-handler</artifactId></dependency>
-		<dependency><groupId>io.netty</groupId><artifactId>netty-transport</artifactId></dependency>
-		<dependency><groupId>io.netty</groupId><artifactId>netty-codec</artifactId></dependency>
-		<dependency><groupId>io.netty</groupId><artifactId>netty-resolver</artifactId></dependency>
-		<dependency><groupId>io.netty</groupId><artifactId>netty-buffer</artifactId></dependency>
-		<dependency><groupId>io.netty</groupId><artifactId>netty-common</artifactId></dependency>
 	</dependencies>
 
 	<build>
