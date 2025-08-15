@@ -1,20 +1,22 @@
 "use client";
 
-import { AIRecommendations } from "@/components/ai-recommendations";
+import { AIRecommendedRequests } from "@/components/ai-recommended-requests";
 
 export default function AIRecommendationsPage() {
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="space-y-2">
+    <div className="container mx-auto p-6 h-[calc(100vh-2rem)] flex flex-col">
+      <div className="space-y-2 flex-shrink-0 mb-6">
         <h1 className="text-3xl font-bold text-gray-900">
-          AI Task Recommendations
+          My AI Recommended Requests
         </h1>
         <p className="text-gray-600">
-          Get intelligent task recommendations powered by AI to optimize your workflow and prioritize your most important work.
+          Get AI-ranked requests to help you prioritize and focus on your most important work.
         </p>
       </div>
       
-      <AIRecommendations />
+      <div className="flex-1 min-h-0">
+        <AIRecommendedRequests showAllRequests={false} />
+      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { KanbanSquare, List, Loader2, BarChart3, RefreshCw, AlertTriangle, Filter } from "lucide-react";
+import { KanbanSquare, List, Loader2, BarChart3, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestKanbanView } from "@/components/request-kanban-view";
 import { RequestKanbanPriorityView } from "@/components/request-kanban-priority-view";
@@ -34,7 +34,6 @@ interface RequestSortOption {
 export default function RequestManagement() {
   const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban-status");
-  const [smartFilter, setSmartFilter] = useState(true); // Hide empty columns when filtering
   const [filters, setFilters] = useState<RequestFilterOptions>({});
   const [sort, setSort] = useState<RequestSortOption>({
     field: "createdAt",
@@ -44,12 +43,12 @@ export default function RequestManagement() {
   const { toast } = useToast();
   const { currentUser } = useCurrentUser();
 
-  // Use the request management hook
+  // Use the enhanced request management hook with spam detection
   const {
     requests,
     loading: isLoading,
     error,
-    lastUpdated,
+    spamDetectionStatus,
     updateRequest,
     refresh,
     filterAndSortRequests,
@@ -292,18 +291,21 @@ export default function RequestManagement() {
           <RequestKanbanView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
+            spamDetectionStatus={spamDetectionStatus} // PHASE 4: Pass spam detection status
           />
         )}
         {viewMode === "kanban-priority" && (
           <RequestKanbanPriorityView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
+            spamDetectionStatus={spamDetectionStatus} // PHASE 4: Pass spam detection status
           />
         )}
         {viewMode === "table" && (
           <RequestTableView
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
+            spamDetectionStatus={spamDetectionStatus} // PHASE 4: Pass spam detection status
           />
         )}
       </div>

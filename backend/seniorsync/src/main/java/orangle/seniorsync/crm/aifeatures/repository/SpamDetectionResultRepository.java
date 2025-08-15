@@ -13,6 +13,8 @@ public interface SpamDetectionResultRepository extends JpaRepository<SpamDetecti
 
     Optional<SpamDetectionResult> findTopByRequestIdOrderByDetectedAtDesc(Long requestId);
 
+    Optional<SpamDetectionResult> findByRequestId(Long requestId);
+
     List<SpamDetectionResult> findByRequestIdIn(List<Long> requestIds);
 
     @Query("SELECT s FROM SpamDetectionResult s WHERE s.isSpam = true ORDER BY s.detectedAt DESC")

@@ -29,7 +29,9 @@ type Priority = "urgent" | "high" | "medium" | "low";
 interface RequestKanbanPriorityViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
+  spamDetectionStatus?: Map<number, 'pending' | 'completed'>; // PHASE 4: Add spam detection status
 }
+
 
 interface PriorityColumn {
   id: Priority;
@@ -65,7 +67,11 @@ const priorityColumns: PriorityColumn[] = [
   },
 ];
 
-export function RequestKanbanPriorityView({ requests, onRequestUpdate }: RequestKanbanPriorityViewProps) {
+export function RequestKanbanPriorityView({ 
+  requests, 
+  onRequestUpdate,
+  spamDetectionStatus = new Map() // PHASE 4: Default to empty map
+}: RequestKanbanPriorityViewProps) {
   const [activeRequest, setActiveRequest] = useState<SeniorRequestDisplayView | null>(null);
 
   const sensors = useSensors(
@@ -241,6 +247,7 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate }: Request
                             request={request}
                             isKanban
                             onUpdate={onRequestUpdate}
+                            spamDetectionStatus={spamDetectionStatus.get(request.id)} // PHASE 4: Pass spam status
                           />
                         ))}
                         {columnRequests.length === 0 && (
@@ -270,6 +277,7 @@ export function RequestKanbanPriorityView({ requests, onRequestUpdate }: Request
               request={activeRequest}
               isKanban
               onUpdate={onRequestUpdate}
+              spamDetectionStatus={spamDetectionStatus.get(activeRequest.id)} // PHASE 4: Pass spam status
             />
           </div>
         ) : null}

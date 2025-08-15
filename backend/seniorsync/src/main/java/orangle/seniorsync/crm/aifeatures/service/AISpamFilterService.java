@@ -11,7 +11,9 @@ import orangle.seniorsync.crm.aifeatures.model.SpamDetectionResult;
 import orangle.seniorsync.crm.aifeatures.repository.SpamDetectionResultRepository;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 @Service
 @RequiredArgsConstructor
@@ -33,53 +38,60 @@ public class AISpamFilterService implements IAISpamFilterService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // Track ongoing processing to prevent duplicate LLM calls
+    private final ConcurrentHashMap<Long, CompletableFuture<SpamFilterResultDto>> processingRequests = new ConcurrentHashMap<>();
+
+    @Autowired
+    @Qualifier("taskExecutor") // Use Spring's configured async executor
+    private Executor asyncExecutor;
+
     @Override
+    @Async
     @Transactional
-    public SpamFilterResultDto checkSingleRequest(Long requestId) {
-        log.info("Checking request {} for spam", requestId);
-
-        Optional<SeniorRequest> requestOpt = seniorRequestRepository.findById(requestId);
-        if (requestOpt.isEmpty()) {
-            throw new IllegalArgumentException("Request not found with ID: " + requestId);
-        }
-
-        SeniorRequest request = requestOpt.get();
-        return performSpamDetection(request);
+    public CompletableFuture<SpamFilterResultDto> checkSingleRequestAsync(Long requestId) {
+        log.info("Checking request {} for spam asynchronously", requestId);
+        return getOrCreateProcessingFuture(requestId);
     }
 
     @Override
-    @Transactional
-    public BatchSpamFilterResultDto checkBatchRequests(List<Long> requestIds) {
-        log.info("Checking {} requests for spam", requestIds.size());
+    @Async
+    public CompletableFuture<BatchSpamFilterResultDto> checkBatchRequestsAsync(List<Long> requestIds) {
+        log.info("Checking {} requests for spam with fan-out", requestIds.size());
 
-        List<SeniorRequest> requests = seniorRequestRepository.findAllById(requestIds);
-        List<SpamFilterResultDto> results = new ArrayList<>();
-        int spamCount = 0;
+        // Fan out - each request gets its own future (reuses existing if already processing)
+        List<CompletableFuture<SpamFilterResultDto>> futures = requestIds.stream()
+                .map(this::getOrCreateProcessingFuture)
+                .toList();
 
-        for (SeniorRequest request : requests) {
-            try {
-                SpamFilterResultDto result = performSpamDetection(request);
-                results.add(result);
-                if (result.getIsSpam()) {
-                    spamCount++;
-                }
-            } catch (Exception e) {
-                log.error("Error checking request {} for spam: {}", request.getId(), e.getMessage());
-                // Create error result
-                SpamFilterResultDto errorResult = new SpamFilterResultDto();
-                errorResult.setRequestId(request.getId());
-                errorResult.setIsSpam(false);
-                errorResult.setDetectionReason("Error during detection: " + e.getMessage());
-                results.add(errorResult);
-            }
-        }
+        // Combine all results
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> {
+                    List<SpamFilterResultDto> results = futures.stream()
+                            .map(future -> {
+                                try {
+                                    return future.join();
+                                } catch (Exception e) {
+                                    log.error("Error processing request: {}", e.getMessage());
+                                    // Return error result
+                                    SpamFilterResultDto errorResult = new SpamFilterResultDto();
+                                    errorResult.setIsSpam(false);
+                                    errorResult.setDetectionReason("Error: " + e.getMessage());
+                                    return errorResult;
+                                }
+                            })
+                            .toList();
 
-        BatchSpamFilterResultDto batchResult = new BatchSpamFilterResultDto();
-        batchResult.setResults(results);
-        batchResult.setTotalProcessed(results.size());
-        batchResult.setSpamDetected(spamCount);
+                    int spamCount = (int) results.stream()
+                            .mapToInt(result -> result.getIsSpam() ? 1 : 0)
+                            .sum();
 
-        return batchResult;
+                    BatchSpamFilterResultDto batchResult = new BatchSpamFilterResultDto();
+                    batchResult.setResults(results);
+                    batchResult.setTotalProcessed(results.size());
+                    batchResult.setSpamDetected(spamCount);
+
+                    return batchResult;
+                });
     }
 
     @Override
@@ -90,7 +102,53 @@ public class AISpamFilterService implements IAISpamFilterService {
                 .toList();
     }
 
+
+    private CompletableFuture<SpamFilterResultDto> getOrCreateProcessingFuture(Long requestId) {
+        // Check if already processing
+        CompletableFuture<SpamFilterResultDto> existingFuture = processingRequests.get(requestId);
+        if (existingFuture != null) {
+            log.info("Request {} already being processed, reusing future", requestId);
+            return existingFuture;
+        }
+
+        // Create new processing future
+        CompletableFuture<SpamFilterResultDto> newFuture = CompletableFuture
+                .supplyAsync(() -> processRequest(requestId), asyncExecutor)
+                .whenComplete((result, throwable) -> {
+                    // Clean up when done
+                    processingRequests.remove(requestId);
+                });
+
+        // Try to register atomically
+        CompletableFuture<SpamFilterResultDto> registeredFuture = processingRequests.putIfAbsent(requestId, newFuture);
+
+        if (registeredFuture != null) {
+            log.info("Another thread registered request {}, using that future", requestId);
+            return registeredFuture;
+        }
+
+        return newFuture;
+    }
+
+    @Transactional
+    private SpamFilterResultDto processRequest(Long requestId) {
+        Optional<SeniorRequest> requestOpt = seniorRequestRepository.findById(requestId);
+        if (requestOpt.isEmpty()) {
+            throw new IllegalArgumentException("Request not found with ID: " + requestId);
+        }
+        return performSpamDetection(requestOpt.get());
+    }
+
     private SpamFilterResultDto performSpamDetection(SeniorRequest request) {
+        // Check if spam detection already exists for this request
+        Optional<SpamDetectionResult> existingResult = spamDetectionResultRepository
+                .findByRequestId(request.getId());
+
+        if (existingResult.isPresent()) {
+            log.info("Using existing spam detection result for request {}", request.getId());
+            return mapToDto(existingResult.get());
+        }
+
         String prompt = buildSpamDetectionPrompt(request);
         String llmResponse = llmClient.callLLM(prompt);
 

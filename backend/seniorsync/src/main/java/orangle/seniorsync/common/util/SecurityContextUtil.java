@@ -153,8 +153,28 @@ public class SecurityContextUtil {
      * @throws SecurityException if user is not authenticated
      */
     public static Long requireCurrentUserCenterId() {
-        return getCurrentUserCenterId()
-                .orElseThrow(() -> new SecurityException("User not authenticated"));
+        // Enhanced debugging for center ID requirement
+        if (!isAuthenticated()) {
+            throw new SecurityException("User not authenticated - no valid JWT token found in security context");
+        }
+
+        Optional<Long> centerIdOpt = getCurrentUserCenterId();
+        if (centerIdOpt.isEmpty()) {
+            Optional<JwtAuthenticationToken> tokenOpt = getCurrentJwtToken();
+            if (tokenOpt.isPresent()) {
+                JwtAuthenticationToken token = tokenOpt.get();
+                throw new SecurityException(String.format(
+                    "User authenticated but no center ID found in token. User ID: %s, Role: %s, Token data available: %s",
+                    token.getUserId(),
+                    token.getUserRole(),
+                    token.getTokenData() != null
+                ));
+            } else {
+                throw new SecurityException("User authenticated but JWT token is not available");
+            }
+        }
+
+        return centerIdOpt.get();
     }
 
     /**
@@ -206,4 +226,4 @@ public class SecurityContextUtil {
                 authentication.getPrincipal(), 
                 authentication.isAuthenticated());
     }
-} 
+}

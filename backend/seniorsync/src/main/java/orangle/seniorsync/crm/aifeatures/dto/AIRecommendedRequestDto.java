@@ -4,7 +4,7 @@ import java.util.List;
 import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestDto;
 
 public record AIRecommendedRequestDto(
-    List<SeniorRequestDto> rankedRequests
+        List<SeniorRequestDto> rankedRequests
 ) {
 
 }
