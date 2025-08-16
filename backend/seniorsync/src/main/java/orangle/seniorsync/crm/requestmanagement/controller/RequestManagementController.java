@@ -1,7 +1,10 @@
 package orangle.seniorsync.crm.requestmanagement.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.common.service.IUserContextService;
+import orangle.seniorsync.common.service.UserContextService;
 import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.service.IRequestManagementService;
 import org.springframework.http.HttpStatus;
@@ -16,13 +19,11 @@ import orangle.seniorsync.crm.requestmanagement.dto.AssignRequestDto;
 @RestController
 @RequestMapping("/api/requests")
 @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+@RequiredArgsConstructor
 public class RequestManagementController {
 
     private final IRequestManagementService requestManagementService;
-
-    public RequestManagementController(IRequestManagementService requestManagementService) {
-        this.requestManagementService = requestManagementService;
-    }
+    private final IUserContextService userContextService;
 
     /**
      * Create a new senior request.

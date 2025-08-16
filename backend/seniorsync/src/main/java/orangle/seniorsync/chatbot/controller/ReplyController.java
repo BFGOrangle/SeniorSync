@@ -3,13 +3,10 @@ package orangle.seniorsync.chatbot.controller;
 import lombok.extern.slf4j.Slf4j;
 import orangle.seniorsync.chatbot.dto.IncomingMessageDto;
 import orangle.seniorsync.chatbot.dto.ReplyDto;
-import orangle.seniorsync.chatbot.dto.ReplyOption;
 import orangle.seniorsync.chatbot.service.IReplyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController

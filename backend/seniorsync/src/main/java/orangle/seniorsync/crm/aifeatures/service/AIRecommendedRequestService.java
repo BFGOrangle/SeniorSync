@@ -1,5 +1,7 @@
 package orangle.seniorsync.crm.aifeatures.service;
 
+import orangle.seniorsync.common.service.AbstractCenterFilteredService;
+import orangle.seniorsync.common.service.IUserContextService;
 import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.crm.aifeatures.client.LLMClient;
 import orangle.seniorsync.crm.aifeatures.dto.AIRecommendedRequestDto;
@@ -13,7 +15,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,20 +26,19 @@ import orangle.seniorsync.crm.aifeatures.repository.RequestsRankingRepository;
 
 @Service
 @Slf4j
-public class AIRecommendedRequestService implements IAIRecommendedRequestService {
+public class AIRecommendedRequestService extends AbstractCenterFilteredService<SeniorRequest, Long> implements IAIRecommendedRequestService {
     private final SeniorRequestRepository seniorRequestRepository;
-    private final RequestsRankingRepository requestsRankingRepository;
     private final SeniorRequestMapper seniorRequestMapper;
     private final LLMClient llmClient;
 
     public AIRecommendedRequestService(
             SeniorRequestRepository seniorRequestRepository,
-            RequestsRankingRepository requestsRankingRepository,
             SeniorRequestMapper seniorRequestMapper,
-            @Qualifier("claude") LLMClient llmClient
+            @Qualifier("claude") LLMClient llmClient,
+            IUserContextService userContextService
     ) {
+        super(userContextService);
         this.seniorRequestRepository = seniorRequestRepository;
-        this.requestsRankingRepository = requestsRankingRepository;
         this.seniorRequestMapper = seniorRequestMapper;
         this.llmClient = llmClient;
     }
@@ -52,7 +56,7 @@ public class AIRecommendedRequestService implements IAIRecommendedRequestService
     }
 
     private List<SeniorRequestDto> getAllSeniorRequests() {
-        List<SeniorRequest> seniorRequests = seniorRequestRepository.findAll();
+        List<SeniorRequest> seniorRequests = findAllWithCenterFilter(null);
         String prompt = buildPrompt(seniorRequests);
         String response = getRankedResponse(prompt);
         return parseAndRankRequests(response, seniorRequests);
@@ -127,5 +131,15 @@ public class AIRecommendedRequestService implements IAIRecommendedRequestService
                     .map(seniorRequestMapper::toDto)
                     .collect(Collectors.toList());
         }
+    }
+
+    @Override
+    protected JpaSpecificationExecutor<SeniorRequest> getRepository() {
+        return seniorRequestRepository;
+    }
+
+    @Override
+    protected Specification<SeniorRequest> createCenterFilterSpec(Long centerId) {
+        return SeniorRequestSpecs.belongsToCenter(centerId);
     }
 }

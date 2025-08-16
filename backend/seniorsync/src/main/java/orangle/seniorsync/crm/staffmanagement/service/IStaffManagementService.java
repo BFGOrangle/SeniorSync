@@ -7,12 +7,13 @@ import orangle.seniorsync.crm.staffmanagement.dto.StaffResponseDto;
 import orangle.seniorsync.crm.staffmanagement.dto.UpdateStaffDto;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface IStaffManagementService {
     StaffResponseDto createStaff(CreateStaffDto createStaffDto);
     Optional<StaffResponseDto> getStaffById(Long staffId);
     Page<StaffResponseDto> getAllStaff(Pageable pageable);
-    Optional<StaffResponseDto> getStaffByCognitoSub(String cognitoSub);
+    Optional<StaffResponseDto> getStaffByCognitoSub(UUID cognitoSub);
     Page<StaffResponseDto> getStaffByCenter(Long centerId, Pageable pageable);
     StaffResponseDto updateStaff(Long staffId, UpdateStaffDto updateStaffDto);
     void deleteStaff(Long staffId);

@@ -156,33 +156,6 @@ export function StaffAssignmentDropdown({
           </DropdownMenuItem>
         ) : (
           <>
-            {/* Assign to Me option for admins */}
-            {includeAssignToMe && currentUser && currentUserNumericId !== undefined && !Number.isNaN(currentUserNumericId) && (
-              <>
-                <DropdownMenuItem
-                  onClick={() => handleAssignToStaff(currentUserNumericId, currentUser.fullName)}
-                  disabled={isLoading || request.assignedStaffId === currentUserNumericId}
-                  className="flex items-center gap-2 cursor-pointer font-medium"
-                >
-                  <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                      {getInitials(currentUser.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {request.assignedStaffId ? "Reassign to Me" : "Assign to Me"}
-                    </span>
-                    <span className="text-xs text-gray-500">{currentUser.fullName}</span>
-                  </div>
-                  {request.assignedStaffId === currentUserNumericId && (
-                    <span className="text-xs text-blue-600 ml-auto">Current</span>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-
             {staffOptions.length === 0 ? (
               <DropdownMenuItem disabled>
                 <span className="text-sm text-muted-foreground">No staff available</span>

@@ -156,13 +156,13 @@ public class StaffManagementService implements IStaffManagementService {
      * Get staff member by CognitoSub
      */
     @Transactional(readOnly = true)
-    public Optional<StaffResponseDto> getStaffByCognitoSub(String cognitoSub) {
+    public Optional<StaffResponseDto> getStaffByCognitoSub(UUID cognitoSub) {
         log.info("Retrieving staff member with CognitoSub: {}", cognitoSub);
 
         // Get current user's center ID for multi-tenancy
         Long currentUserCenterId = userContextService.getRequestingUserCenterId();
         // Find staff and ensure they belong to the same center
-        Optional<Staff> staffOpt = staffRepository.findByCognitoSub(UUID.fromString(cognitoSub));
+        Optional<Staff> staffOpt = staffRepository.findByCognitoSub(cognitoSub);
         return getStaffResponseDto(currentUserCenterId, staffOpt);
     }
 
