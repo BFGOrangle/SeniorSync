@@ -14,6 +14,7 @@ public interface IRequestManagementService {
     SeniorRequestDto updateRequest(UpdateSeniorRequestDto updateSeniorRequestDto);
     List<SeniorRequestDto> findRequestsBySenior(long id);
     void deleteRequest(long id);
+
     DashboardDto getDashboard();
     
     // Dashboard methods with role-based access

@@ -26,7 +26,7 @@ public class UserContextService implements IUserContextService {
         return requestingUser.getCenter().getId();
     }
 
-    public boolean isRequestingUserSelf(Long requestedStaffId) {
+    public boolean isRequestingUserSelfCheckByStaffId(Long requestedStaffId) {
         UUID cognitoSub = SecurityContextUtil.getCurrentCognitoSubUUID()
                 .orElseThrow(() -> new RuntimeException("Requesting User Cognito sub not available"));
         Staff staff = staffRepository.findByCognitoSub(cognitoSub)
@@ -34,8 +34,8 @@ public class UserContextService implements IUserContextService {
         return staff.getId().equals(requestedStaffId);
     }
 
-    public boolean isRequestingUserSelf(String cognitoSub) {
-        Staff staff = staffRepository.findByCognitoSub(UUID.fromString(cognitoSub))
+    public boolean isRequestingUserSelfCheckBySub(UUID cognitoSub) {
+        Staff staff = staffRepository.findByCognitoSub(cognitoSub)
                 .orElseThrow(() -> new RuntimeException("Requesting User not found"));
         UUID currentCognitoSub = SecurityContextUtil.getCurrentCognitoSubUUID()
                 .orElseThrow(() -> new RuntimeException("Requesting User Cognito sub not available"));
@@ -50,6 +50,6 @@ public class UserContextService implements IUserContextService {
             Long requestedStaffCenterId = requestedStaff.getCenter().getId();
             return requesterCenterId.equals(requestedStaffCenterId);
         }
-        return isRequestingUserSelf(requestedStaffId);
+        return isRequestingUserSelfCheckByStaffId(requestedStaffId);
     }
 }

@@ -2,20 +2,20 @@ package orangle.seniorsync.common.service;
 
 import orangle.seniorsync.crm.staffmanagement.model.Staff;
 
+import java.util.UUID;
+
 public interface IUserContextService {
 
     Staff getRequestingUser();
 
     Long getRequestingUserCenterId();
 
-    boolean isRequestingUserSelf(Long StaffId);
+    boolean isRequestingUserSelfCheckByStaffId(Long StaffId);
 
     /**
      * IMPT: This overload users cognito sub not staff ID
-     * @param cognitoSub
-     * @return
      */
-    boolean isRequestingUserSelf(String cognitoSub);
+    boolean isRequestingUserSelfCheckBySub(UUID cognitoSub);
 
     boolean canRequestingUserAccessStaffId(Long staffId);
 }

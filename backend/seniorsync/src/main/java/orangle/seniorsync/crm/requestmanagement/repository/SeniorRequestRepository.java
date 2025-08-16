@@ -61,7 +61,7 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
     @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.centerId = :centerId")
     Long countAllRequestsByCenter(@Param("centerId") Long centerId);
 
-    @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.status = 'PENDING' AND r.centerId = :centerId")
+    @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.status = 'IN_PROGRESS' AND r.centerId = :centerId")
     Long countPendingRequestsByCenter(@Param("centerId") Long centerId);
 
     @Query("SELECT COUNT(1) FROM SeniorRequest r WHERE r.status = 'COMPLETED' AND r.centerId = :centerId AND EXTRACT(MONTH FROM r.completedAt) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM r.completedAt) = EXTRACT(YEAR FROM CURRENT_DATE)")
@@ -109,7 +109,7 @@ public interface SeniorRequestRepository extends JpaRepository<SeniorRequest, Lo
     @Query("SELECT COUNT(1) FROM SeniorRequest r where r.status = 'COMPLETED' and r.centerId = :centerId AND EXTRACT(MONTH FROM r.completedAt) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM r.completedAt) = EXTRACT(YEAR FROM CURRENT_DATE)")
     Long centerCompletedThisMonth(Long centerId);
 
-    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (r.completed_at - r.created_at)) / 3600) FROM senior_sync.senior_requests r WHERE r.status = 'COMPLETED' and r.centerId = :centerId", nativeQuery = true)
+    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (r.completed_at - r.created_at)) / 3600) FROM senior_sync.senior_requests r WHERE r.status = 'COMPLETED' and r.center_id = :centerId", nativeQuery = true)
     Double averageCenterRequestCompletionTime(Long centerId);
 
     @Query("SELECT rt.name, COUNT(r) FROM SeniorRequest r, RequestType rt where r.requestTypeId = rt.id and r.centerId = :centerId GROUP BY rt.name")

@@ -34,6 +34,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     private final UpdateSeniorRequestMapper updateSeniorRequestMapper;
     private final StaffRepository staffRepository;
     private final RequestTypeRepository requestTypeRepository;
+    private final IUserContextService userContextService;
 
     public RequestManagementService(
             SeniorRequestRepository seniorRequestRepository,
@@ -50,6 +51,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         this.updateSeniorRequestMapper = updateSeniorRequestMapper;
         this.staffRepository = staffRepository;
         this.requestTypeRepository = requestTypeRepository;
+        this.userContextService = userContextService;
     }
 
     /**
@@ -312,26 +314,12 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     }
 
     /**
-     * Helper method to get current user ID with fallback to Cognito sub lookup
-     */
-    private Long getCurrentUserIdWithFallback() {
-        // Fallback: lookup staff by Cognito sub
-        UUID cognitoSub = SecurityContextUtil.requireCurrentCognitoSubUUID();
-        Optional<Staff> staff = staffRepository.findByCognitoSub(cognitoSub);
-        if (staff.isPresent()) {
-            return staff.get().getId();
-        }
-
-        throw new IllegalStateException("User ID not available - user may not be authenticated or not have a corresponding staff record");
-    }
-
-    /**
      * Get the current user's staff ID
      * @return The staff ID for the current authenticated user
      * @throws IllegalStateException if user is not authenticated or doesn't have a staff record
      */
     private Long requireCurrentUserId() {
-        return getCurrentUserIdWithFallback();
+        return userContextService.getRequestingUser().getId();
     }
 
     /**

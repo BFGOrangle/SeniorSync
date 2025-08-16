@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import orangle.seniorsync.common.service.IUserContextService;
 import orangle.seniorsync.common.util.SecurityContextUtil;
-import orangle.seniorsync.crm.staffmanagement.model.Staff;
 import orangle.seniorsync.crm.staffmanagement.service.IStaffManagementService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +21,7 @@ import orangle.seniorsync.crm.staffmanagement.dto.UpdateStaffDto;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -102,13 +102,12 @@ public class StaffController {
     @Operation(summary = "Get staff member by cognitoSub", description = "Retrieves a staff member by their cognitoSub (must be from same center)")
     @GetMapping("/my-profile/sub/{cognitoSub}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public ResponseEntity<?> getStaffById(
-            @Parameter(description = "Staff Cognito Sub") @PathVariable String cognitoSub) {
-
-        log.info("Retrieving staff member with cognitoSub: {}", cognitoSub);
+    public ResponseEntity<?> getStaffById() {
 
         try {
-            if (!userContextService.isRequestingUserSelf(cognitoSub)) {
+            UUID cognitoSub = SecurityContextUtil.getCurrentCognitoSubUUID()
+                    .orElseThrow(() -> new IllegalArgumentException("Cognito sub not found in security context"));
+            if (!userContextService.isRequestingUserSelfCheckBySub(cognitoSub)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                         "error", "Access denied - you can only access your own profile",
                         "timestamp", System.currentTimeMillis()
@@ -120,7 +119,6 @@ public class StaffController {
 
             return ResponseEntity.ok(staffResponseDto);
         } catch (SecurityException e) {
-            log.warn("Access denied for staff ID {}: {}", cognitoSub, e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "error", e.getMessage(),
                     "timestamp", System.currentTimeMillis()

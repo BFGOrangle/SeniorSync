@@ -1,7 +1,9 @@
 package orangle.seniorsync.crm.seniormanagement.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.common.service.IUserContextService;
 import orangle.seniorsync.crm.seniormanagement.dto.CreateSeniorDto;
 import orangle.seniorsync.crm.seniormanagement.dto.SeniorDto;
 import orangle.seniorsync.crm.seniormanagement.dto.SeniorFilterDto;
@@ -22,13 +24,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/seniors")
 @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+@RequiredArgsConstructor
 public class SeniorManagementController {
 
     private final ISeniorManagementService seniorManagementService;
-
-    public SeniorManagementController(ISeniorManagementService seniorManagementService) {
-        this.seniorManagementService = seniorManagementService;
-    }
+    private final IUserContextService userContextService;
 
     /**
      * Create a new senior profile
@@ -50,8 +50,6 @@ public class SeniorManagementController {
     public ResponseEntity<Page<SeniorDto>> getSeniorsPaginated(
             @RequestBody(required = false) SeniorFilterDto filter,
             @PageableDefault(sort = {"lastName", "firstName"}) Pageable pageable) {
-
-        // Enforce maximum page size to prevent abuse
         if (pageable.getPageSize() > 100) {
             pageable = PageRequest.of(pageable.getPageNumber(), 100, pageable.getSort());
         }
