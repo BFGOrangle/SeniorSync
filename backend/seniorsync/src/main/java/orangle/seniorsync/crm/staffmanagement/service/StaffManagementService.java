@@ -55,7 +55,14 @@ public class StaffManagementService implements IStaffManagementService {
         SecurityContextUtil.requireAdmin();
         Long currentUserCenterId = userContextService.getRequestingUserCenterId();
 
-        String cognitoUsername = firstName.toLowerCase() + "." + lastName.toLowerCase() + "." + currentUserCenterId;
+        String cognitoUsername = (firstName.toLowerCase() + "." + lastName.toLowerCase() + "." + currentUserCenterId)
+                .replaceAll("\\s+", "_")
+                .replaceAll("[^\\p{L}\\p{M}\\p{S}\\p{N}\\p{P}]", "");
+
+        if (cognitoUsername.isBlank()) {
+            throw new IllegalArgumentException("Username empty after sanitization");
+        }
+
         UUID cognitoSub = null;
 
         try {
@@ -119,20 +126,12 @@ public class StaffManagementService implements IStaffManagementService {
             Staff savedStaff = staffRepository.save(staff);
             log.info("Successfully saved staff record with ID: {} (pending first login password change)", savedStaff.getId());
 
-            // Update Cognito with staff database ID
-            Map<String, String> updateAttributes = new HashMap<>();
-            updateAttributes.put("custom:staff_id", savedStaff.getId().toString());
-            boolean attributesUpdated = cognitoService.updateUserAttributes(cognitoUsername, updateAttributes);
-            if (!attributesUpdated) {
-                log.warn("Failed to update Cognito user attributes with staff_id");
-            }
-
             return staffMapper.toResponseDto(savedStaff);
 
         } catch (Exception e) {
             log.error("Error creating staff member: {}", e.getMessage(), e);
             if (cognitoUsername != null) {
-                log.info("(Optional) implement cleanup deletion for Cognito user: {} if necessary", cognitoUsername);
+                log.warn("Please implement cleanup deletion for Cognito user: {} if necessary", cognitoUsername);
             }
             throw new RuntimeException("Failed to create staff member: " + e.getMessage(), e);
         }
