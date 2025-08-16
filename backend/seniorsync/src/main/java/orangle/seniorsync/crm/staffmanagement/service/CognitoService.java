@@ -70,7 +70,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to create Cognito user {}: {}", username, e.getMessage());
-            return Optional.empty();
+            throw new RuntimeException("Failed to create user in Cognito", e);
         }
     }
 
@@ -89,7 +89,7 @@ public class CognitoService {
             return Optional.empty();
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to get Cognito user {}: {}", username, e.getMessage());
-            return Optional.empty();
+            throw new RuntimeException("Failed to retrieve user from Cognito", e);
         }
     }
 
@@ -115,7 +115,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to update attributes for Cognito user {}: {}", username, e.getMessage());
-            return false;
+            throw new RuntimeException("Failed to update user attributes in Cognito", e);
         }
     }
 
@@ -137,7 +137,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to remove user {} from group {}: {}", usernameOrEmail, groupName, e.getMessage());
-            return false;
+            throw new RuntimeException("Failed to remove user from group in Cognito", e);
         }
     }
 
@@ -159,7 +159,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to add user {} to user group {}: {}", usernameOrEmail, groupName, e.getMessage());
-            return false;
+            throw new RuntimeException("Failed to add user to group in Cognito", e);
         }
     }
 
@@ -179,7 +179,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to set password for user {}: {}", username, e.getMessage());
-            return false;
+            throw new RuntimeException("Failed to set user password in Cognito", e);
         }
     }
 
@@ -202,7 +202,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to disable user {}: {}", username, e.getMessage());
-            return false;
+            throw new RuntimeException("Failed to disable user in Cognito", e);
         }
     }
 
@@ -236,7 +236,7 @@ public class CognitoService {
 
         } catch (CognitoIdentityProviderException e) {
             log.error("Failed to list users in group {}: {}", groupName, e.getMessage());
-            return List.of();
+            throw new RuntimeException("Failed to list users in group in Cognito", e);
         }
     }
 }
