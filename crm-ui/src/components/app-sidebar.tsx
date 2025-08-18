@@ -43,12 +43,6 @@ const navigationItems = [
     icon: FileText,
   },
   {
-    title: "AI Recommendations",
-    url: "/admin/ai-recommendations",
-    icon: Brain,
-    badge: "NEW",
-  },
-  {
     title: "Senior Profiles",
     url: "/admin/senior-profiles",
     icon: Users,
