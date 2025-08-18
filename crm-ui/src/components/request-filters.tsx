@@ -11,11 +11,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { requestManagementApiService } from "@/services/request-api";
 import { RequestFilterOptionsDto } from "@/types/request";
-import { useCurrentUser } from "@/contexts/user-context";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "todo" | "in-progress" | "completed";
@@ -416,25 +425,33 @@ export function RequestFilters({
         {/* Sort */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Sort by:</span>
-          <select
+          <Select
             value={`${sort.field}-${sort.direction}`}
-            onChange={(e) => {
-              const [field, direction] = e.target.value.split('-') as [RequestSortOption['field'], RequestSortOption['direction']];
+            onValueChange={(value) => {
+              const [field, direction] = value.split('-') as [RequestSortOption['field'], RequestSortOption['direction']];
               onSortChange({ field, direction });
             }}
-            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
           >
-            {sortOptions.map((option) => (
-              <optgroup key={option.field} label={option.label}>
-                <option value={`${option.field}-desc`}>
-                  {option.label} (Newest first)
-                </option>
-                <option value={`${option.field}-asc`}>
-                  {option.label} (Oldest first)
-                </option>
-              </optgroup>
-            ))}
-          </select>
+            <SelectTrigger className="w-[180px] text-sm border-gray-300">
+              <SelectValue placeholder="Select sort option" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option, index) => (
+                <SelectGroup key={option.field}>
+                  {index > 0 && <SelectSeparator />}
+                  <SelectLabel>
+                    {option.label}
+                  </SelectLabel>
+                  <SelectItem value={`${option.field}-desc`}>
+                    Newest first
+                  </SelectItem>
+                  <SelectItem value={`${option.field}-asc`}>
+                    Oldest first
+                  </SelectItem>
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Active Filters Display - only show if we have them and they're not taking too much space */}

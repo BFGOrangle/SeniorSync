@@ -1,5 +1,10 @@
 name: Backend Spring Boot App CI
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 on:
   pull_request:
     branches:
@@ -67,7 +72,8 @@ jobs:
         working-directory: ./backend/seniorsync
         run: |
           chmod +x mvnw || true
-          npx snyk test --severity-threshold=high --json-file-output=../backend-snyk.json
+          # Output JSON to repository root (align with frontend workflow convention)
+          npx snyk test --severity-threshold=high --json-file-output=../../backend-snyk.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         shell: bash
@@ -79,12 +85,12 @@ jobs:
           script: |
             const fs = require('fs');
             const path = 'backend-snyk.json';
-            if (!fs.existsSync(path)) { core.warning('No Snyk JSON output found.'); return; }
-            let raw = fs.readFileSync(path, 'utf8').trim();
+            if (!fs.existsSync(path)) { core.warning(`No Snyk JSON output found at ${path}.`); return; }
+            const raw = fs.readFileSync(path, 'utf8').trim();
             if (!raw) { core.warning('Empty Snyk JSON file'); return; }
             let data; try { data = JSON.parse(raw); } catch (e) { core.setFailed('Failed to parse Snyk JSON: '+e); return; }
             const results = Array.isArray(data) ? data : [data];
-            let total = 0; let sevCounts = { critical:0, high:0, medium:0, low:0 }; let projNames = [];
+            let total = 0; const sevCounts = { critical:0, high:0, medium:0, low:0 }; const projNames = [];
             for (const r of results) {
               if (r.projectName) projNames.push(r.projectName);
               if (r.vulnerabilities) {
