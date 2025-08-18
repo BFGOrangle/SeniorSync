@@ -88,8 +88,8 @@ export default function RequestManagement() {
   };
 
   const handleMyTicketsClick = () => {
-    if (currentUser) {
-      const currentUserId = parseInt(currentUser.id);
+    if (currentUser && currentUser.backendStaffId) {
+      const currentUserId = currentUser.backendStaffId;
       const isMyTicketsActive = filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUserId;
       
       if (isMyTicketsActive) {
@@ -114,6 +114,14 @@ export default function RequestManagement() {
           duration: 2000,
         });
       }
+    } else {
+      // Handle case where backend staff ID is not available
+      toast({
+        title: "Error",
+        description: "Unable to filter by your assigned requests. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
     }
   };
 
@@ -283,7 +291,7 @@ export default function RequestManagement() {
             sort={sort}
             onMyTicketsClick={handleMyTicketsClick}
             onUnassignedClick={handleUnassignedClick}
-            isMyTicketsActive={currentUser ? filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === parseInt(currentUser.id) : false}
+            isMyTicketsActive={currentUser?.backendStaffId ? filters.assignedStaff?.length === 1 && filters.assignedStaff[0] === currentUser.backendStaffId : false}
             isUnassignedActive={filters.assignedStaff?.length === 0}
           />
         </div>

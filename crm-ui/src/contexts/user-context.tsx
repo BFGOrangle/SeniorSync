@@ -6,13 +6,15 @@ import { fetchAuthSession, getCurrentUser, fetchUserAttributes, signOut } from "
 
 // Keep your existing CurrentUser interface for backward compatibility
 export interface CurrentUser {
-  id: string;
+  id: string; // This is now the backend staff ID (not Cognito sub)
   firstName?: string;
   lastName?: string;
   role: string;
   jobTitle?: string;
   email?: string;
   fullName: string;
+  cognitoSub?: string; // Added for reference if needed
+  backendStaffId?: number; // Added as explicit numeric ID
 }
 
 interface UserContextType {
@@ -43,8 +45,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const cognitoUser = await getCurrentUser();
       const attributes = await fetchUserAttributes();
 
-      // Extract user ID and role from token
-      let userId = "";
+      // Extract role and cognito sub from token
+      let cognitoSubId = "";
       let userRole = 'STAFF'; // Default role
       
       try {
@@ -52,7 +54,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (token) {
           const payload = token.toString().split('.')[1];
           const decodedClaims = JSON.parse(atob(payload));
-          userId = decodedClaims['custom:id'] || decodedClaims.sub || "";
+          cognitoSubId = decodedClaims.sub || "";
           
           // Extract role from Cognito groups first (this is where your ADMIN role is)
           const cognitoGroups = decodedClaims['cognito:groups'];
@@ -69,15 +71,33 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.error('Error decoding token:', e);
       }
 
+      // Get backend staff profile to get the actual staff ID
+      let backendStaffId: number | undefined;
+      try {
+        const { staffApiService } = await import('@/services/staff-api');
+        const staffProfile = await staffApiService.getCurrentUserProfile();
+        
+        if (staffProfile) {
+          backendStaffId = staffProfile.id;
+          console.log('Backend staff ID from API:', backendStaffId);
+        } else {
+          console.warn('No backend staff profile found for current user');
+        }
+      } catch (error) {
+        console.error('Error fetching backend staff profile:', error);
+      }
+
       // Map to your existing CurrentUser format
       const user: CurrentUser = {
-        id: userId,
+        id: backendStaffId ? backendStaffId.toString() : cognitoSubId, // Use backend staff ID or fallback to cognito sub
         firstName: attributes.given_name,
         lastName: attributes.family_name,
         role: userRole, // Use the role extracted from token
         jobTitle: attributes['custom:job_title'] || attributes.job_title,
         email: attributes.email,
-        fullName: attributes.name || `${attributes.given_name || ''} ${attributes.family_name || ''}`.trim()
+        fullName: attributes.name || `${attributes.given_name || ''} ${attributes.family_name || ''}`.trim(),
+        cognitoSub: cognitoSubId,
+        backendStaffId: backendStaffId
       };
 
       setCurrentUser(user);
