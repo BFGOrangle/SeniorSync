@@ -185,6 +185,12 @@ export default function SeniorProfiles() {
   const [newCareLevelColor, setNewCareLevelColor] = useState("#6b7280");
 
   useEffect(() => {
+  if (isCreateDialogOpen) {
+    createForm.updateField('firstName', 'SENIOR');
+  }
+}, [isCreateDialogOpen])
+
+  useEffect(() => {
   const savedCareLevels = localStorage.getItem("customCareLevels");
   if (savedCareLevels) {
     try {
@@ -483,7 +489,7 @@ export default function SeniorProfiles() {
                   <Label htmlFor="create-firstName">First Name *</Label>
                   <Input
                     id="create-firstName"
-                    value={createForm.formData.firstName}
+                    value="SENIOR"
                     onChange={(e) => createForm.updateField('firstName', e.target.value)}
                     placeholder="SENIOR"
                     disabled={true}
