@@ -13,8 +13,6 @@ import {
   ChevronRight,
   Sparkles
 } from "lucide-react";
-import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
-import { AIRecommendationUtils } from "@/types/ai-recommendations";
 import { cn } from "@/lib/utils";
 
 interface AIRecommendationsWidgetProps {

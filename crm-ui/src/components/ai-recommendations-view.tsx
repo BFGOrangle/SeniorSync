@@ -24,8 +24,6 @@ import {
   Star,
   FileText
 } from "lucide-react";
-import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
-import { AIRecommendationDto, AIRecommendationUtils, AIRecommendationProcessingStatus } from "@/types/ai-recommendations";
 import { SeniorRequestDto } from "@/types/request";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";

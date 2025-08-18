@@ -16,8 +16,6 @@ import {
   Zap,
   BarChart3
 } from "lucide-react";
-import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
-import { AIRecommendationUtils } from "@/types/ai-recommendations";
 import { AIRecommendationsView } from "@/components/ai-recommendations-view";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
 import { cn } from "@/lib/utils";
