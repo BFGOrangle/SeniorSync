@@ -56,7 +56,7 @@ export function SpamDetectionIndicator({
         variant: 'destructive' as const,
         className: 'bg-red-100 text-red-800 border-red-300',
         icon: <AlertTriangle className="h-3 w-3" />,
-        text: 'Likely Spam',
+        text: 'Likely spam',
         tooltip: `Flagged as spam (${Math.round((confidenceScore || 0) * 100)}% confidence): ${detectionReason || 'No reason provided'}`
       };
     } else {
@@ -65,7 +65,7 @@ export function SpamDetectionIndicator({
         variant: 'outline' as const,
         className: 'bg-green-50 text-green-700 border-green-200',
         icon: <Shield className="h-3 w-3" />,
-        text: 'Unlikely Spam',
+        text: 'Unlikely spam',
         tooltip: `Clean content (${Math.round((confidenceScore || 0) * 100)}% confidence): ${detectionReason || 'No reason provided'}`
       };
     }
@@ -76,17 +76,17 @@ export function SpamDetectionIndicator({
   // Size configurations
   const sizeConfigs = {
     sm: {
-      badgeClass: 'text-xs px-2 py-1 h-6',
+      badgeClass: 'text-xs px-2 py-1',
       iconSize: 'h-3 w-3',
       gap: 'gap-1'
     },
     md: {
-      badgeClass: 'text-sm px-3 py-1 h-7',
+      badgeClass: 'text-sm px-3 py-1',
       iconSize: 'h-4 w-4',
       gap: 'gap-1.5'
     },
     lg: {
-      badgeClass: 'text-sm px-4 py-2 h-8',
+      badgeClass: 'text-sm px-4 py-2',
       iconSize: 'h-4 w-4',
       gap: 'gap-2'
     }
@@ -97,7 +97,7 @@ export function SpamDetectionIndicator({
   const badgeContent = (
     <Badge
       variant={state.variant}
-      className={`${state.className} ${sizeConfig.badgeClass} flex items-center ${sizeConfig.gap} font-medium cursor-help`}
+      className={`${state.className} ${sizeConfig.badgeClass} items-center ${sizeConfig.gap} font-medium cursor-help`}
     >
       {state.icon}
       {showText && <span>{state.text}</span>}

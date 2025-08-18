@@ -137,40 +137,36 @@ export function RequestCard({
               >
                 {request.id}
               </Badge>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs font-medium",
-                  getPriorityColor(request.frontendPriority)
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Clock className="h-3 w-3" />
+                <span className="font-medium">
+                  {formatDate(request.createdAt)}
+                </span>
+                {!isKanban && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs font-medium",
+                      getStatusColor(request.frontendStatus)
+                    )}
+                  >
+                    {request.frontendStatus
+                      .replace("-", " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
+                  </Badge>
                 )}
-              >
-                {request.frontendPriority.charAt(0).toUpperCase() +
-                  request.frontendPriority.slice(1)}
-              </Badge>
-              {!isKanban && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-xs font-medium",
-                    getStatusColor(request.frontendStatus)
-                  )}
-                >
-                  {request.frontendStatus
-                    .replace("-", " ")
-                    .replace(/\b\w/g, (l) => l.toUpperCase())}
-                </Badge>
-              )}
-              {/* PHASE 4: Enhanced Spam Detection Indicator */}
-              <SpamDetectionIndicator
-                isSpam={request.isSpam}
-                confidenceScore={request.spamConfidenceScore}
-                detectionReason={request.spamDetectionReason}
-                detectedAt={request.spamDetectedAt}
-                detectionStatus={spamDetectionStatus}
-                size="sm"
-                showText={true}
-              />
+              </div>
             </div>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs font-medium px-1.5 py-0.5",
+                getPriorityColor(request.frontendPriority)
+              )}
+            >
+              {request.frontendPriority.charAt(0).toUpperCase() +
+                request.frontendPriority.slice(1)}
+            </Badge>
           </div>
 
           <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
@@ -183,18 +179,22 @@ export function RequestCard({
             </p>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <AssigneeSection 
               request={request} 
               onUpdate={onUpdate}
             />
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Clock className="h-3 w-3" />
-              <span className="font-medium">
-                {formatDate(request.createdAt)}
-              </span>
-            </div>
           </div>
+          {/* PHASE 4: Enhanced Spam Detection Indicator */}
+          <SpamDetectionIndicator
+            isSpam={request.isSpam}
+            confidenceScore={request.spamConfidenceScore}
+            detectionReason={request.spamDetectionReason}
+            detectedAt={request.spamDetectedAt}
+            detectionStatus={spamDetectionStatus}
+            size="sm"
+            showText={true}
+          />
         </CardContent>
       </Card>
     </>
