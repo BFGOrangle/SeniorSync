@@ -64,7 +64,7 @@ export default function Dashboard() {
   const showStaffWorkload = mode === 'center' && isAdmin;
 
   // Dynamic title based on mode
-  const dashboardTitle = mode === 'personal' ? 'My Dashboard' : 'Center Dashboard';
+  const dashboardTitle = mode === 'personal' ? 'My Analytics' : 'Center Analytics';
   const dashboardDescription = mode === 'personal' 
     ? 'Overview of your assigned requests' 
     : 'Overview of all center requests and staff workload';
