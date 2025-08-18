@@ -241,11 +241,7 @@ export default function LandingPage() {
               <div className="space-y-2 text-gray-400">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  <span>vendors@seniorsync.com</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  <span>1-800-SENIORS</span>
+                  <span>contactus@seniorsync.sg</span>
                 </div>
               </div>
             </div>
