@@ -31,8 +31,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
-// Navigation items for staff
-const navigationItems = [
+// Overview items for staff
+const overviewItems = [
   {
     title: "Dashboard",
     url: "/staff",
@@ -53,6 +53,9 @@ const navigationItems = [
       }
     ]
   },
+];
+
+const managementItems = [
   {
     title: "Senior Profiles",
     url: "/staff/senior-profiles",
@@ -99,10 +102,10 @@ export function StaffSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => {
+              {overviewItems.map((item) => {
                 // Handle items with children (like Request Management)
                 if (item.children) {
                   return (
@@ -173,6 +176,31 @@ export function StaffSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Management</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {managementItems.map((item) => {
+              const isActive = pathname === item.url;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.url} className="flex items-center gap-2">
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
       <SidebarFooter className="border-t p-4">
         <div className="space-y-3 group-data-[collapsible=icon]:hidden">

@@ -38,7 +38,7 @@ export function useNavigationHelper() {
         throw new Error("User object is null");
     }
     const baseRoute = currentUser.role === 'ADMIN' ? '/admin' : '/staff';
-    return `${baseRoute}/dashboard`
+    return `${baseRoute}/request-management`
   }
 
   const goToDashboard = () => {
