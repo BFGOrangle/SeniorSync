@@ -54,15 +54,6 @@ const navigationItems = [
   },
 ];
 
-const settingsItems = [
-  {
-    title: "Settings",
-    url: "/staff/settings",
-    icon: Settings,
-    badge: "Coming Soon",
-  },
-];
-
 export function StaffSidebar() {
   const pathname = usePathname();
   const { signOut, currentUser } = useCurrentUser();
@@ -110,36 +101,6 @@ export function StaffSidebar() {
                         <span>{item.title}</span>
                         {item.badge && (
                           <span className="ml-auto text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => {
-                const isActive = pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                    >
-                      <Link href={item.url} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
                             {item.badge}
                           </span>
                         )}
