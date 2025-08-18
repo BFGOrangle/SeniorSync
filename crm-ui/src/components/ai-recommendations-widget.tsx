@@ -13,8 +13,7 @@ import {
   ChevronRight,
   Sparkles
 } from "lucide-react";
-import { useAIRecommendations } from "@/hooks/use-ai-recommendations";
-import { AIRecommendationUtils } from "@/types/ai-recommendations";
+import { useAIRecommendedRequests } from "@/hooks/use-ai-recommended-requests";
 import { cn } from "@/lib/utils";
 
 interface AIRecommendationsWidgetProps {
@@ -40,21 +39,20 @@ export function AIRecommendationsWidget({
     loading,
     error,
     hasRecommendations,
-    fetchRecommendations,
-  } = useAIRecommendations();
+    fetchAllAIRecommendedRequests,
+  } = useAIRecommendedRequests();
 
   const [expanded, setExpanded] = useState(false);
 
-  const sortedRecommendations = AIRecommendationUtils.sortRecommendations(recommendations);
-  const displayedRecommendations = sortedRecommendations.slice(0, maxItems);
+  const displayedRecommendations = recommendations.slice(0, maxItems);
 
   const getQuickStats = () => {
     const total = recommendations.length;
-    const highPriority = recommendations.filter(r => (r.priorityScore || 0) >= 80).length;
-    const critical = recommendations.filter(r => r.urgencyLevel === 'CRITICAL').length;
-    const completed = recommendations.filter(r => r.status === 'COMPLETED').length;
+    const highPriority = recommendations.filter((r) => r.priority >= 4).length; // High priority: 4-5
+    const mediumPriority = recommendations.filter((r) => r.priority === 3).length;
+    const completed = recommendations.filter((r) => r.status === 'COMPLETED').length;
 
-    return { total, highPriority, critical, completed };
+    return { total, highPriority, mediumPriority, completed };
   };
 
   const stats = getQuickStats();
@@ -73,7 +71,7 @@ export function AIRecommendationsWidget({
             </p>
             <Button
               size="sm"
-              onClick={fetchRecommendations}
+              onClick={() => fetchAllAIRecommendedRequests()}
               disabled={loading}
               className="h-7 text-xs"
             >
@@ -144,8 +142,8 @@ export function AIRecommendationsWidget({
                   <div className="text-xs text-gray-500">High</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-red-600">{stats.critical}</div>
-                  <div className="text-xs text-gray-500">Critical</div>
+                  <div className="text-lg font-bold text-yellow-600">{stats.mediumPriority}</div>
+                  <div className="text-xs text-gray-500">Medium</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-green-600">{stats.completed}</div>
@@ -189,7 +187,7 @@ export function AIRecommendationsWidget({
 }
 
 interface AIRecommendationItemProps {
-  recommendation: import("@/types/ai-recommendations").AIRecommendationDto;
+  recommendation: import("@/types/request").SeniorRequestDto;
   rank: number;
   compact?: boolean;
 }
@@ -206,12 +204,11 @@ function AIRecommendationItem({
     return <span className="text-xs font-medium text-gray-500">#{rank}</span>;
   };
 
-  const getUrgencyColor = (urgency?: string) => {
-    switch (urgency) {
-      case 'CRITICAL': return 'text-red-600 bg-red-50';
-      case 'HIGH': return 'text-orange-600 bg-orange-50';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-50';
-      case 'LOW': return 'text-green-600 bg-green-50';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return 'text-green-600 bg-green-50';
+      case 'IN_PROGRESS': return 'text-blue-600 bg-blue-50';
+      case 'TODO': return 'text-gray-600 bg-gray-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
@@ -228,28 +225,17 @@ function AIRecommendationItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1 mb-1">
           <span className={cn("text-xs font-medium text-gray-900", compact && "text-xs")}>
-            Request #{recommendation.requestId}
+            Request #{recommendation.id}
           </span>
           
-          {recommendation.urgencyLevel && (
-            <Badge 
-              variant="outline" 
-              className={cn("text-xs h-4 px-1", getUrgencyColor(recommendation.urgencyLevel))}
-            >
-              {recommendation.urgencyLevel.charAt(0)}
-            </Badge>
-          )}
-          
-          {recommendation.priorityScore && (
-            <Badge variant="outline" className="text-xs h-4 px-1">
-              {recommendation.priorityScore}
-            </Badge>
-          )}
+          <Badge variant="outline" className="text-xs h-4 px-1">
+            Priority {recommendation.priority}
+          </Badge>
         </div>
         
-        {!compact && recommendation.recommendationText && (
+        {!compact && recommendation.description && (
           <p className="text-xs text-gray-600 line-clamp-2">
-            {recommendation.recommendationText}
+            {recommendation.description}
           </p>
         )}
         
@@ -258,7 +244,7 @@ function AIRecommendationItem({
             variant="outline" 
             className={cn(
               "text-xs h-4 px-1",
-              AIRecommendationUtils.getStatusColor(recommendation.status)
+              getStatusColor(recommendation.status)
             )}
           >
             {recommendation.status}
