@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/admin-sidebar";
 import { useCurrentUser } from "@/contexts/user-context";
 import { Route } from "@/enums/Route";
 import FullPageSpinnerLoader from "@/components/full-page-spinner-loader";
