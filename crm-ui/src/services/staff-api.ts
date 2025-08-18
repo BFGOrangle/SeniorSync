@@ -3,8 +3,6 @@ import {
   StaffResponseDto,
   CreateStaffDto,
   UpdateStaffDto,
-  StaffApiError,
-  StaffValidationError,
   StaffDisplayView,
   StaffUtils
 } from '@/types/staff';
@@ -333,6 +331,22 @@ export class StaffApiService {
         inactive: 0,
         byRole: {}
       };
+    }
+  }
+
+  /**
+   * Get current user's staff profile
+   * @returns Promise<StaffResponseDto | null> - Current user's staff profile or null if not found
+   */
+  async getCurrentUserProfile(): Promise<StaffResponseDto | null> {
+    try {
+      return await this.client.get<StaffResponseDto>(`${STAFF_ENDPOINT}/me`);
+    } catch (error) {
+      if (error instanceof StaffApiErrorClass && error.status === 404) {
+        return null;
+      }
+      console.error('Error fetching current user profile:', error);
+      throw error;
     }
   }
 
