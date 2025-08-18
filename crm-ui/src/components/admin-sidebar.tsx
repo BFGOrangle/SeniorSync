@@ -33,15 +33,16 @@ import { Button } from "@/components/ui/button";
 // Overview items
 const overviewItems = [
   {
+    title: "My Analytics",
+    url: "/admin/dashboard",
+    icon: Layout,
+  },
+  {
     title: "Request Management",
     url: "/admin/request-management",
     icon: FileText,
   },
-  {
-    title: "My Analytics",
-    url: "/admin",
-    icon: Layout,
-  },
+
 ];
 
 const managementItems = [

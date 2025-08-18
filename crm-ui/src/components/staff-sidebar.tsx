@@ -31,15 +31,16 @@ import { Button } from "@/components/ui/button";
 
 // Overview items for staff
 const overviewItems = [
-  {
-    title: "Dashboard",
-    url: "/staff",
-    icon: Layout,
-  },
+  
   {
     title: "Request Management",
     url: "/staff/request-management",
     icon: FileText,
+  },
+  {
+    title: "My Analytics",
+    url: "/staff/dashboard",
+    icon: Layout,
   },
 ];
 
@@ -104,9 +105,7 @@ export function StaffSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarGroup>
+        <SidebarGroup>
         <SidebarGroupLabel>Management</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -130,6 +129,9 @@ export function StaffSidebar() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+      </SidebarContent>
+
+      
 
       <SidebarFooter className="border-t p-4">
         <div className="space-y-3 group-data-[collapsible=icon]:hidden">
