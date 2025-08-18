@@ -43,12 +43,6 @@ const navigationItems = [
     icon: FileText,
   },
   {
-    title: "AI Recommendations",
-    url: "/admin/ai-recommendations",
-    icon: Brain,
-    badge: "NEW",
-  },
-  {
     title: "Senior Profiles",
     url: "/admin/senior-profiles",
     icon: Users,
@@ -108,11 +102,6 @@ export function AppSidebar() {
                       <Link href={item.url} className="flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
