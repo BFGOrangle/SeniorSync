@@ -30,11 +30,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
-// Navigation items
-const navigationItems = [
+// Overview items
+const overviewItems = [
   {
-    title: "Dashboard",
-    url: "/admin",
+    title: "My Analytics",
+    url: "/admin/dashboard",
     icon: Layout,
   },
   {
@@ -42,16 +42,17 @@ const navigationItems = [
     url: "/admin/request-management",
     icon: FileText,
   },
+
+];
+
+const managementItems = [
   {
     title: "Senior Profiles",
     url: "/admin/senior-profiles",
     icon: Users,
   },
-];
-
-const settingsItems = [
   {
-    title: "Staff Management",
+    title: "Staff Profiles",
     url: "/admin/staff",
     icon: UserCog,
   }
@@ -84,10 +85,10 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => {
+              {overviewItems.map((item) => {
                 const isActive =
                   pathname === item.url ||
                   (item.title === "Dashboard" &&
@@ -115,7 +116,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingsItems.map((item) => {
+              {managementItems.map((item) => {
                 const isActive = pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>

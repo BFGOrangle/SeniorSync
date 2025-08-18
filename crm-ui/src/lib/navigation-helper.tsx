@@ -7,9 +7,13 @@ import { useRouter } from "next/navigation";
 export function getDashboardRoute(user: CurrentUser | null): string {
     if (!user) {
         throw new Error("User object is null");
+    } else if (user.role === 'ADMIN') {
+        return '/admin/dashboard';
+    } else if (user.role === 'STAFF') {
+        return '/staff/request-management';
+    } else {
+        throw new Error("Unknown user role");
     }
-    const baseRoute = user.role === 'ADMIN' ? '/admin' : '/staff';
-    return `${baseRoute}/dashboard`
 }
 
 export function useNavigationHelper() {
@@ -36,9 +40,13 @@ export function useNavigationHelper() {
   const getDashboardRoute = (): string => {
     if (!currentUser) {
         throw new Error("User object is null");
+    } else if (currentUser.role === 'ADMIN') {
+        return '/admin/dashboard';
+    } else if (currentUser.role === 'STAFF') {
+        return '/staff/request-management';
+    } else {
+      throw new Error("Unknown user role");
     }
-    const baseRoute = currentUser.role === 'ADMIN' ? '/admin' : '/staff';
-    return `${baseRoute}/dashboard`
   }
 
   const goToDashboard = () => {

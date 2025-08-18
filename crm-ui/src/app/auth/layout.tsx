@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   if (isLoading || currentUser) {
     return (
       <FullPageSpinnerLoader 
-        loadingMessage={currentUser ? "Redirecting to dashboard..." : ""} 
+        loadingMessage={currentUser ? "Redirecting..." : ""} 
       />
     );
   }

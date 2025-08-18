@@ -945,14 +945,14 @@ export default function SeniorProfiles() {
                         <InitialsAvatar name={seniorUtils.getFullName(senior)}/>
                         <CardTitle className="text-lg">{seniorUtils.getFullName(senior)}</CardTitle>
                       </div>
-                      <CardDescription className="flex items-center gap-2 text-base">
-                        <Calendar className="h-4 w-4" />
-                        {senior.dateOfBirth ? (
-                          `Age ${seniorUtils.calculateAge(senior.dateOfBirth)} • ${seniorUtils.formatDate(senior.dateOfBirth)}`
-                        ) : (
-                          'Age unknown'
-                        )}
-                      </CardDescription>
+                        <CardDescription className="flex items-center gap-2 text-base">
+                          {senior.dateOfBirth && (
+                            <>
+                              <Calendar className="h-4 w-4" />
+                              {`Age ${seniorUtils.calculateAge(senior.dateOfBirth)} • ${seniorUtils.formatDate(senior.dateOfBirth)}`}
+                            </>
+                          )}
+                        </CardDescription>
                     </div>
                     <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
                       <Button
@@ -1210,14 +1210,14 @@ export default function SeniorProfiles() {
                   id="edit-firstName"
                   value={editForm.formData.firstName}
                   onChange={(e) => editForm.updateField('firstName', e.target.value)}
-                  disabled={isLoading('update')}
+                  disabled={true}
                 />
                 {editForm.errors.firstName && editForm.touched.firstName && (
                   <p className="text-sm text-red-600">{editForm.errors.firstName}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-lastName">Last Name *</Label>
+                <Label htmlFor="edit-lastName">Senior Identifier *</Label>
                 <Input
                   id="edit-lastName"
                   value={editForm.formData.lastName}
@@ -1228,54 +1228,6 @@ export default function SeniorProfiles() {
                   <p className="text-sm text-red-600">{editForm.errors.lastName}</p>
                 )}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-dateOfBirth">Date of Birth</Label>
-              <Input
-                id="edit-dateOfBirth"
-                type="date"
-                value={editForm.formData.dateOfBirth}
-                onChange={(e) => editForm.updateField('dateOfBirth', e.target.value)}
-                disabled={isLoading('update')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-contactPhone">Phone Number</Label>
-              <Input
-                id="edit-contactPhone"
-                value={editForm.formData.contactPhone}
-                onChange={(e) => editForm.updateField('contactPhone', e.target.value)}
-                disabled={isLoading('update')}
-              />
-              {editForm.errors.contactPhone && editForm.touched.contactPhone && (
-                <p className="text-sm text-red-600">{editForm.errors.contactPhone}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-contactEmail">Email Address</Label>
-              <Input
-                id="edit-contactEmail"
-                type="email"
-                value={editForm.formData.contactEmail}
-                onChange={(e) => editForm.updateField('contactEmail', e.target.value)}
-                disabled={isLoading('update')}
-              />
-              {editForm.errors.contactEmail && editForm.touched.contactEmail && (
-                <p className="text-sm text-red-600">{editForm.errors.contactEmail}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-address">Address</Label>
-              <Input
-                id="edit-address"
-                value={editForm.formData.address}
-                onChange={(e) => editForm.updateField('address', e.target.value)}
-                disabled={isLoading('update')}
-              />
             </div>
 
             <div className="space-y-3">
