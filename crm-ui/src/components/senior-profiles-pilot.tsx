@@ -264,6 +264,8 @@ export default function SeniorProfiles() {
     // Add care level filter
     if (selectedCareLevel !== "all") {
       filter.careLevel = selectedCareLevel;
+    } else {
+      filter.careLevel = undefined;
     }
     
     // Add care level color filter (if needed)
@@ -310,12 +312,6 @@ export default function SeniorProfiles() {
       setDeletingSenior(null);
     }
   };
-
-  // // Start editing a senior
-  // const startEdit = (senior: SeniorDto) => {
-  //   setEditingSenior(senior);
-  //   editForm.reset(seniorUtils.dtoToFormData(senior));
-  // };
 
   // Cancel editing
   const cancelEdit = () => {
