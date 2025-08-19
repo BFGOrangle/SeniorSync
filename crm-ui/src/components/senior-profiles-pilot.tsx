@@ -313,12 +313,6 @@ export default function SeniorProfiles() {
     }
   };
 
-  // // Start editing a senior
-  // const startEdit = (senior: SeniorDto) => {
-  //   setEditingSenior(senior);
-  //   editForm.reset(seniorUtils.dtoToFormData(senior));
-  // };
-
   // Cancel editing
   const cancelEdit = () => {
     setEditingSenior(null);
