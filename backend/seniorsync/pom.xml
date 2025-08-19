@@ -175,6 +175,12 @@
 				<artifactId>spring-core</artifactId>
 				<version>6.2.10</version>
 			</dependency>
+			<!-- Override spring-beans to 6.2.10 to fix path traversal vulnerability SNYK-JAVA-ORGSPRINGFRAMEWORK-12008931 -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>6.2.10</version>
+			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-bom</artifactId>
