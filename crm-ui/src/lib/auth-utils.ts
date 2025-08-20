@@ -6,6 +6,7 @@ export const getBearerToken = async (): Promise<string> => {
   let token = "";
   if (session && session.tokens && session.tokens.accessToken) {
     token = `Bearer ${session.tokens.accessToken}`;
+
   } else {
     console.error("Error in retrieving access token.");
   }

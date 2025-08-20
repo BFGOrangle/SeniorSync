@@ -41,6 +41,7 @@ const overviewItems = [
   },
   {
     title: "Request Management",
+
     url: "/admin/request-management", 
     icon: FileText,
     children: [
@@ -72,8 +73,7 @@ const managementItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { signOut, currentUser } = useCurrentUser();
-  
+  const { signOut, currentUser } = useCurrentUser();  
   // State to track which menu items are expanded
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   
@@ -85,6 +85,7 @@ export function AppSidebar() {
         : [...prev, itemTitle]
     );
   };
+
 
     const handleSignOut = async () => {
         try {
@@ -163,7 +164,6 @@ export function AppSidebar() {
                 const isActive =
                   pathname === item.url ||
                   (item.title === "Dashboard" && pathname === "/admin/dashboard");
-                
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
