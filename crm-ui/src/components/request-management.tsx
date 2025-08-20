@@ -216,68 +216,78 @@ export default function RequestManagement() {
               </p>
             </div>
 
-            <div className="flex gap-2 lg:gap-3">
-              <Badge
-                variant="outline"
-                className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1"
-              >
-                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                TODO: {statusCounts.todo}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="bg-orange-50 text-orange-700 border-orange-200 font-medium px-3 py-1"
-              >
-                <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
-                In Progress: {statusCounts['in-progress']}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1"
-              >
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                Completed: {statusCounts.completed}
-              </Badge>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              {/* Status Badges Row */}
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 border-blue-200 font-medium px-3 py-1 whitespace-nowrap"
+                >
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                  TODO: {statusCounts.todo}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-orange-50 text-orange-700 border-orange-200 font-medium px-3 py-1 whitespace-nowrap"
+                >
+                  <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
+                  In Progress: {statusCounts['in-progress']}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1 whitespace-nowrap"
+                >
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  Completed: {statusCounts.completed}
+                </Badge>
+              </div>
 
-              <Tabs
-                value={viewMode}
-                onValueChange={(value) => setViewMode(value as ViewMode)}
-              >
-                <TabsList className="grid w-full grid-cols-3 bg-gray-100">
-                  <TabsTrigger
-                    value="kanban-status"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                  >
-                    <KanbanSquare className="h-4 w-4" />
-                    Status
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="kanban-priority"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    Priority
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="table"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                  >
-                    <List className="h-4 w-4" />
-                    Table
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {/* View Toggle and Create Button Row */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Tabs
+                  value={viewMode}
+                  onValueChange={(value) => setViewMode(value as ViewMode)}
+                  className="flex-shrink-0"
+                >
+                  <TabsList className="grid w-full grid-cols-3 bg-gray-100 min-w-fit">
+                    <TabsTrigger
+                      value="kanban-status"
+                      className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm px-2 sm:px-3"
+                    >
+                      <KanbanSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Status</span>
+                      <span className="sm:hidden">S</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="kanban-priority"
+                      className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm px-2 sm:px-3"
+                    >
+                      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Priority</span>
+                      <span className="sm:hidden">P</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="table"
+                      className="flex items-center gap-1 sm:gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs sm:text-sm px-2 sm:px-3"
+                    >
+                      <List className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Table</span>
+                      <span className="sm:hidden">T</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
 
-              {/* Create Request Button */}
-              <CreateRequestModal 
-                onRequestCreated={() => {
-                  refresh();
-                  toast({
-                    title: "Success",
-                    description: "Request created successfully and list refreshed!",
-                  });
-                }}
-              />
+                {/* Create Request Button */}
+                <CreateRequestModal 
+                  onRequestCreated={() => {
+                    refresh();
+                    toast({
+                      title: "Success",
+                      description: "Request created successfully and list refreshed!",
+                    });
+                  }}
+                />
+              </div>
             </div>
           </div>
 

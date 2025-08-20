@@ -16,7 +16,6 @@ import {
   Clock,
   Zap,
   User,
-  Users,
   ExternalLink,
   ChevronLeft,
   ChevronRight
@@ -57,19 +56,28 @@ export function AIRecommendedRequests({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Track previous showAllRequests value to detect changes
+  const [prevShowAllRequests, setPrevShowAllRequests] = useState(showAllRequests);
+
   // Determine if user can see all requests (admin/manager)
   const canViewAllRequests = currentUser?.role === 'ADMIN';
 
-  // Auto-fetch on mount
+  // Auto-fetch on mount and when showAllRequests changes
   useEffect(() => {
     if (currentUser) {
+      // Force refresh if showAllRequests prop has changed
+      const forceRefresh = prevShowAllRequests !== showAllRequests;
+      
       if (showAllRequests && canViewAllRequests) {
-        fetchAllAIRecommendedRequests();
+        fetchAllAIRecommendedRequests(undefined, forceRefresh);
       } else {
-        fetchMyAIRecommendedRequests();
+        fetchMyAIRecommendedRequests(undefined, forceRefresh);
       }
+      
+      // Update the previous value
+      setPrevShowAllRequests(showAllRequests);
     }
-  }, [currentUser, showAllRequests, canViewAllRequests, fetchAllAIRecommendedRequests, fetchMyAIRecommendedRequests]);
+  }, [currentUser, showAllRequests, canViewAllRequests, fetchAllAIRecommendedRequests, fetchMyAIRecommendedRequests, prevShowAllRequests]);
 
   // Reset to first page when recommendations change
   useEffect(() => {
@@ -142,27 +150,6 @@ export function AIRecommendedRequests({
           </div>
 
           <div className="flex items-center gap-2">
-            {canViewAllRequests && (
-              <div className="flex items-center gap-1">
-                <Badge 
-                  variant={showAllRequests ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => window.location.reload()} // Simple way to toggle view
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  All
-                </Badge>
-                {/* <Badge 
-                  variant={!showAllRequests ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => window.location.reload()} // Simple way to toggle view
-                >
-                  <User className="h-3 w-3 mr-1" />
-                  Mine
-                </Badge> */}
-              </div>
-            )}
-
             {hasRecommendations && (
               <>
                 <Button
@@ -217,10 +204,13 @@ export function AIRecommendedRequests({
               <Brain className="h-12 w-12 text-purple-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Get AI-Ranked Requests
+              No AI Recommendations Available
             </h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Let AI analyze and rank {showAllRequests ? "all" : "your"} requests by priority, urgency, and importance to help you focus on what matters most.
+              {showAllRequests 
+                ? "There are currently no requests in the system to analyze and rank."
+                : "You have no requests assigned to you currently. AI recommendations will appear when you have assigned requests."
+              }
             </p>
             <Button
               onClick={handleGetRecommendations}
@@ -228,7 +218,7 @@ export function AIRecommendedRequests({
               className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
             >
               <TrendingUp className="h-4 w-4" />
-              Get AI Recommendations
+              {showAllRequests ? "Check for New Requests" : "Refresh My Assignments"}
             </Button>
           </div>
         )}

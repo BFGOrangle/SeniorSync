@@ -27,9 +27,9 @@ export function useNavigationHelper() {
     return {
       dashboard: () => `${baseRoute}/dashboard`,
       requests: (id?: string) => id ? `${baseRoute}/requests/${id}` : `${baseRoute}/request-management`,
+      requestsAI: () => `${baseRoute}/request-management/ai-recommendations`,
       seniors: (id?: string) => id ? `${baseRoute}/seniors/${id}` : `${baseRoute}/senior-profiles`,
       settings: () => `${baseRoute}/settings`,
-      aiRecommendations: () => `${baseRoute}/ai-recommendations`,
     };
   };
 
