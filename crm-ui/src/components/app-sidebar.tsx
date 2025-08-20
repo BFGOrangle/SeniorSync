@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useCurrentUser } from "@/contexts/user-context";
@@ -13,6 +14,7 @@ import {
   Brain,
   UserCog,
   UserCircle,
+  ChevronDown,
 } from "lucide-react";
 
 import {
@@ -39,8 +41,18 @@ const navigationItems = [
   },
   {
     title: "Request Management",
-    url: "/admin/request-management",
+    url: "/admin/request-management", 
     icon: FileText,
+    children: [
+      {
+        title: "All Requests",
+        url: "/admin/request-management"
+      },
+      {
+        title: "AI Recommendations",
+        url: "/admin/request-management/ai-recommendations"
+      }
+    ]
   },
   {
     title: "Senior Profiles",
@@ -60,6 +72,18 @@ const settingsItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { signOut, currentUser } = useCurrentUser();
+  
+  // State to track which menu items are expanded
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  
+  // Function to toggle expansion
+  const toggleExpanded = (itemTitle: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemTitle) 
+        ? prev.filter(title => title !== itemTitle)
+        : [...prev, itemTitle]
+    );
+  };
 
     const handleSignOut = async () => {
         try {
@@ -88,10 +112,57 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => {
+                // Handle items with children (like Request Management)
+                if (item.children) {
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton 
+                        tooltip={item.title}
+                        onClick={() => toggleExpanded(item.title)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </div>
+                          <ChevronDown 
+                            className={`h-4 w-4 transition-transform ${
+                              expandedItems.includes(item.title) ? 'rotate-180' : ''
+                            }`} 
+                          />
+                        </div>
+                      </SidebarMenuButton>
+                      {/* Conditionally render children based on expanded state */}
+                      {expandedItems.includes(item.title) && (
+                        <SidebarMenu className="ml-4">
+                          {item.children.map((child) => {
+                            const isChildActive = pathname === child.url;
+                            return (
+                              <SidebarMenuItem key={child.title}>
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={isChildActive}
+                                  tooltip={child.title}
+                                >
+                                  <Link href={child.url} className="flex items-center gap-2">
+                                    <span>{child.title}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
+
+                // Handle regular items with direct URLs
                 const isActive =
                   pathname === item.url ||
-                  (item.title === "Dashboard" &&
-                    pathname === "/admin/dashboard");
+                  (item.title === "Dashboard" && pathname === "/admin/dashboard");
+                
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton

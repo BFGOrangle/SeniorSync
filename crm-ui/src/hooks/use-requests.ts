@@ -34,20 +34,20 @@ export function useRequestManagement() {
       setLoading(true);
       setError(null);
       
-      console.log('🚀 Phase 2: Starting immediate loading strategy...');
+      // console.log('🚀 Phase 2: Starting immediate loading strategy...');
       
       // STEP 1: Load requests immediately (even without spam detection)
       const enhancedRequests = await requestManagementApiService.getEnhancedRequests(filter);
       setRequests(enhancedRequests);
       setLoading(false); // UI can render immediately!
       
-      console.log(`📊 Loaded ${enhancedRequests.length} requests immediately`);
+      // console.log(`📊 Loaded ${enhancedRequests.length} requests immediately`);
       
       // STEP 2: Identify requests needing spam detection
       const requestsNeedingSpam = spamFilterService.getRequestsNeedingSpamDetection(enhancedRequests);
       
       if (requestsNeedingSpam.length > 0) {
-        console.log(`🔍 Found ${requestsNeedingSpam.length} requests needing spam detection`);
+        // console.log(`🔍 Found ${requestsNeedingSpam.length} requests needing spam detection`);
         
         // STEP 3: Start async spam detection (don't wait)
         await spamFilterService.initiateSpamDetectionAsync(requestsNeedingSpam);
@@ -66,12 +66,12 @@ export function useRequestManagement() {
           pollAttempts++;
           
           try {
-            console.log(`🔄 Polling for spam updates (attempt ${pollAttempts}/${maxPollAttempts})`);
+            // console.log(`🔄 Polling for spam updates (attempt ${pollAttempts}/${maxPollAttempts})`);
             
             const updates = await spamFilterService.pollForSpamUpdates(requestsNeedingSpam);
             
             if (updates.size > 0) {
-              console.log(`✅ Received spam updates for ${updates.size} requests`);
+              // console.log(`✅ Received spam updates for ${updates.size} requests`);
               
               // Show completion alert for each batch of updates
               const spamCount = Array.from(updates.values()).filter(update => update.isSpam).length;
@@ -124,7 +124,7 @@ export function useRequestManagement() {
             const allComplete = completedCount >= requestsNeedingSpam.length || pollAttempts >= maxPollAttempts;
             
             if (allComplete) {
-              console.log(`🏁 Spam detection polling complete (${completedCount}/${requestsNeedingSpam.length} processed)`);
+              // console.log(`🏁 Spam detection polling complete (${completedCount}/${requestsNeedingSpam.length} processed)`);
               clearInterval(pollInterval);
               setSpamPollingActive(false);
               
@@ -157,7 +157,7 @@ export function useRequestManagement() {
         });
         
       } else {
-        console.log('✅ All requests already have spam detection data');
+        // console.log('✅ All requests already have spam detection data');
       }
       
       setLastUpdated(new Date());
@@ -458,7 +458,7 @@ export function useRequest(requestId: number | null) {
         
         // Check if spam detection is needed for this single request
         if (data.isSpam === undefined || data.isSpam === null) {
-          console.log(`🔍 Single request ${requestId} needs spam detection`);
+          // console.log(`🔍 Single request ${requestId} needs spam detection`);
           setSpamDetectionPending(true);
           
           // Start async spam detection
@@ -476,7 +476,7 @@ export function useRequest(requestId: number | null) {
               
               if (updates.has(requestId)) {
                 const spamUpdate = updates.get(requestId)!;
-                console.log(`✅ Received spam update for request ${requestId}`);
+                // console.log(`✅ Received spam update for request ${requestId}`);
                 
                 // Show completion alert
                 const alertMessage = spamUpdate.isSpam 

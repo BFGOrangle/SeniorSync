@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Brain, 
-  TrendingUp, 
-  Zap, 
   AlertTriangle,
   ChevronRight,
+  ChevronLeft,
   Sparkles
 } from "lucide-react";
 import { useAIRecommendedRequests } from "@/hooks/use-ai-recommended-requests";
@@ -21,6 +20,7 @@ interface AIRecommendationsWidgetProps {
   maxItems?: number;
   showTitle?: boolean;
   compact?: boolean;
+  showAllRequests?: boolean;
   onViewAll?: () => void;
 }
 
@@ -32,6 +32,7 @@ export function AIRecommendationsWidget({
   maxItems = 5,
   showTitle = true,
   compact = false,
+  showAllRequests = false,
   onViewAll
 }: AIRecommendationsWidgetProps) {
   const {
@@ -40,11 +41,85 @@ export function AIRecommendationsWidget({
     error,
     hasRecommendations,
     fetchAllAIRecommendedRequests,
+    fetchMyAIRecommendedRequests,
   } = useAIRecommendedRequests();
 
-  const [expanded, setExpanded] = useState(false);
+  // Replace expanded state with pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Track previous showAllRequests value to detect changes
+  const [prevShowAllRequests, setPrevShowAllRequests] = useState(showAllRequests);
+  
+  // Ref for scroll area to control scroll position
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const displayedRecommendations = recommendations.slice(0, maxItems);
+  // Auto-fetch when component mounts or showAllRequests changes
+  useEffect(() => {
+    // Force refresh if showAllRequests prop has changed
+    const forceRefresh = prevShowAllRequests !== showAllRequests;
+    
+    if (showAllRequests) {
+      fetchAllAIRecommendedRequests(undefined, forceRefresh);
+    } else {
+      fetchMyAIRecommendedRequests(undefined, forceRefresh);
+    }
+    
+    // Update the previous value
+    setPrevShowAllRequests(showAllRequests);
+  }, [showAllRequests, fetchAllAIRecommendedRequests, fetchMyAIRecommendedRequests, prevShowAllRequests]);
+  
+  // Calculate pagination - force maxItems to be 5
+  const itemsPerPage = 5;
+  const totalItems = recommendations.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedRecommendations = recommendations.slice(startIndex, endIndex);
+
+  // Add pagination handlers with scroll reset
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => {
+      const newPage = Math.max(prev - 1, 1);
+      // Reset scroll to top after state update
+      setTimeout(() => {
+        if (scrollAreaRef.current) {
+          const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+          if (viewport) {
+            viewport.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
+      }, 0);
+      return newPage;
+    });
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => {
+      const newPage = Math.min(prev + 1, totalPages);
+      // Reset scroll to top after state update
+      setTimeout(() => {
+        if (scrollAreaRef.current) {
+          const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+          if (viewport) {
+            viewport.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
+      }, 0);
+      return newPage;
+    });
+  };
+
+  // Reset to first page when recommendations change
+  useEffect(() => {
+    setCurrentPage(1);
+    // Reset scroll when data changes
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [recommendations]);
 
   const getQuickStats = () => {
     const total = recommendations.length;
@@ -71,7 +146,7 @@ export function AIRecommendationsWidget({
             </p>
             <Button
               size="sm"
-              onClick={() => fetchAllAIRecommendedRequests()}
+              onClick={() => showAllRequests ? fetchAllAIRecommendedRequests() : fetchMyAIRecommendedRequests()}
               disabled={loading}
               className="h-7 text-xs"
             >
@@ -91,7 +166,7 @@ export function AIRecommendationsWidget({
             <div className="flex items-center gap-2">
               <Brain className="h-4 w-4 text-purple-600" />
               <CardTitle className={cn("text-sm font-medium", compact && "text-xs")}>
-                AI Recommendations
+                {showAllRequests ? "All AI Recommendations" : "My AI Recommendations"}
               </CardTitle>
               <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs">
                 <Sparkles className="h-2 w-2 mr-1" />
@@ -153,30 +228,51 @@ export function AIRecommendationsWidget({
             )}
 
             {/* Recommendations List */}
-            <ScrollArea className={cn("space-y-2", compact ? "max-h-40" : "max-h-60")}>
-              <div className="space-y-2">
+            <ScrollArea className={cn("w-full", compact ? "h-40" : "h-60")} ref={scrollAreaRef}>
+              <div className="space-y-2 pr-3">
                 {displayedRecommendations.map((recommendation, index) => (
                   <AIRecommendationItem
                     key={recommendation.id}
                     recommendation={recommendation}
-                    rank={index + 1}
+                    rank={startIndex + index + 1}
                     compact={compact}
                   />
                 ))}
               </div>
             </ScrollArea>
 
-            {/* Show More */}
-            {recommendations.length > maxItems && (
-              <div className="text-center pt-2 border-t">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setExpanded(!expanded)}
-                  className="h-6 text-xs"
-                >
-                  {expanded ? 'Show Less' : `+${recommendations.length - maxItems} more`}
-                </Button>
+            {/* Pagination Controls - Replace the old "Show More" section */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3 border-t">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <ChevronLeft className="h-3 w-3 mr-1" />
+                    Previous
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="h-7 px-2 text-xs"
+                  >
+                    Next
+                    <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <span className="text-gray-400">•</span>
+                  <span>{startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}</span>
+                </div>
               </div>
             )}
           </div>
@@ -198,10 +294,11 @@ function AIRecommendationItem({
   compact = false 
 }: AIRecommendationItemProps) {
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <TrendingUp className="h-3 w-3 text-yellow-600" />;
-    if (rank === 2) return <Zap className="h-3 w-3 text-orange-600" />;
-    if (rank === 3) return <AlertTriangle className="h-3 w-3 text-red-600" />;
-    return <span className="text-xs font-medium text-gray-500">#{rank}</span>;
+    return (
+      <span className="text-xs font-bold text-gray-700 bg-gray-100 rounded-full w-5 h-5 flex items-center justify-center">
+        {rank}
+      </span>
+    );
   };
 
   const getStatusColor = (status: string) => {

@@ -17,7 +17,7 @@ import {
 } from "@/components/dashboard-charts";
 
 import { CreateRequestModal } from "@/components/create-request-modal";
-import { AIRecommendedRequestsWidget } from "@/components/ai-recommended-requests-widget";
+import { AIRecommendationsWidget } from "@/components/ai-recommendations-widget";
 import { RefreshCw, Calendar, Plus } from "lucide-react";
 import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
 import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
@@ -143,15 +143,15 @@ export default function Dashboard() {
       </div>
 
       {/* AI Recommendations Section */}
-      <AIRecommendedRequestsWidget 
+      <AIRecommendationsWidget 
         className="w-full" 
-        showAllRequests={mode === 'center' && isAdmin}
+        showAllRequests={mode === 'center'}
         maxItems={6}
         onViewAll={() => {
           if (isAdmin && mode === 'center') {
-            window.location.href = '/admin/ai-recommendations';
+            window.location.href = '/admin/request-management/ai-recommendations';
           } else {
-            window.location.href = '/staff/ai-recommendations';
+            window.location.href = '/staff/request-management/ai-recommendations';
           }
         }}
       />
