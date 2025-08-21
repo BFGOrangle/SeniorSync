@@ -485,22 +485,22 @@ export default function SeniorProfiles() {
                   <Label htmlFor="create-firstName">First Name *</Label>
                   <Input
                     id="create-firstName"
-                    value="SENIOR"
+                    value={createForm.formData.firstName}
                     onChange={(e) => createForm.updateField('firstName', e.target.value)}
-                    placeholder="SENIOR"
-                    disabled={true}
+                    placeholder=""
+                    disabled={isLoading('create')}
                   />
                   {createForm.errors.firstName && createForm.touched.firstName && (
                     <p className="text-sm text-red-600">{createForm.errors.firstName}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-lastName">Identifier Number *</Label>
+                  <Label htmlFor="create-lastName">Last Name *</Label>
                   <Input
                     id="create-lastName"
                     value={createForm.formData.lastName}
                     onChange={(e) => createForm.updateField('lastName', e.target.value)}
-                    placeholder="123"
+                    placeholder=""
                     disabled={isLoading('create')}
                   />
                   {createForm.errors.lastName && createForm.touched.lastName && (
@@ -1206,14 +1206,14 @@ export default function SeniorProfiles() {
                   id="edit-firstName"
                   value={editForm.formData.firstName}
                   onChange={(e) => editForm.updateField('firstName', e.target.value)}
-                  disabled={true}
+                  disabled={isLoading('update')}
                 />
                 {editForm.errors.firstName && editForm.touched.firstName && (
                   <p className="text-sm text-red-600">{editForm.errors.firstName}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-lastName">Senior Identifier *</Label>
+                <Label htmlFor="edit-lastName">Last name *</Label>
                 <Input
                   id="edit-lastName"
                   value={editForm.formData.lastName}

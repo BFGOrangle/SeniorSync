@@ -336,7 +336,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
     }
 
     if (!data.lastName.trim()) {
-      newErrors.lastName = 'Senior Identifier is required';
+      newErrors.lastName = 'Last name is required';
     }
 
     if (data.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contactEmail)) {
