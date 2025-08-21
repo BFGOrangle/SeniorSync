@@ -11,9 +11,7 @@ public record SeniorFilterDto(
         LocalDate maxDateOfBirth,
         String contactPhone,
         String contactEmail,
-        String careLevel,
-        @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", message = "Care level color must be a valid hex color code (e.g., #FF0000 or #F00)")
-        String careLevelColor,
+        Long careLevelId,
         String[] characteristics
 ) {
 }

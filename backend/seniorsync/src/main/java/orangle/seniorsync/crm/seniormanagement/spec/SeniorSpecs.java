@@ -68,18 +68,11 @@ public class SeniorSpecs {
             return cb.lessThanOrEqualTo(root.get("dateOfBirth"), maxDateOfBirth);
         };
     }
-    public static Specification<Senior> hasCareLevel(String careLevel) {
+    public static Specification<Senior> hasCareLevelId(Long careLevelId) {
         return (root, query, cb) ->
-                careLevel == null || careLevel.isEmpty()
+                careLevelId == null
                         ? cb.conjunction()
-                        : cb.equal(root.get("careLevel"), careLevel);
-    }
-
-    public static Specification<Senior> hasCareLevelColor(String careLevelColor) {
-        return (root, query, cb) ->
-                careLevelColor == null || careLevelColor.isEmpty()
-                        ? cb.conjunction()
-                        : cb.equal(root.get("careLevelColor"), careLevelColor);
+                        : cb.equal(root.get("careLevelId"), careLevelId);
     }
 
     public static Specification<Senior> hasCharacteristics(String[] characteristics) {
