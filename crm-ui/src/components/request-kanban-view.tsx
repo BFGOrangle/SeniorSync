@@ -167,15 +167,15 @@ export function RequestKanbanView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="overflow-x-auto">
-        <div className="flex gap-6 h-full w-full">
+      <div className="overflow-x-auto h-full">
+        <div className="flex gap-6 h-full w-full min-w-fit">
           {allColumns.map((column) => {
             const columnRequests = getRequestsForStatus(column.id);
 
             return (
               <Card
                 key={column.id}
-                className={cn("border shadow-sm flex flex-col flex-1", column.color)}
+                className={cn("border shadow-sm flex flex-col flex-1 min-w-80 h-full", column.color)}
               >
                 <CardHeader className="pb-3 flex-shrink-0">
                   <CardTitle className="flex items-center justify-between text-lg">
@@ -193,17 +193,17 @@ export function RequestKanbanView({
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 flex-1 flex flex-col min-h-0">
+                <CardContent className="pt-0 flex-1 flex flex-col min-h-0 overflow-hidden">
                   <SortableContext
                     items={columnRequests.map((r) => r.id)}
                     strategy={verticalListSortingStrategy}
                   >
                     <DroppableColumn
                       id={column.id}
-                      className={cn("rounded flex-1 min-h-0 p-2", column.color)}
+                      className={cn("rounded flex-1 min-h-0 p-2 overflow-y-auto", column.color)}
                     >
-                      <ScrollArea className="h-full">
-                        <div className="space-y-2">
+                      <ScrollArea className="h-full w-full">
+                        <div className="space-y-2 pr-2">
                           {columnRequests.map((request) => (
                             <RequestCard
                               key={request.id}
