@@ -13,6 +13,7 @@ import {
   Mail,
   MapPin,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { ReminderSection } from "@/components/reminder-section";
 import { CommentSection } from "@/components/comment-section";
@@ -35,6 +46,7 @@ import { useRequestDetails } from "@/hooks/use-requests";
 import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
 import InitialsAvatar from "@/components/initials-avatar";
+import { AssigneeSection } from "@/components/assignee-section";
 import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
 
@@ -51,6 +63,8 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
   const isAdmin = currentUser?.role === 'ADMIN';
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editedRequest, setEditedRequest] =
     useState<SeniorRequestDisplayView | null>(null);
 
@@ -59,6 +73,7 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
     loading,
     error: hookError,
     updateRequest,
+    deleteRequest,
   } = useRequestDetails(requestId || null);
 
   const error = hookError?.message || null;
@@ -87,6 +102,30 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
       setEditedRequest(request);
       setIsEditing(false);
     }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteRequest();
+      if (success) {
+        // Navigate back to the previous page after successful deletion
+        router.back();
+      }
+    } catch (err) {
+      console.error("Failed to delete request:", err);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
   };
 
   const priorityOptions: Priority[] = ["urgent", "high", "medium", "low"];
@@ -132,8 +171,8 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
   };
 
   // Determine if user can edit this request
-  const canEdit = isAdmin || 
-    (currentUser && editedRequest?.assignedStaffId === parseInt(currentUser.id));
+  // Both admin and staff can edit and delete requests
+  const canEdit = isAdmin || (currentUser?.role === 'STAFF');
 
   if (loading) {
     return (
@@ -195,14 +234,33 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
         <div className="flex items-center gap-2">
           {/* Only show edit button if user has permission */}
           {canEdit && !isEditing ? (
-            <Button
-              size="sm"
-              onClick={() => setIsEditing(true)}
-              className="h-8"
-            >
-              <Edit3 className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
+            <>
+              <Button
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="h-8"
+              >
+                <Edit3 className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              {/* Both staff and admin can delete requests */}
+              {(isAdmin || currentUser?.role === 'STAFF') && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleDeleteConfirm}
+                  className="h-8"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-1" />
+                  )}
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              )}
+            </>
           ) : canEdit && isEditing ? (
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSave} className="h-8">
@@ -456,10 +514,17 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="assignee">Assigned Staff</Label>
-              <div className="flex items-center gap-2">
-                <InitialsAvatar name={editedRequest.assignedStaffName || "Unassigned"}/>
-                <span>{editedRequest.assignedStaffName || "Unassigned"}</span>
-              </div>
+              <AssigneeSection 
+                request={editedRequest} 
+                onUpdate={(updatedRequest) => {
+                  setEditedRequest(updatedRequest);
+                  // If not in editing mode, auto-save the assignment
+                  if (!isEditing && updateRequest) {
+                    updateRequest(updatedRequest);
+                  }
+                }}
+                className="text-base"
+              />
             </div>
           </div>
 
@@ -495,6 +560,36 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this request? This action cannot be undone.
+              All associated data including comments, reminders, and history will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Request"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

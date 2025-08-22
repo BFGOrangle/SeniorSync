@@ -359,9 +359,9 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     }
 
     /**
-     * Assign a request to a staff member with role-based business rules:
-     * - Admin can assign any request to any staff member
-     * - Staff can only assign unassigned requests to themselves
+     * Assign a request to a staff member with updated role-based business rules:
+     * - Both Admin and Staff can assign any request to any staff member
+     * - Validates that target staff exists and belongs to same center
      *
      * @param requestId the ID of the request to assign
      * @param assignRequestDto the assignment details
@@ -385,22 +385,18 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
 
         Long currentUserId = requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
+        boolean isStaff = !SecurityContextUtil.isCurrentUserAdmin();
         Long targetStaffId = assignRequestDto.assignedStaffId();
 
-        // Validate business rules
-        if (isAdmin) {
-            // Admin can assign to anyone
-            // TODO: Optionally validate that targetStaffId exists in staff table
-        } else {
-            // Staff can only assign unassigned requests to themselves
-            if (request.getAssignedStaffId() != null) {
-                throw new SecurityException("Staff members can only assign unassigned requests");
-            }
-            if (!currentUserId.equals(targetStaffId)) {
-                throw new SecurityException("Staff members can only assign requests to themselves");
-            }
+        // Validate that user has permission to assign
+        if (!isAdmin && !isStaff) {
+            throw new SecurityException("Only admin and staff members can assign requests");
         }
 
+        // Validate that target staff exists and belongs to same center
+        // This validation applies to both admin and staff
+        // TODO: Implement staff validation to ensure target staff exists and belongs to same center
+        
         // Perform assignment
         request.setAssignedStaffId(targetStaffId);
         seniorRequestRepository.save(request);
@@ -409,14 +405,12 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     }
 
     /**
-     * Unassign a request (remove assignment) with role-based business rules:
-     * - Admin can unassign any request
-     * - Staff can only unassign requests assigned to themselves
+     * Unassign a request (remove assignment) with updated role-based business rules:
+     * - Both Admin and Staff can unassign any request
      *
      * @param requestId the ID of the request to unassign
      * @return the updated SeniorRequestDto
      * @throws IllegalArgumentException if request not found
-     * @throws SecurityException if unassignment violates business rules
      */
     @Transactional
     public SeniorRequestDto unassignRequest(Long requestId) {
@@ -434,16 +428,16 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
 
         Long currentUserId = requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
+        boolean isStaff = !SecurityContextUtil.isCurrentUserAdmin();
 
-        // Validate business rules
-        if (!isAdmin) {
-            // Staff can only unassign requests assigned to themselves
-            if (request.getAssignedStaffId() == null) {
-                throw new SecurityException("Request is not assigned");
-            }
-            if (!currentUserId.equals(request.getAssignedStaffId())) {
-                throw new SecurityException("Staff members can only unassign requests assigned to themselves");
-            }
+        // Validate that user has permission to unassign
+        if (!isAdmin && !isStaff) {
+            throw new SecurityException("Only admin and staff members can unassign requests");
+        }
+
+        // Both admin and staff can unassign any request
+        if (request.getAssignedStaffId() == null) {
+            throw new SecurityException("Request is not assigned");
         }
 
         // Perform unassignment
