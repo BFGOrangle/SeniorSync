@@ -591,6 +591,35 @@ export function useRequest(requestId: number | null) {
     }
   }, [toast]);
 
+  const deleteRequest = useCallback(async (): Promise<boolean> => {
+    if (!requestId) return false;
+
+    try {
+      setLoading(true);
+      await requestManagementApiService.deleteRequest(requestId);
+      
+      toast({
+        title: 'Request Deleted',
+        description: 'The request has been successfully deleted.',
+      });
+
+      return true;
+    } catch (err) {
+      const apiError = err instanceof RequestApiError ? err : new RequestApiError(0, 'Unknown error', [{ message: 'Unknown error', timestamp: new Date().toISOString() }]);
+      setError(apiError);
+      
+      toast({
+        title: 'Error Deleting Request',
+        description: apiError.errors[0]?.message || 'Failed to delete request. Please try again.',
+        variant: 'destructive',
+      });
+
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [requestId, toast]);
+
   useEffect(() => {
     fetchRequest();
   }, [fetchRequest]);
@@ -601,6 +630,7 @@ export function useRequest(requestId: number | null) {
     error,
     spamDetectionPending,
     updateRequest,
+    deleteRequest,
     refetch: fetchRequest
   };
 }
