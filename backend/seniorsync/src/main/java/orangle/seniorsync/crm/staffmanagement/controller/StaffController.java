@@ -126,12 +126,13 @@ public class StaffController {
         }
     }
 
-    @Operation(summary = "Get all staff members", description = "Retrieves all staff members from admin's center only (Admin only)")
+    @Operation(summary = "Get all staff members", description = "Retrieves all staff members from user's center (Admin and Staff)")
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public ResponseEntity<Page<StaffResponseDto>> getAllStaff(
             @PageableDefault(size = 20) Pageable pageable) {
 
-        log.info("Retrieving all staff members for admin's center with pagination: {}", pageable);
+        log.info("Retrieving all staff members for user's center with pagination: {}", pageable);
 
         Page<StaffResponseDto> staffPage = staffManagementService.getAllStaff(pageable);
         return ResponseEntity.ok(staffPage);

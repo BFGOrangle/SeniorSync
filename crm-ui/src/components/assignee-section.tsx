@@ -28,9 +28,13 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
   const [isLoading, setIsLoading] = useState(false);
 
   const isAdmin = currentUser?.role === 'ADMIN';
+  const isStaff = currentUser?.role === 'STAFF';
   const isUnassigned = !request.assignedStaffId;
   const currentUserNumericId = currentUser ? parseInt(currentUser.id, 10) : undefined;
   const isAssignedToMe = currentUserNumericId !== undefined && request.assignedStaffId === currentUserNumericId;
+
+  // Both staff and admin can assign to any staff member
+  const canAssign = isAdmin || isStaff;
 
   const handleAssignToMe = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -74,25 +78,36 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
   if (isUnassigned) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        <StaffAssignmentDropdown
-          request={request}
-          onUpdate={onUpdate}
-          disabled={isLoading}
-          includeAssignToMe={true}
-          showUnassignOption={false}
-          useNameAsTrigger={true}
-          triggerContent={
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <User className="h-3 w-3 text-gray-400" />
+        {canAssign ? (
+          <StaffAssignmentDropdown
+            request={request}
+            onUpdate={onUpdate}
+            disabled={isLoading}
+            includeAssignToMe={true}
+            showUnassignOption={false}
+            useNameAsTrigger={true}
+            triggerContent={
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
+                  <User className="h-3 w-3 text-gray-400" />
+                </div>
+                <span className="text-xs text-gray-700 cursor-pointer">
+                  Unassigned
+                </span>
               </div>
-              <span className="text-xs text-gray-700 cursor-pointer">
-                Unassigned
-              </span>
+            }
+            tooltipText="Assign"
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center">
+              <User className="h-3 w-3 text-gray-400" />
             </div>
-          }
-          tooltipText="Assign"
-        />
+            <span className="text-xs text-gray-700">
+              Unassigned
+            </span>
+          </div>
+        )}
       </div>
     );
   }
@@ -100,27 +115,40 @@ export function AssigneeSection({ request, onUpdate, className }: AssigneeSectio
   // Assigned state
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <StaffAssignmentDropdown
-        request={request}
-        onUpdate={onUpdate}
-        disabled={isLoading}
-        includeAssignToMe={true}
-        showUnassignOption={isAdmin || isAssignedToMe}
-        useNameAsTrigger={true}
-        triggerContent={
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-blue-100 text-blue-700 font-medium">
-                {getInitials(request.assignedStaffName || "U")}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-gray-700 font-medium cursor-pointer">
-              {request.assignedStaffName}
-            </span>
-          </div>
-        }
-        tooltipText={isUnassigned ? "Assign" : "Reassign"}
-      />
+      {canAssign ? (
+        <StaffAssignmentDropdown
+          request={request}
+          onUpdate={onUpdate}
+          disabled={isLoading}
+          includeAssignToMe={true}
+          showUnassignOption={true} // Both staff and admin can unassign
+          useNameAsTrigger={true}
+          triggerContent={
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarFallback className="text-xs bg-blue-100 text-blue-700 font-medium">
+                  {getInitials(request.assignedStaffName || "U")}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-gray-700 font-medium cursor-pointer">
+                {request.assignedStaffName}
+              </span>
+            </div>
+          }
+          tooltipText={isUnassigned ? "Assign" : "Reassign"}
+        />
+      ) : (
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarFallback className="text-xs bg-blue-100 text-blue-700 font-medium">
+              {getInitials(request.assignedStaffName || "U")}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-xs text-gray-700 font-medium">
+            {request.assignedStaffName}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -57,8 +57,7 @@ public class RequestManagementController {
     /**
      * Assign or reassign a request to a staff member
      * Business rules enforced in service layer:
-     * - Admin can assign to anyone
-     * - Staff can only assign unassigned requests to themselves
+     * - Both Admin and Staff can assign any request to any staff member
      *
      * @param requestId the ID of the request to assign
      * @param assignRequestDto the assignment details
@@ -76,8 +75,7 @@ public class RequestManagementController {
     /**
      * Unassign a request (remove assignment)
      * Business rules enforced in service layer:
-     * - Admin can unassign any request
-     * - Staff can only unassign requests assigned to themselves
+     * - Both Admin and Staff can unassign any request
      *
      * @param requestId the ID of the request to unassign
      * @return updated SeniorRequestDto with HTTP 200
