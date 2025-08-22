@@ -25,10 +25,20 @@ interface RequestFilterOptions {
   requestType?: number[];
   assignedStaff?: number[];
   searchTerm?: string;
+  dueDate?: {
+    overdue?: boolean;
+    dueToday?: boolean;
+    dueThisWeek?: boolean;
+    noDueDate?: boolean;
+    dateRange?: {
+      from?: string;
+      to?: string;
+    };
+  };
 }
 
 interface RequestSortOption {
-  field: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName';
+  field: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName' | 'dueDate';
   direction: "asc" | "desc";
 }
 

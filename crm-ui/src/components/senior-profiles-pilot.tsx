@@ -53,7 +53,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Import our backend integration with pagination
-import { SeniorDto, SeniorFilterDto } from "@/types/senior"
+import { SeniorDto, SeniorFilterDto, UpdateSeniorDto } from "@/types/senior"
 import { useSeniorsPaginated, useSeniorForm, useLoadingStates } from "@/hooks/use-seniors"
 import { seniorUtils } from "@/services/senior-api"
 import { SeniorRequestsModal } from "@/components/senior-requests-modal"
@@ -149,16 +149,35 @@ export default function SeniorProfiles() {
     if (!createForm.isValid) return;
 
     setLoading('create', true);
-    // Pass the characteristics tags array to the conversion function
+    
+    // Create the senior with temporary lastName
     const result = await createSenior(createForm.toCreateDto(characteristicsTags));
-    setLoading('create', false);
-
+    
     if (result) {
+      // Update the lastName to use the auto-generated ID
+      const updateDto: UpdateSeniorDto = {
+        id: result.id,
+        firstName: result.firstName,
+        lastName: `SENIOR-${result.id}`,
+        dateOfBirth: result.dateOfBirth,
+        contactPhone: result.contactPhone,
+        contactEmail: result.contactEmail,
+        address: result.address,
+        careLevel: result.careLevel,
+        careLevelColor: result.careLevelColor,
+        characteristics: result.characteristics
+      };
+      
+      // Update the senior with the proper identifier
+      await updateSenior(updateDto);
+      
       createForm.reset();
       setCharacteristicsTags([]);
       setCurrentCharacteristicInput("");
       setIsCreateDialogOpen(false);
     }
+    
+    setLoading('create', false);
   };
 
   const handleEditSenior = async (e: React.FormEvent) => {
@@ -185,10 +204,16 @@ export default function SeniorProfiles() {
   const [newCareLevelColor, setNewCareLevelColor] = useState("#6b7280");
 
   useEffect(() => {
-  if (isCreateDialogOpen) {
-    createForm.updateField('firstName', 'SENIOR');
-  }
-}, [isCreateDialogOpen])
+    // Reset form when dialog opens
+    if (isCreateDialogOpen) {
+      createForm.reset();
+      // Set a temporary lastName to pass validation
+      createForm.updateField('lastName', 'TEMP');
+      setCharacteristicsTags([]);
+      setCurrentCharacteristicInput("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCreateDialogOpen]) // Intentionally excluding createForm to prevent infinite loop
 
   useEffect(() => {
   const savedCareLevels = localStorage.getItem("customCareLevels");
@@ -487,7 +512,7 @@ export default function SeniorProfiles() {
                     id="create-firstName"
                     value={createForm.formData.firstName}
                     onChange={(e) => createForm.updateField('firstName', e.target.value)}
-                    placeholder=""
+                    placeholder="Enter first name"
                     disabled={isLoading('create')}
                   />
                   {createForm.errors.firstName && createForm.touched.firstName && (
@@ -495,17 +520,15 @@ export default function SeniorProfiles() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-lastName">Last Name *</Label>
+                  <Label htmlFor="create-identifier">Identifier Number</Label>
                   <Input
-                    id="create-lastName"
-                    value={createForm.formData.lastName}
-                    onChange={(e) => createForm.updateField('lastName', e.target.value)}
-                    placeholder=""
-                    disabled={isLoading('create')}
+                    id="create-identifier"
+                    value="Will be auto-generated"
+                    placeholder="Auto-generated after creation"
+                    disabled={true}
+                    className="text-gray-500 bg-gray-50"
                   />
-                  {createForm.errors.lastName && createForm.touched.lastName && (
-                    <p className="text-sm text-red-600">{createForm.errors.lastName}</p>
-                  )}
+                  <p className="text-xs text-gray-500">The identifier will be automatically assigned when the profile is created</p>
                 </div>
               </div>
               {/* Care Level - Enhanced Version */}
@@ -743,7 +766,7 @@ export default function SeniorProfiles() {
                   {isLoading('create') ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
+                      Creating Profile...
                     </>
                   ) : (
                     'Create Profile'
@@ -1213,16 +1236,14 @@ export default function SeniorProfiles() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-lastName">Last name *</Label>
+                <Label htmlFor="edit-lastName">Identifier Number</Label>
                 <Input
                   id="edit-lastName"
-                  value={editForm.formData.lastName}
-                  onChange={(e) => editForm.updateField('lastName', e.target.value)}
-                  disabled={isLoading('update')}
+                  value={editingSenior?.id ? `SENIOR-${editingSenior.id}` : 'Auto-generated'}
+                  disabled={true}
+                  className="text-gray-500 bg-gray-50"
                 />
-                {editForm.errors.lastName && editForm.touched.lastName && (
-                  <p className="text-sm text-red-600">{editForm.errors.lastName}</p>
-                )}
+                <p className="text-xs text-gray-500">Identifier number is automatically assigned and cannot be changed</p>
               </div>
             </div>
 

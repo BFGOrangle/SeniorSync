@@ -32,6 +32,7 @@ import {
   ExternalLink,
   Filter,
   ChevronLeft,
+  AlertTriangle,
 } from "lucide-react";
 import { SeniorDto } from "@/types/senior";
 import { SeniorRequestDto } from "@/types/request";

@@ -41,15 +41,7 @@ export function SearchableSelect({
   const [search, setSearch] = React.useState("");
   const [filteredOptions, setFilteredOptions] =
     React.useState<SearchableSelectOption[]>(options);
-  const [triggerWidth, setTriggerWidth] = React.useState<number>(0);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
-
-  // Get trigger width for popover sizing
-  React.useEffect(() => {
-    if (triggerRef.current) {
-      setTriggerWidth(triggerRef.current.offsetWidth);
-    }
-  }, [open]);
 
   // Filter options based on search
   React.useEffect(() => {
@@ -82,8 +74,12 @@ export function SearchableSelect({
     } else {
       onValueChange?.(optionValue);
     }
-    setOpen(false);
-    setSearch("");
+    
+    // Small delay to ensure the selection is processed before closing
+    setTimeout(() => {
+      setOpen(false);
+      setSearch("");
+    }, 0);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -120,11 +116,24 @@ export function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0"
+        className="z-50 p-0 min-w-[var(--radix-popover-trigger-width)] w-full max-w-none pointer-events-auto"
         align="start"
-        style={{ width: triggerWidth }}
+        sideOffset={4}
+        avoidCollisions={true}
+        collisionPadding={10}
+        onInteractOutside={(e) => {
+          // Only close when clicking outside, not when interacting with content
+          const target = e.target as Element;
+          if (!target?.closest('[data-radix-popover-content]')) {
+            setOpen(false);
+          }
+        }}
       >
-        <div className="p-2">
+        <div 
+          className="p-2" 
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <Input
             placeholder={searchPlaceholder}
             value={search}
@@ -132,21 +141,33 @@ export function SearchableSelect({
             onKeyDown={handleKeyDown}
             className="mb-2"
             autoFocus
+            onMouseDown={(e) => e.stopPropagation()}
           />
-          <div className="max-h-60 overflow-y-auto">
+          <div 
+            className="max-h-60 overflow-y-auto overscroll-contain"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             {filteredOptions.length > 0 ? (
-              <div className="space-y-1">
+              <div 
+                className="space-y-1 p-1"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
                 {filteredOptions.map((option) => (
                   <div
                     key={option.value}
                     className={cn(
-                      "flex items-center space-x-2 rounded-md px-2 py-2 text-sm hover:bg-gray-100 cursor-pointer",
-                      value === option.value && "bg-gray-100",
-                      option.disabled && "opacity-50 cursor-not-allowed"
+                      "flex items-center space-x-2 rounded-md px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer select-none relative focus:bg-accent focus:text-accent-foreground",
+                      value === option.value && "bg-accent text-accent-foreground",
+                      option.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
                     )}
-                    onClick={() =>
-                      !option.disabled && handleSelect(option.value)
-                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!option.disabled) {
+                        handleSelect(option.value);
+                      }
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
                   >
                     <Check
                       className={cn(

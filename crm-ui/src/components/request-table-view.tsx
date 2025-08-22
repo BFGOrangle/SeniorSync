@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, Clock, Phone } from "lucide-react";
+import { ArrowUpDown, Clock, Phone, Calendar, AlertTriangle } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { SpamDetectionIndicator } from "@/components/spam-detection-indicator";
 import { cn } from "@/lib/utils";
@@ -91,6 +91,51 @@ export function RequestTableView({
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const formatDueDate = (dueDate: string | undefined) => {
+    if (!dueDate) return null;
+
+    const due = new Date(dueDate);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    
+    const diffTime = dueDay.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let label: string;
+    let colorClass: string;
+    let icon = Calendar;
+
+    if (diffDays < 0) {
+      label = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
+      colorClass = "text-red-600 bg-red-50 border-red-200";
+      icon = AlertTriangle;
+    } else if (diffDays === 0) {
+      label = "Due today";
+      colorClass = "text-orange-600 bg-orange-50 border-orange-200";
+      icon = AlertTriangle;
+    } else if (diffDays === 1) {
+      label = "Due tomorrow";
+      colorClass = "text-yellow-600 bg-yellow-50 border-yellow-200";
+    } else if (diffDays <= 7) {
+      label = `Due in ${diffDays} days`;
+      colorClass = "text-blue-600 bg-blue-50 border-blue-200";
+    } else {
+      label = formatDate(dueDate);
+      colorClass = "text-gray-600 bg-gray-50 border-gray-200";
+    }
+
+    const IconComponent = icon;
+
+    return {
+      label,
+      colorClass,
+      icon: IconComponent,
+      isUrgent: diffDays <= 1,
+      isOverdue: diffDays < 0,
+    };
   };
 
   const columns: ColumnDef<SeniorRequestDisplayView>[] = [
@@ -279,6 +324,56 @@ export function RequestTableView({
         return (
           <div className="group inline-flex items-center">
             <AssigneeSection request={request} onUpdate={onRequestUpdate} />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "dueDate",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8 p-0 hover:bg-transparent font-semibold text-gray-900"
+        >
+          Due Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const dueDate = row.getValue("dueDate") as string | undefined;
+        
+        if (!dueDate) {
+          return (
+            <div className="text-sm text-gray-400">
+              No due date
+            </div>
+          );
+        }
+
+        const dueDateInfo = formatDueDate(dueDate);
+        if (!dueDateInfo) {
+          return (
+            <div className="text-sm text-gray-400">
+              No due date
+            </div>
+          );
+        }
+
+        const IconComponent = dueDateInfo.icon;
+
+        return (
+          <div className="flex items-center gap-1">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs font-medium flex items-center gap-1",
+                dueDateInfo.colorClass
+              )}
+            >
+              <IconComponent className="h-3 w-3" />
+              {dueDateInfo.label}
+            </Badge>
           </div>
         );
       },

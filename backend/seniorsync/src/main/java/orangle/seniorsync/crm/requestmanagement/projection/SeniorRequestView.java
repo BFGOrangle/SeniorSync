@@ -28,5 +28,6 @@ public interface SeniorRequestView {
     OffsetDateTime getCreatedAt();
     OffsetDateTime getUpdatedAt();
     OffsetDateTime getCompletedAt();
+    OffsetDateTime getDueDate();
     RequestStatus getStatus();
 }
