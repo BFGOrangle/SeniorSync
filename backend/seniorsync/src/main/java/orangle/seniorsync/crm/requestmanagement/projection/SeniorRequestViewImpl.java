@@ -19,6 +19,7 @@ public record SeniorRequestViewImpl(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         OffsetDateTime completedAt,
+        OffsetDateTime dueDate,
         RequestStatus status
 ) implements SeniorRequestView {
     
@@ -51,6 +52,9 @@ public record SeniorRequestViewImpl(
     
     @Override
     public OffsetDateTime getCompletedAt() { return completedAt; }
+    
+    @Override
+    public OffsetDateTime getDueDate() { return dueDate; }
     
     @Override
     public RequestStatus getStatus() { return status; }

@@ -16,6 +16,7 @@ public record SeniorRequestDto(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         OffsetDateTime completedAt,
+        OffsetDateTime dueDate,
         RequestStatus status,
         String assignedStaffName,
         String requestTypeName,

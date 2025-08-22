@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
 
+import java.time.OffsetDateTime;
+
 public record UpdateSeniorRequestDto(
         @NotNull Long id,
         @NotBlank String title,
@@ -11,6 +13,7 @@ public record UpdateSeniorRequestDto(
         @NotNull Short priority,
         @NotNull RequestStatus status,
         Long assignedStaffId,
-        Long requestTypeId
+        Long requestTypeId,
+        OffsetDateTime dueDate
 ) {
 }

@@ -3,11 +3,14 @@ package orangle.seniorsync.crm.requestmanagement.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.OffsetDateTime;
+
 public record CreateSeniorRequestDto(
         @NotNull Long seniorId,
         @NotNull Long requestTypeId,
         @NotBlank String title,
         @NotBlank String description,
-        @NotNull Short priority
+        @NotNull Short priority,
+        OffsetDateTime dueDate // Optional due date
 ) {
 }

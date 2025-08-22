@@ -15,6 +15,7 @@ export interface SeniorRequestDto {
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
   completedAt?: string; // ISO string
+  dueDate?: string; // ISO string
   status: RequestStatus;
   assignedStaffName?: string; // Added to match backend DTO
   requestTypeName?: string; // for request name
@@ -31,6 +32,7 @@ export interface CreateSeniorRequestDto {
   title: string;
   description: string;
   priority: number; // 1-5 scale
+  dueDate?: string; // ISO string, optional
 }
 
 export interface UpdateSeniorRequestDto {
@@ -41,6 +43,7 @@ export interface UpdateSeniorRequestDto {
   status: RequestStatus;
   assignedStaffId?: number;
   requestTypeId?: number;
+  dueDate?: string; // ISO string, optional
 }
 
 export interface SeniorRequestFilterDto {
@@ -84,6 +87,7 @@ export interface SeniorRequestView {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  dueDate?: string; // ISO string
   status: RequestStatus;
 }
 

@@ -45,7 +45,8 @@ public class FinalizeRequestAction implements Action<String, String> {
                 draftRequest.getRequestTypeId(),
                 draftRequest.getTitle(),
                 draftRequest.getDescription(),
-                draftRequest.getPriority()
+                draftRequest.getPriority(),
+                null
         );
 
         var finalRequest = requestManagementService.createRequest(createDto);

@@ -349,6 +349,11 @@ export const seniorUtils = {
    * Get full name from senior data
    */
   getFullName(senior: SeniorDto | SeniorView): string {
+    // If lastName follows the "SENIOR-{ID}" pattern, show "FirstName (SENIOR-{ID})"
+    if (senior.lastName && senior.lastName.startsWith('SENIOR-')) {
+      return `${senior.firstName} (${senior.lastName})`;
+    }
+    // Fallback to original format for legacy data
     return `${senior.firstName} ${senior.lastName}`.trim();
   },
 

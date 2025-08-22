@@ -344,6 +344,17 @@ export const requestUtils = {
       requestType?: number[];
       assignedStaff?: number[];
       searchTerm?: string;
+      dueDate?: {
+        overdue?: boolean;
+        dueToday?: boolean;
+        dueThisWeek?: boolean;
+        noDueDate?: boolean;
+        // Phase 3: Advanced date range filtering
+        dateRange?: {
+          from?: string; // ISO date string
+          to?: string; // ISO date string
+        };
+      };
     }
   ): SeniorRequestDisplayView[] {
     return requests.filter(request => {
@@ -400,6 +411,76 @@ export const requestUtils = {
         }
       }
 
+      // Due date filter
+      if (filters.dueDate) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const weekFromNow = new Date(today);
+        weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+        let dueDateMatches = false;
+
+        // Check if request has no due date
+        if (filters.dueDate.noDueDate && !request.dueDate) {
+          dueDateMatches = true;
+        }
+
+        // Check due date conditions if request has a due date
+        if (request.dueDate) {
+          const dueDate = new Date(request.dueDate);
+          const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+          if (filters.dueDate.overdue && dueDateOnly < today) {
+            dueDateMatches = true;
+          }
+
+          if (filters.dueDate.dueToday && dueDateOnly.getTime() === today.getTime()) {
+            dueDateMatches = true;
+          }
+
+          if (filters.dueDate.dueThisWeek && dueDateOnly >= today && dueDateOnly <= weekFromNow) {
+            dueDateMatches = true;
+          }
+
+          // Phase 3: Date range filtering
+          if (filters.dueDate.dateRange) {
+            const { from, to } = filters.dueDate.dateRange;
+            
+            if (from && to) {
+              const fromDate = new Date(from);
+              const toDate = new Date(to);
+              toDate.setHours(23, 59, 59, 999); // Include the entire "to" date
+              
+              if (dueDateOnly >= fromDate && dueDateOnly <= toDate) {
+                dueDateMatches = true;
+              }
+            } else if (from) {
+              const fromDate = new Date(from);
+              if (dueDateOnly >= fromDate) {
+                dueDateMatches = true;
+              }
+            } else if (to) {
+              const toDate = new Date(to);
+              toDate.setHours(23, 59, 59, 999);
+              if (dueDateOnly <= toDate) {
+                dueDateMatches = true;
+              }
+            }
+          }
+        }
+
+        // If any due date filter is selected but none match, exclude this request
+        const hasDueDateFilters = filters.dueDate.overdue || filters.dueDate.dueToday || 
+                                 filters.dueDate.dueThisWeek || filters.dueDate.noDueDate ||
+                                 (filters.dueDate.dateRange?.from || filters.dueDate.dateRange?.to);
+        
+        if (hasDueDateFilters && !dueDateMatches) {
+          return false;
+        }
+      }
+
       return true;
     });
   },
@@ -409,7 +490,7 @@ export const requestUtils = {
    */
   sortRequests(
     requests: SeniorRequestDisplayView[],
-    sortBy: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName',
+    sortBy: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName' | 'dueDate',
     direction: 'asc' | 'desc' = 'desc'
   ): SeniorRequestDisplayView[] {
     return [...requests].sort((a, b) => {
@@ -430,6 +511,18 @@ export const requestUtils = {
           break;
         case 'seniorName':
           comparison = (a.seniorName || '').localeCompare(b.seniorName || '');
+          break;
+        case 'dueDate':
+          // Handle null/undefined due dates - put them at the end
+          if (!a.dueDate && !b.dueDate) {
+            comparison = 0;
+          } else if (!a.dueDate) {
+            comparison = 1; // a comes after b
+          } else if (!b.dueDate) {
+            comparison = -1; // a comes before b
+          } else {
+            comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+          }
           break;
         default:
           comparison = 0;

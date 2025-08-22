@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Clock, Eye, Star, TrendingUp, User, Calendar } from "lucide-react";
+import { Clock, Eye, Star, TrendingUp, User, Calendar, AlertTriangle } from "lucide-react";
 import { SeniorRequestDto } from "@/types/request";
 import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { cn } from "@/lib/utils";
@@ -86,6 +86,51 @@ export function RecommendedRequestCard({
     } catch {
       return dateString;
     }
+  };
+
+  const formatDueDate = (dueDate: string | undefined) => {
+    if (!dueDate) return null;
+
+    const due = new Date(dueDate);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    
+    const diffTime = dueDay.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let label: string;
+    let colorClass: string;
+    let icon = Calendar;
+
+    if (diffDays < 0) {
+      label = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
+      colorClass = "text-red-600 bg-red-50 border-red-200";
+      icon = AlertTriangle;
+    } else if (diffDays === 0) {
+      label = "Due today";
+      colorClass = "text-orange-600 bg-orange-50 border-orange-200";
+      icon = AlertTriangle;
+    } else if (diffDays === 1) {
+      label = "Due tomorrow";
+      colorClass = "text-yellow-600 bg-yellow-50 border-yellow-200";
+    } else if (diffDays <= 7) {
+      label = `Due in ${diffDays} days`;
+      colorClass = "text-blue-600 bg-blue-50 border-blue-200";
+    } else {
+      label = formatDate(dueDate);
+      colorClass = "text-gray-600 bg-gray-50 border-gray-200";
+    }
+
+    const IconComponent = icon;
+
+    return {
+      label,
+      colorClass,
+      icon: IconComponent,
+      isUrgent: diffDays <= 1,
+      isOverdue: diffDays < 0,
+    };
   };
 
   return (
@@ -191,6 +236,29 @@ export function RecommendedRequestCard({
               <Calendar className="h-3 w-3" />
               {formatDate(request.createdAt)}
             </div>
+
+            {/* Due Date */}
+            {request.dueDate && (
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const dueDateInfo = formatDueDate(request.dueDate);
+                  if (!dueDateInfo) return null;
+                  const IconComponent = dueDateInfo.icon;
+                  return (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-xs font-medium flex items-center gap-1",
+                        dueDateInfo.colorClass
+                      )}
+                    >
+                      <IconComponent className="h-3 w-3" />
+                      {dueDateInfo.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+            )}
             
             {/* Updated/Completed Date */}
             {request.completedAt ? (

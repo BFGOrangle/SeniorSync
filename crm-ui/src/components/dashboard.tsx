@@ -18,6 +18,7 @@ import {
 
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { AIRecommendationsWidget } from "@/components/ai-recommendations-widget";
+import { DueDateAnalyticsWidget } from "@/components/dashboard/due-date-analytics-widget";
 import { RefreshCw, Calendar, Plus } from "lucide-react";
 import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
 import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
@@ -142,19 +143,26 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* AI Recommendations Section */}
-      <AIRecommendationsWidget 
-        className="w-full" 
-        showAllRequests={mode === 'center'}
-        maxItems={6}
-        onViewAll={() => {
-          if (isAdmin && mode === 'center') {
-            window.location.href = '/admin/request-management/ai-recommendations';
-          } else {
-            window.location.href = '/staff/request-management/ai-recommendations';
-          }
-        }}
-      />
+      {/* Due Date Analytics Widget */}
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+        <DueDateAnalyticsWidget className="lg:col-span-1" />
+        
+        {/* AI Recommendations Section - now in grid */}
+        <div className="lg:col-span-2">
+          <AIRecommendationsWidget 
+            className="w-full h-full" 
+            showAllRequests={mode === 'center'}
+            maxItems={4}
+            onViewAll={() => {
+              if (isAdmin && mode === 'center') {
+                window.location.href = '/admin/request-management/ai-recommendations';
+              } else {
+                window.location.href = '/staff/request-management/ai-recommendations';
+              }
+            }}
+          />
+        </div>
+      </div>
 
       {/* Charts Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
