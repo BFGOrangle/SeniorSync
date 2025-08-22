@@ -185,7 +185,7 @@ public class StaffManagementService implements IStaffManagementService {
         log.info("Retrieving all staff members with pagination");
 
         // Only admins can view all staff, but restricted to their center
-        SecurityContextUtil.requireAdmin();
+//        SecurityContextUtil.requireAdmin();
         Long currentUserCenterId = userContextService.getRequestingUserCenterId();
 
         // Return staff only from admin's center

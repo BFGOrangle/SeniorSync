@@ -46,6 +46,7 @@ import { useRequestDetails } from "@/hooks/use-requests";
 import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
 import InitialsAvatar from "@/components/initials-avatar";
+import { AssigneeSection } from "@/components/assignee-section";
 import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
 
@@ -170,8 +171,8 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
   };
 
   // Determine if user can edit this request
-  const canEdit = isAdmin || 
-    (currentUser && editedRequest?.assignedStaffId === parseInt(currentUser.id));
+  // Both admin and staff can edit and delete requests
+  const canEdit = isAdmin || (currentUser?.role === 'STAFF');
 
   if (loading) {
     return (
@@ -242,8 +243,8 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
                 <Edit3 className="h-4 w-4 mr-1" />
                 Edit
               </Button>
-              {/* Only admins can delete requests */}
-              {isAdmin && (
+              {/* Both staff and admin can delete requests */}
+              {(isAdmin || currentUser?.role === 'STAFF') && (
                 <Button
                   size="sm"
                   variant="destructive"
@@ -513,10 +514,17 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="assignee">Assigned Staff</Label>
-              <div className="flex items-center gap-2">
-                <InitialsAvatar name={editedRequest.assignedStaffName || "Unassigned"}/>
-                <span>{editedRequest.assignedStaffName || "Unassigned"}</span>
-              </div>
+              <AssigneeSection 
+                request={editedRequest} 
+                onUpdate={(updatedRequest) => {
+                  setEditedRequest(updatedRequest);
+                  // If not in editing mode, auto-save the assignment
+                  if (!isEditing && updateRequest) {
+                    updateRequest(updatedRequest);
+                  }
+                }}
+                className="text-base"
+              />
             </div>
           </div>
 
