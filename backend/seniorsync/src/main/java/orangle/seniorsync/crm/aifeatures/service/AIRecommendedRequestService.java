@@ -11,6 +11,7 @@ import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,17 +31,20 @@ public class AIRecommendedRequestService extends AbstractCenterFilteredService<S
     private final SeniorRequestRepository seniorRequestRepository;
     private final SeniorRequestMapper seniorRequestMapper;
     private final LLMClient llmClient;
+    private final SanitiseRequestDetailsService sanitiseRequestDetailsService;
 
     public AIRecommendedRequestService(
             SeniorRequestRepository seniorRequestRepository,
             SeniorRequestMapper seniorRequestMapper,
             @Qualifier("claude") LLMClient llmClient,
-            IUserContextService userContextService
+            IUserContextService userContextService,
+            SanitiseRequestDetailsService sanitiseRequestDetailsService
     ) {
         super(userContextService);
         this.seniorRequestRepository = seniorRequestRepository;
         this.seniorRequestMapper = seniorRequestMapper;
         this.llmClient = llmClient;
+        this.sanitiseRequestDetailsService = sanitiseRequestDetailsService;
     }
 
     @Override
@@ -79,10 +83,12 @@ public class AIRecommendedRequestService extends AbstractCenterFilteredService<S
         prompt.append("Please rank the following senior care requests by priority based on urgency, severity, status and impact. ");
         prompt.append("Return the IDs in order of highest to lowest priority:\n\n");
         for(SeniorRequest request : seniorRequests) {
+            String requestDetails = request.getDescription();
+            String sanitisedDescription = sanitiseRequestDetailsService.sanitise(requestDetails);
             prompt.append(String.format("ID: %d, Type: %s, Description: %s, Status: %s\n",
                     request.getId(),
                     request.getRequestTypeId(),
-                    request.getDescription(),
+                    sanitisedDescription,
                     request.getStatus()));
         }
 
@@ -104,7 +110,7 @@ public class AIRecommendedRequestService extends AbstractCenterFilteredService<S
             log.info("LLM Response: {}", llmResponse);
             log.info("Original requests: {}", originalRequests);
             String[] rankedIds = llmResponse.trim().split(",");
-            log.info("Ranked Ids: {}", java.util.Arrays.toString(rankedIds));
+            log.info("Ranked Ids: {}", Arrays.toString(rankedIds));
             List<SeniorRequestDto> rankedRequests = new ArrayList<>();
             List<Long> processedIds = new ArrayList<>();
 

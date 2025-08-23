@@ -114,6 +114,35 @@
 			<artifactId>netty-codec-http2</artifactId>
 			<!-- no version: comes from the BOM (4.1.124.Final) -->
 		</dependency>
+
+		<!-- JAXB dependencies required for Stanford CoreNLP on Java 9+ -->
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>2.3.8</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.activation</groupId>
+			<artifactId>activation</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>4.5.6</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>4.5.6</version>
+			<classifier>models</classifier>
+		</dependency>
 	</dependencies>
 
 	<build>
