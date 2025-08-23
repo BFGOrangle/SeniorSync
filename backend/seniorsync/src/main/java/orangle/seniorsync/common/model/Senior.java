@@ -45,11 +45,9 @@ public class Senior {
     @Column(name = "address", length = Integer.MAX_VALUE)
     private String address;
 
-    @Column(name = "care_level")
-    private String careLevel;
-
-    @Column(name = "care_level_color", length = 7)
-    private String careLevelColor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "care_level_id")
+    private CareLevel careLevel;
 
     @Column(name = "characteristics")
     @JdbcTypeCode(SqlTypes.JSON)

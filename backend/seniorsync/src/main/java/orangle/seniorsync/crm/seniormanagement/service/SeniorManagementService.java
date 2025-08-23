@@ -97,8 +97,7 @@ public class SeniorManagementService extends AbstractCenterFilteredService<Senio
                     SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
                     SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
                     SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
-                    SeniorSpecs.hasCareLevel(filter.careLevel()),           
-                    SeniorSpecs.hasCareLevelColor(filter.careLevelColor()), 
+                    SeniorSpecs.hasCareLevelId(filter.careLevelId()),
                     SeniorSpecs.hasCharacteristics(filter.characteristics()) 
             );
         }
@@ -153,8 +152,7 @@ public class SeniorManagementService extends AbstractCenterFilteredService<Senio
                     SeniorSpecs.hasContactPhoneLike(filter.contactPhone()),
                     SeniorSpecs.hasContactEmailLike(filter.contactEmail()),
                     SeniorSpecs.dateOfBirthBetween(filter.minDateOfBirth(), filter.maxDateOfBirth()),
-                    SeniorSpecs.hasCareLevel(filter.careLevel()),
-                    SeniorSpecs.hasCareLevelColor(filter.careLevelColor()),
+                    SeniorSpecs.hasCareLevelId(filter.careLevelId()),
                     SeniorSpecs.hasCharacteristics(filter.characteristics())
             );
         }
@@ -173,8 +171,7 @@ public class SeniorManagementService extends AbstractCenterFilteredService<Senio
                 (filter.contactEmail() == null || filter.contactEmail().trim().isEmpty()) &&
                 filter.minDateOfBirth() == null &&
                 filter.maxDateOfBirth() == null &&
-                (filter.careLevel() == null || filter.careLevel().trim().isEmpty()) &&
-                (filter.careLevelColor() == null || filter.careLevelColor().trim().isEmpty()) &&
+                filter.careLevelId() == null &&
                 (filter.characteristics() == null || filter.characteristics().length == 0);
     }
 

@@ -15,6 +15,7 @@ import {
   seniorUtils 
 } from '@/services/senior-api';
 import { useToast } from '@/hooks/use-toast';
+import { CareLevelDto } from '@/types/care-level';
 
 // Hook for paginated seniors with filtering
 export function useSeniorsPaginated(initialFilter?: SeniorFilterDto) {
@@ -312,7 +313,7 @@ export function useSeniors(initialFilter?: SeniorFilterDto) {
 }
 
 // Hook for form state management with validation
-export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
+export function useSeniorForm(initialData?: Partial<CreateSeniorDto>, careLevels: CareLevelDto[] = []) {
   const [formData, setFormData] = useState({
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
@@ -320,8 +321,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
     contactPhone: initialData?.contactPhone || '',
     contactEmail: initialData?.contactEmail || '',
     address: initialData?.address || '',
-    careLevel: initialData?.careLevel || '',
-    careLevelColor: initialData?.careLevelColor || '#6b7280',
+    careLevelId: initialData?.careLevelId,
     characteristics: typeof initialData?.characteristics === 'string' ? initialData?.characteristics : '',
   });
 
@@ -350,8 +350,13 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
     return newErrors;
   }, []);
 
+  // Update the updateField function to handle number conversion for careLevelId
   const updateField = useCallback((field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'careLevelId') {
+      setFormData(prev => ({ ...prev, [field]: value ? Number(value) : null }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
     setTouched(prev => ({ ...prev, [field]: true }));
   }, []);
 
@@ -372,8 +377,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>) {
       contactPhone: newData?.contactPhone || '',
       contactEmail: newData?.contactEmail || '',
       address: newData?.address || '',
-      careLevel: newData?.careLevel || '',
-      careLevelColor: newData?.careLevelColor || '#6b7280',
+      careLevelId: newData?.careLevelId,
       characteristics: typeof newData?.characteristics === 'string' ? newData?.characteristics : '',
     });
     setErrors({});

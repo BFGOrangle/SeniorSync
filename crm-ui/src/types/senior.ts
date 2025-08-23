@@ -9,8 +9,7 @@ export interface SeniorFilterDto extends Pageable {
   contactPhone?: string | null;
   contactEmail?: string | null;
   characteristics?: string[] | null;
-  careLevel?: string | null;
-  careLevelColor?: string | null;
+  careLevelId?: number | null;
 }
 
 // Search parameters with pagination
@@ -30,8 +29,7 @@ export interface SeniorDto {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
-  careLevel: string | null;
-  careLevelColor: string | null;
+  careLevelId: number | null;
   characteristics: string[] | null;
   createdAt: string; // ISO datetime string
   updatedAt: string; // ISO datetime string
@@ -44,8 +42,7 @@ export interface CreateSeniorDto {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
-  careLevel: string | null;
-  careLevelColor: string | null;
+  careLevelId: number | null;
   characteristics: string[] | null;
 }
 
@@ -57,8 +54,7 @@ export interface UpdateSeniorDto {
   contactPhone: string | null;
   contactEmail: string | null;
   address: string | null;
-  careLevel: string | null;
-  careLevelColor: string | null;
+  careLevelId: number | null;
   characteristics: string[] | null;
 }
 
