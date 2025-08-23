@@ -115,14 +115,14 @@ resource "aws_cognito_user_pool_client" "client" {
     "ALLOW_CUSTOM_AUTH"
   ]
 
-  # Enable MFA settings for the client - shorter token lifetimes for security
-  access_token_validity = 2
-  id_token_validity = 2
-  refresh_token_validity = 7
+  # Token validity settings optimized for security
+  access_token_validity = 30
+  id_token_validity = 30
+  refresh_token_validity = 1
 
   token_validity_units {
-    access_token  = "hours"
-    id_token      = "hours"
+    access_token  = "minutes"
+    id_token      = "minutes" 
     refresh_token = "days"
   }
 
