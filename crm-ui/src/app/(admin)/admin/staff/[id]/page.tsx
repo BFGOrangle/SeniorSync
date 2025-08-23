@@ -12,9 +12,9 @@ import {
   User,
   UserCheck,
   UserX,
-  Clock,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Building
 } from 'lucide-react';
 import { useStaff, useStaffManagement } from '@/hooks/use-staff';
 import { useCurrentUser } from '@/contexts/user-context';
@@ -43,7 +43,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { StaffFormDialog } from '@/components/staff-form-dialog';
 import { 
-  StaffDisplayView, 
   StaffUtils, 
   ROLE_TYPE_DISPLAY 
 } from '@/types/staff';
@@ -277,16 +276,6 @@ export default function StaffProfilePage() {
                   </p>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Last Login</p>
-                  <p className="text-sm text-muted-foreground">
-                    {displayStaff.lastLoginDisplay}
-                  </p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -298,7 +287,7 @@ export default function StaffProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-3">
-              <Shield className="h-5 w-5 text-muted-foreground" />
+              <Building className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Center</p>
                 <p className="text-sm text-muted-foreground">

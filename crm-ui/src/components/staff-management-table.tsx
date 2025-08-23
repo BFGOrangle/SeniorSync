@@ -13,7 +13,6 @@ import {
   UserX,
   Mail,
   Phone,
-  Calendar,
   Shield,
   User
 } from 'lucide-react';
@@ -404,15 +403,6 @@ export function StaffManagementTable({ className }: StaffManagementTableProps) {
                       <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     )}
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('lastLoginDisplay')}
-                  >
-                    Last Login
-                    {sortBy === 'lastLoginDisplay' && (
-                      <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -423,7 +413,7 @@ export function StaffManagementTable({ className }: StaffManagementTableProps) {
                       <div className="flex items-center justify-center space-x-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                         <span>Loading staff members...</span>
-                      </div>
+                      </div>Job
                     </TableCell>
                   </TableRow>
                 ) : filteredStaff.length === 0 ? (
@@ -480,12 +470,6 @@ export function StaffManagementTable({ className }: StaffManagementTableProps) {
                         <Badge variant={getStatusBadgeVariant(member.isActive)}>
                           {member.isActive ? 'Active' : 'Inactive'}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {member.lastLoginDisplay}
-                        </div>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

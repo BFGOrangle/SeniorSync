@@ -7,13 +7,10 @@ import { useCurrentUser } from "@/contexts/user-context";
 import {
   FileText,
   Users,
-  Settings,
   HeartHandshake,
   Layout,
   LogOut,
-  Brain,
   UserCog,
-  UserCircle,
   ChevronDown,
   ClipboardList,
   Sparkles,

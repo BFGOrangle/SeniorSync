@@ -12,9 +12,8 @@ import {
   TrendingUp,
   CheckCircle,
   ArrowRight,
-  Building2,
-  Phone,
-  Mail
+  Mail,
+  HeartHandshake
 } from "lucide-react";
 import Link from "next/link";
 import { Route } from "@/enums/Route";
@@ -68,7 +67,7 @@ export default function LandingPage() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-blue-600" />
+            <HeartHandshake className="h-8 w-8 text-blue-600" />
             <span className="text-2xl font-bold text-gray-900">SeniorSync</span>
             <Badge variant="secondary" className="ml-2">For Vendors</Badge>
           </div>
@@ -211,7 +210,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Building2 className="h-6 w-6 text-blue-400" />
+                <HeartHandshake className="h-6 w-6 text-blue-400" />
                 <span className="text-xl font-bold">SeniorSync</span>
               </div>
               <p className="text-gray-400">
