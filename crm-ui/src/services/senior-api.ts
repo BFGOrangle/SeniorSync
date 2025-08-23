@@ -242,8 +242,7 @@ export class SeniorApiService {
     if (filter.minDateOfBirth) body.minDateOfBirth = filter.minDateOfBirth;
     if (filter.maxDateOfBirth) body.maxDateOfBirth = filter.maxDateOfBirth;
     if (filter.characteristics) body.characteristics = filter.characteristics;
-    if (filter.careLevel) body.careLevel = filter.careLevel;
-    if (filter.careLevelColor) body.careLevelColor = filter.careLevelColor;
+    if (filter.careLevelId) body.careLevelId = filter.careLevelId;
     
     return body;
   }
@@ -265,8 +264,7 @@ export const seniorUtils = {
       contactPhone: string;
       contactEmail: string;
       address: string;
-      careLevel: string;
-      careLevelColor: string;
+      careLevelId: number;
       characteristics: string;
     },
     characteristicsTags: string[] = [] // Add this parameter
@@ -278,8 +276,7 @@ export const seniorUtils = {
       contactPhone: formData.contactPhone.trim() || null,
       contactEmail: formData.contactEmail.trim() || null,
       address: formData.address.trim() || null,
-      careLevel: formData.careLevel.trim() || null,
-      careLevelColor: formData.careLevelColor || null,
+      careLevelId: formData.careLevelId || null,
       // Use the characteristicsTags parameter instead of parsing the string
       characteristics: characteristicsTags.length > 0 ? characteristicsTags : null,
     };
@@ -296,8 +293,7 @@ export const seniorUtils = {
       contactPhone: string;
       contactEmail: string;
       address: string;
-      careLevel: string;
-      careLevelColor: string;
+      careLevelId: number;
       characteristics: string;
     },
     id: number,
@@ -311,8 +307,7 @@ export const seniorUtils = {
       contactPhone: formData.contactPhone.trim() || null,
       contactEmail: formData.contactEmail.trim() || null,
       address: formData.address.trim() || null,
-      careLevel: formData.careLevel.trim() || null,
-      careLevelColor: formData.careLevelColor || null,
+      careLevelId: formData.careLevelId || null,
       // Use the characteristicsTags parameter instead of parsing the string
       characteristics: characteristicsTags.length > 0 ? characteristicsTags : null,
     };
@@ -328,8 +323,7 @@ export const seniorUtils = {
     contactPhone: string;
     contactEmail: string;
     address: string;
-    careLevel: string;
-    careLevelColor: string;
+    careLevelId: number;
     characteristics: string;
   } {
     return {
@@ -339,8 +333,7 @@ export const seniorUtils = {
       contactPhone: senior.contactPhone || '',
       contactEmail: senior.contactEmail || '',
       address: senior.address || '',
-      careLevel: senior.careLevel || '',
-      careLevelColor: senior.careLevelColor || '#6b7280',
+      careLevelId: senior.careLevelId || null,
       characteristics: senior.characteristics?.join(', ') || '',
     };
   },

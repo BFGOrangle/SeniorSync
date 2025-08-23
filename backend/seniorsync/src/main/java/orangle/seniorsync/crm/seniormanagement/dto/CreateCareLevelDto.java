@@ -4,12 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-
 /**
- * Response DTO for care level information
+ * DTO for creating a new care level
  */
-public record CareLevelDto(
-        Long id,
+public record CreateCareLevelDto(
         @NotBlank(message = "Care level name is required")
         @Size(max = 50, message = "Care level name must not exceed 50 characters")
         String careLevel,

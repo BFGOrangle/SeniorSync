@@ -55,6 +55,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 // Import our backend integration with pagination
 import { SeniorDto, SeniorFilterDto } from "@/types/senior"
 import { useSeniorsPaginated, useSeniorForm, useLoadingStates } from "@/hooks/use-seniors"
+import { useCareLevels } from "@/hooks/use-care-levels"
 import { seniorUtils } from "@/services/senior-api"
 import { SeniorRequestsModal } from "@/components/senior-requests-modal"
 import { Badge } from "@/components/ui/badge"
@@ -84,6 +85,16 @@ export default function SeniorProfiles() {
   });
 
   const { setLoading, isLoading } = useLoadingStates();
+
+  // Care levels from API
+  const { 
+    careLevels: allCareLevels, 
+    loading: careLevelsLoading, 
+    error: careLevelsError,
+    createCareLevel: createApiCareLevel,
+    refreshCareLevels,
+    isValidating: careLevelsValidating
+  } = useCareLevels();
 
   // UI state
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -150,7 +161,7 @@ export default function SeniorProfiles() {
 
     setLoading('create', true);
     // Pass the characteristics tags array to the conversion function
-    const result = await createSenior(createForm.toCreateDto(characteristicsTags));
+    const result = await createSenior(createForm.toCreateDto(characteristicsTags));    
     setLoading('create', false);
 
     if (result) {
@@ -178,28 +189,16 @@ export default function SeniorProfiles() {
     }
   };
 
-  // Add state for managing custom care levels
-  const [customCareLevels, setCustomCareLevels] = useState<Array<{ name: string; color: string }>>([]);
+  // State for adding custom care levels
   const [isAddingCustomCareLevel, setIsAddingCustomCareLevel] = useState(false);
   const [newCareLevelName, setNewCareLevelName] = useState("");
   const [newCareLevelColor, setNewCareLevelColor] = useState("#6b7280");
 
   useEffect(() => {
-  if (isCreateDialogOpen) {
-    createForm.updateField('firstName', 'SENIOR');
-  }
-}, [isCreateDialogOpen])
-
-  useEffect(() => {
-  const savedCareLevels = localStorage.getItem("customCareLevels");
-  if (savedCareLevels) {
-    try {
-      setCustomCareLevels(JSON.parse(savedCareLevels));
-    } catch (e) {
-      console.error("Failed to parse custom care levels from localStorage", e);
+    if (isCreateDialogOpen) {
+      createForm.updateField('firstName', 'SENIOR');
     }
-  }
-}, []);
+  }, [isCreateDialogOpen]);
 
 
   // Function to open requests modal for a senior
@@ -263,30 +262,14 @@ export default function SeniorProfiles() {
     
     // Add care level filter
     if (selectedCareLevel !== "all") {
-      filter.careLevel = selectedCareLevel;
-    } else {
-      filter.careLevel = undefined;
-    }
-    
-    // Add care level color filter (if needed)
-    if (selectedCareLevelColor !== "all") {
-      filter.careLevelColor = selectedCareLevelColor;
+      const selectedLevel = allCareLevels.find(level => level.careLevel === selectedCareLevel);
+      filter.careLevelId = selectedLevel?.id;
     }
 
       applyFilter(filter);
     };
 
   // (Removed unused uniqueCharacteristics variable)
-
-  // Care levels
-  const CARE_LEVEL = [
-    { name: 'LOW', color: '#22c55e' },
-    { name: 'MEDIUM', color: '#eab308' },
-    { name: 'HIGH', color: '#f97316' },
-    { name: 'CRITICAL', color: '#ef4444' },
-    { name: 'INDEPENDENT', color: '#3b82f6' },
-    { name: 'SUPERVISED', color: '#8b5cf6' }
-  ];
 
   // Clear all filters
   const handleClearFilters = () => {
@@ -323,31 +306,24 @@ export default function SeniorProfiles() {
     setSelectedCharacteristics(prev => prev.filter(char => char !== charToRemove));
   };
 
-  // Function to add custom care level
-  const addCustomCareLevel = () => {
-    const trimmedName = newCareLevelName.trim().toUpperCase();
+  // Function to add custom care level via API
+  const addCustomCareLevel = async () => {
+    const trimmedName = newCareLevelName.trim();
+    
+    if (!trimmedName) return;
 
-    const exists = CARE_LEVEL.some(level => level.name === trimmedName) ||
-                  customCareLevels.some(level => level.name === trimmedName);
-
-    if (trimmedName && !exists) {
-      const newLevel = { name: trimmedName, color: newCareLevelColor };
-      const updatedLevels = [...customCareLevels, newLevel];
-      setCustomCareLevels(updatedLevels);
-      localStorage.setItem("customCareLevels", JSON.stringify(updatedLevels));
-
+    const newLevel = await createApiCareLevel(trimmedName, newCareLevelColor);
+    
+    if (newLevel) {
+      // Clear form
       setNewCareLevelName("");
       setNewCareLevelColor("#6b7280");
       setIsAddingCustomCareLevel(false);
 
-      createForm.updateField("careLevel", newLevel.name);
-      createForm.updateField("careLevelColor", newLevel.color);
+      // Set as selected in create form
+      createForm.updateField("careLevelId", newLevel.id.toString());
     }
   };
-
-
-  // Combined care levels (default + custom)
-  const allCareLevels = [...CARE_LEVEL, ...customCareLevels];
 
   // Pagination component
   const PaginationControls = () => {
@@ -514,25 +490,37 @@ export default function SeniorProfiles() {
                 
                 {/* Existing Care Level Options */}
                 <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">Select from existing options:</div>
+                  <div className="text-sm text-muted-foreground">
+                    Select from existing options:
+                    {careLevelsLoading && (
+                      <span className="ml-2 text-xs text-blue-600">
+                        <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                        Loading care levels...
+                      </span>
+                    )}
+                    {careLevelsError && (
+                      <span className="ml-2 text-xs text-red-600">
+                        Error loading care levels
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {allCareLevels.map(preset => (
+                    {allCareLevels.map(careLevel => (
                       <button
-                        key={preset.name}
+                        key={careLevel.id}
                         type="button"
                         className={`px-3 py-1 text-sm rounded-full text-white transition-all ${
-                          createForm.formData.careLevel === preset.name 
+                          createForm.formData.careLevelId === careLevel.id 
                             ? 'ring-2 ring-offset-2 ring-gray-800 scale-105' 
                             : 'hover:scale-105'
                         }`}
-                        style={{ backgroundColor: preset.color }}
+                        style={{ backgroundColor: careLevel.careLevelColor }}
                         onClick={() => {
-                          createForm.updateField('careLevel', preset.name);
-                          createForm.updateField('careLevelColor', preset.color);
+                          createForm.updateField('careLevelId', careLevel.id.toString());
                         }}
                         disabled={isLoading('create')}
                       >
-                        {preset.name}
+                        {careLevel.careLevel}
                       </button>
                     ))}
                   </div>
@@ -602,10 +590,17 @@ export default function SeniorProfiles() {
                           type="button"
                           size="sm"
                           onClick={addCustomCareLevel}
-                          disabled={!newCareLevelName.trim()}
+                          disabled={!newCareLevelName.trim() || careLevelsValidating}
                           className="h-8"
                         >
-                          Add Level
+                          {careLevelsValidating ? (
+                            <>
+                              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                              Adding...
+                            </>
+                          ) : (
+                            'Add Level'
+                          )}
                         </Button>
                         <Button
                           type="button"
@@ -657,14 +652,14 @@ export default function SeniorProfiles() {
                 </div> */}
 
                 {/* Current Selection Display */}
-                {createForm.formData.careLevel && (
+                {createForm.formData.careLevelId && (
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Current selection:</div>
                     <div
                       className="inline-block px-3 py-1 text-sm rounded-full text-white"
-                      style={{ backgroundColor: createForm.formData.careLevelColor || '#6b7280' }}
+                      style={{ backgroundColor: allCareLevels.find(level => level.id === createForm.formData.careLevelId)?.careLevelColor || '#6b7280' }}
                     >
-                      {createForm.formData.careLevel}
+                      {allCareLevels.find(level => level.id === createForm.formData.careLevelId)?.careLevel}
                     </div>
                   </div>
                 )}
@@ -835,20 +830,20 @@ export default function SeniorProfiles() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Care Levels</SelectItem>
-                  {allCareLevels.map(level => (
-                    <SelectItem key={level.name} value={level.name}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: level.color }}
-                        />
-                        {level.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                                  <SelectContent>
+                    <SelectItem value="all">All Care Levels</SelectItem>
+                    {allCareLevels.map(level => (
+                      <SelectItem key={level.id} value={level.careLevel}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: level.careLevelColor }}
+                          />
+                          {level.careLevel}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
               </Select>
             </div>
 
@@ -927,11 +922,6 @@ export default function SeniorProfiles() {
               <Card 
                 key={senior.id} 
                 className={`hover:shadow-lg transition-shadow cursor-pointer`}
-                style={{ 
-                  backgroundColor: senior.careLevelColor || '#ffffff',
-                  // Add semi-transparency to keep text readable
-                  background: `linear-gradient(135deg, ${senior.careLevelColor || '#ffffff'}20, ${senior.careLevelColor || '#ffffff'}40)`
-                }}
                 onClick={() => handleViewRequests(senior)}
               >
                 <CardHeader className="pb-3">
@@ -1070,13 +1060,13 @@ export default function SeniorProfiles() {
                     <TableCell>{senior.contactPhone || 'N/A'}</TableCell>
                     <TableCell>{senior.contactEmail || 'N/A'}</TableCell>
                     <TableCell>
-                      {senior.careLevel ? (
+                      {senior.careLevelId ? (
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: senior.careLevelColor || '#6b7280' }}
+                            style={{ backgroundColor: allCareLevels.find(level => level.id === senior.careLevelId)?.careLevelColor || '#6b7280' }}
                           />
-                          <span className="text-sm">{senior.careLevel}</span>
+                          <span className="text-sm">{allCareLevels.find(level => level.id === senior.careLevelId)?.careLevel}</span>
                         </div>
                       ) : (
                         'N/A'
@@ -1229,38 +1219,45 @@ export default function SeniorProfiles() {
             <div className="space-y-3">
               <Label>Care Level</Label>
               <div className="space-y-2">
-                <div className="text-sm text-muted-foreground">Select from existing options:</div>
+                <div className="text-sm text-muted-foreground">
+                  Select from existing options:
+                  {careLevelsLoading && (
+                    <span className="ml-2 text-xs text-blue-600">
+                      <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                      Loading...
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {allCareLevels.map(preset => (
+                  {allCareLevels.map(careLevel => (
                     <button
-                      key={preset.name}
+                      key={careLevel.id}
                       type="button"
                       className={`px-3 py-1 text-sm rounded-full text-white transition-all ${
-                        editForm.formData.careLevel === preset.name 
+                        editForm.formData.careLevelId === careLevel.id 
                           ? 'ring-2 ring-offset-2 ring-gray-800 scale-105' 
                           : 'hover:scale-105'
                       }`}
-                      style={{ backgroundColor: preset.color }}
+                      style={{ backgroundColor: careLevel.careLevelColor }}
                       onClick={() => {
-                        editForm.updateField('careLevel', preset.name);
-                        editForm.updateField('careLevelColor', preset.color);
+                        editForm.updateField('careLevelId', careLevel.id.toString());
                       }}
                       disabled={isLoading('update')}
                     >
-                      {preset.name}
+                      {careLevel.careLevel}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {editForm.formData.careLevel && (
+              {editForm.formData.careLevelId && (
                 <div className="space-y-1">
                   <div className="text-sm text-muted-foreground">Current selection:</div>
                   <div
                     className="inline-block px-3 py-1 text-sm rounded-full text-white"
-                    style={{ backgroundColor: editForm.formData.careLevelColor || '#6b7280' }}
+                    style={{ backgroundColor: allCareLevels.find(level => level.id === editForm.formData.careLevelId)?.careLevelColor || '#6b7280' }}
                   >
-                    {editForm.formData.careLevel}
+                    {allCareLevels.find(level => level.id === editForm.formData.careLevelId)?.careLevel}
                   </div>
                 </div>
               )}

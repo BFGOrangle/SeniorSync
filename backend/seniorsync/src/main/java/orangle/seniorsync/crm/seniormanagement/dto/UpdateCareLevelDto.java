@@ -1,15 +1,17 @@
 package orangle.seniorsync.crm.seniormanagement.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-
 /**
- * Response DTO for care level information
+ * DTO for updating an existing care level
  */
-public record CareLevelDto(
+public record UpdateCareLevelDto(
+        @NotNull(message = "Care level ID is required")
         Long id,
+        
         @NotBlank(message = "Care level name is required")
         @Size(max = 50, message = "Care level name must not exceed 50 characters")
         String careLevel,
