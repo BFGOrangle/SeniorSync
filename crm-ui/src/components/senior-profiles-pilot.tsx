@@ -956,6 +956,10 @@ export default function SeniorProfiles() {
                 key={senior.id} 
                 className={`hover:shadow-lg transition-shadow cursor-pointer`}
                 onClick={() => handleViewRequests(senior)}
+                style={{ 
+                  backgroundColor: allCareLevels.find(level => level.id === senior.careLevelId)?.careLevelColor ,
+                  background: `linear-gradient(135deg, ${allCareLevels.find(level => level.id === senior.careLevelId)?.careLevelColor}20, ${allCareLevels.find(level => level.id === senior.careLevelId)?.careLevelColor}40)`
+                 }}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
