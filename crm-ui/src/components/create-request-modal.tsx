@@ -37,6 +37,7 @@ import { CreateSeniorRequestDto } from "@/types/request";
 import { SeniorDto } from "@/types/senior";
 import { RequestManagementApiService } from "@/services/request-api";
 import { seniorApiService } from "@/services/senior-api";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 // Hardcoded request types from database migration
 const REQUEST_TYPES = [
@@ -133,6 +134,13 @@ const createRequestSchema = z.object({
     .number()
     .min(1)
     .max(5, { message: "Priority must be between 1 and 5" }),
+  dueDate: z
+    .string()
+    .optional()
+    .refine(
+      (date) => !date || new Date(date) > new Date(),
+      { message: "Due date must be in the future" }
+    ),
 });
 
 type CreateRequestFormData = z.infer<typeof createRequestSchema>;
@@ -157,7 +165,11 @@ export function CreateRequestModal({
   const form = useForm<CreateRequestFormData>({
     resolver: zodResolver(createRequestSchema),
     defaultValues: {
-      priority: 3, // Default to medium priority
+      seniorId: undefined,
+      requestTypeId: undefined,
+      priority: 3,
+      dueDate: new Date().toISOString(),
+
     },
   });
 
@@ -198,6 +210,7 @@ export function CreateRequestModal({
         title: data.title,
         description: data.description,
         priority: data.priority,
+        dueDate: data.dueDate || undefined,
       };
 
       await requestApi.createRequest(createDto);
@@ -290,7 +303,6 @@ export function CreateRequestModal({
                   </FormItem>
                 )}
               />
-
               {/* Request Type */}
               <FormField
                 control={form.control}
@@ -392,6 +404,34 @@ export function CreateRequestModal({
                   </FormItem>
                 )}
               />
+              
+
+              {/* Due Date */}
+              
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due Date (Optional)</FormLabel>
+                    <FormControl>
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={(value) => {
+                          console.log("Form received value from DateTimePicker:", value);
+                          field.onChange(value);
+                        }}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <p className="text-sm text-gray-500">
+                      When should this request be completed?
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
 
               {/* Submit Buttons */}
               <div className="flex justify-end space-x-3 pt-4">

@@ -195,6 +195,7 @@ export function useRequestManagement() {
         status: RequestUtils.frontendToBackendStatus(updatedRequest.frontendStatus),
         assignedStaffId: updatedRequest.assignedStaffId,
         requestTypeId: updatedRequest.requestTypeId,
+        dueDate: updatedRequest.dueDate,
       };
 
       const updated = await requestManagementApiService.updateRequest(updateDto);
@@ -298,8 +299,14 @@ export function useRequestManagement() {
       requestType?: number[];
       assignedStaff?: number[];
       searchTerm?: string;
+      dueDate?: {
+        overdue?: boolean;
+        dueToday?: boolean;
+        dueThisWeek?: boolean;
+        noDueDate?: boolean;
+      };
     },
-    sortBy: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName' = 'createdAt',
+    sortBy: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName' | 'dueDate' = 'createdAt',
     sortDirection: 'asc' | 'desc' = 'desc'
   ) => {
     const filtered = requestUtils.filterRequests(requests, filters);
@@ -541,6 +548,7 @@ export function useRequest(requestId: number | null) {
         status: RequestUtils.frontendToBackendStatus(updatedRequest.frontendStatus),
         assignedStaffId: updatedRequest.assignedStaffId,
         requestTypeId: updatedRequest.requestTypeId,
+        dueDate: updatedRequest.dueDate,
       };
 
       const updated = await requestManagementApiService.updateRequest(updateDto);

@@ -70,6 +70,10 @@ public class SeniorRequest {
     @Column(name = "completed_at")
     private OffsetDateTime completedAt;
 
+    // Optional due date for when the request should be completed
+    @Column(name = "due_date")
+    private OffsetDateTime dueDate;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false)

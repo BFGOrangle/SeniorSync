@@ -49,6 +49,8 @@ import InitialsAvatar from "@/components/initials-avatar";
 import { AssigneeSection } from "@/components/assignee-section";
 import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
+import { Calendar } from "lucide-react";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "todo" | "in-progress" | "completed";
@@ -527,6 +529,58 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
               />
             </div>
           </div>
+
+            {/* Due Date */}
+            <Separator />
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Due Date
+              </h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Target Completion Date</Label>
+                {isEditing && canEdit ? (
+                  <DateTimePicker
+                    value={editedRequest.dueDate}
+                    onChange={(value) =>
+                      setEditedRequest({
+                        ...editedRequest,
+                        dueDate: value,
+                      })
+                    }
+                    disabled={false}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {editedRequest.dueDate ? (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">
+                          {new Date(editedRequest.dueDate).toLocaleString()}
+                        </span>
+                        {/* Show urgency indicator */}
+                        {(() => {
+                          const now = new Date();
+                          const dueDate = new Date(editedRequest.dueDate);
+                          const isOverdue = dueDate < now;
+                          const isDueToday = dueDate.toDateString() === now.toDateString();
+
+                          if (isOverdue) {
+                            return <Badge variant="destructive" className="text-xs">Overdue</Badge>;
+                          } else if (isDueToday) {
+                            return <Badge variant="outline" className="text-xs border-orange-500 text-orange-600">Due Today</Badge>;
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">No due date set</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
 
           {/* Reminders */}
           <Separator />

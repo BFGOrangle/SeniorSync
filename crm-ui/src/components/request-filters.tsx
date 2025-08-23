@@ -35,10 +35,21 @@ interface RequestFilterOptions {
   requestType?: number[]; // Changed from string[] to number[]
   assignedStaff?: number[]; // Changed from string[] to number[]
   searchTerm?: string;
+  dueDate?: {
+    overdue?: boolean;
+    dueToday?: boolean;
+    dueThisWeek?: boolean;
+    noDueDate?: boolean;
+    // Phase 3: Advanced date range filtering
+    dateRange?: {
+      from?: string;
+      to?: string;
+    };
+  };
 }
 
 interface RequestSortOption {
-  field: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName';
+  field: 'createdAt' | 'updatedAt' | 'priority' | 'status' | 'seniorName' | 'dueDate';
   direction: "asc" | "desc";
 }
 
@@ -80,6 +91,7 @@ export function RequestFilters({
   const sortOptions = [
     { field: "createdAt", label: "Created Date" },
     { field: "updatedAt", label: "Updated Date" },
+    { field: "dueDate", label: "Due Date" },
     { field: "seniorName", label: "Senior Name" },
     { field: "priority", label: "Priority" },
     { field: "status", label: "Status" },
@@ -150,6 +162,26 @@ export function RequestFilters({
     });
   };
 
+  const handleDueDateChange = (filterType: keyof NonNullable<RequestFilterOptions['dueDate']>, checked: boolean) => {
+    const currentDueDate = filters.dueDate || {};
+    const newDueDate = {
+      ...currentDueDate,
+      [filterType]: checked ? true : undefined,
+    };
+
+    // Remove undefined values
+    Object.keys(newDueDate).forEach(key => {
+      if (newDueDate[key as keyof typeof newDueDate] === undefined) {
+        delete newDueDate[key as keyof typeof newDueDate];
+      }
+    });
+
+    onFiltersChange({
+      ...filters,
+      dueDate: Object.keys(newDueDate).length > 0 ? newDueDate : undefined,
+    });
+  };
+
   const clearFilters = () => {
     onFiltersChange({});
   };
@@ -160,6 +192,7 @@ export function RequestFilters({
     filters.requestType?.length,
     filters.assignedStaff?.length,
     filters.searchTerm ? 1 : 0,
+    filters.dueDate ? Object.keys(filters.dueDate).length : 0,
   ].reduce((sum: number, count) => sum + (count || 0), 0);
 
   return (
@@ -404,6 +437,139 @@ export function RequestFilters({
                     </div>
                   )}
                 </div>
+
+                <Separator />
+
+                {/* Due Date Filter */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-900">
+                    Due Date
+                  </Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="overdue"
+                        checked={filters.dueDate?.overdue || false}
+                        onCheckedChange={(checked) =>
+                          handleDueDateChange('overdue', checked as boolean)
+                        }
+                        className="border-gray-300"
+                      />
+                      <Label
+                        htmlFor="overdue"
+                        className="text-sm text-gray-700 font-normal cursor-pointer"
+                      >
+                        Overdue
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="due-today"
+                        checked={filters.dueDate?.dueToday || false}
+                        onCheckedChange={(checked) =>
+                          handleDueDateChange('dueToday', checked as boolean)
+                        }
+                        className="border-gray-300"
+                      />
+                      <Label
+                        htmlFor="due-today"
+                        className="text-sm text-gray-700 font-normal cursor-pointer"
+                      >
+                        Due Today
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="due-this-week"
+                        checked={filters.dueDate?.dueThisWeek || false}
+                        onCheckedChange={(checked) =>
+                          handleDueDateChange('dueThisWeek', checked as boolean)
+                        }
+                        className="border-gray-300"
+                      />
+                      <Label
+                        htmlFor="due-this-week"
+                        className="text-sm text-gray-700 font-normal cursor-pointer"
+                      >
+                        Due This Week
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="no-due-date"
+                        checked={filters.dueDate?.noDueDate || false}
+                        onCheckedChange={(checked) =>
+                          handleDueDateChange('noDueDate', checked as boolean)
+                        }
+                        className="border-gray-300"
+                      />
+                      <Label
+                        htmlFor="no-due-date"
+                        className="text-sm text-gray-700 font-normal cursor-pointer"
+                      >
+                        No Due Date
+                      </Label>
+                    </div>
+                    
+                    {/* Phase 3: Advanced Date Range Filter */}
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <Label className="text-xs font-medium text-gray-700 mb-2 block">
+                        Due Date Range
+                      </Label>
+                      <div className="space-y-2">
+                        <div>
+                          <Label htmlFor="due-from" className="text-xs text-gray-600">
+                            From:
+                          </Label>
+                          <Input
+                            id="due-from"
+                            type="date"
+                            value={filters.dueDate?.dateRange?.from || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              onFiltersChange({
+                                ...filters,
+                                dueDate: {
+                                  ...filters.dueDate,
+                                  dateRange: {
+                                    ...filters.dueDate?.dateRange,
+                                    from: newValue || undefined,
+                                  },
+                                },
+                              });
+                            }}
+                            className="mt-1 text-xs h-8"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="due-to" className="text-xs text-gray-600">
+                            To:
+                          </Label>
+                          <Input
+                            id="due-to"
+                            type="date"
+                            value={filters.dueDate?.dateRange?.to || ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              onFiltersChange({
+                                ...filters,
+                                dueDate: {
+                                  ...filters.dueDate,
+                                  dateRange: {
+                                    ...filters.dueDate?.dateRange,
+                                    to: newValue || undefined,
+                                  },
+                                },
+                              });
+                            }}
+                            className="mt-1 text-xs h-8"
+                            min={filters.dueDate?.dateRange?.from || undefined}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </PopoverContent>
@@ -482,6 +648,11 @@ export function RequestFilters({
                 {filters.assignedStaff?.length && (
                   <Badge variant="secondary" className="text-xs">
                     Staff ({filters.assignedStaff.length})
+                  </Badge>
+                )}
+                {filters.dueDate && Object.keys(filters.dueDate).length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    Due Date ({Object.keys(filters.dueDate).length})
                   </Badge>
                 )}
               </>
