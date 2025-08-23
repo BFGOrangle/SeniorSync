@@ -323,7 +323,7 @@ export const seniorUtils = {
     contactPhone: string;
     contactEmail: string;
     address: string;
-    careLevelId: number;
+    careLevelId: number | null | undefined;
     characteristics: string;
   } {
     return {
@@ -333,7 +333,7 @@ export const seniorUtils = {
       contactPhone: senior.contactPhone || '',
       contactEmail: senior.contactEmail || '',
       address: senior.address || '',
-      careLevelId: senior.careLevelId ?? null,
+      careLevelId: senior.careLevelId,
       characteristics: senior.characteristics?.join(', ') || '',
     };
   },
