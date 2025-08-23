@@ -174,8 +174,7 @@ export default function SeniorProfiles() {
         contactPhone: result.contactPhone,
         contactEmail: result.contactEmail,
         address: result.address,
-        careLevel: result.careLevel,
-        careLevelColor: result.careLevelColor,
+        careLevelId: result.careLevelId,
         characteristics: result.characteristics
       };
       
