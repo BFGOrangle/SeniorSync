@@ -224,18 +224,6 @@ export default function SeniorProfiles() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreateDialogOpen]) // Intentionally excluding createForm to prevent infinite loop
 
-  useEffect(() => {
-  const savedCareLevels = localStorage.getItem("customCareLevels");
-  if (savedCareLevels) {
-    try {
-      setCustomCareLevels(JSON.parse(savedCareLevels));
-    } catch (e) {
-      console.error("Failed to parse custom care levels from localStorage", e);
-    }
-  }
-}, []);
-
-
   // Function to open requests modal for a senior
   const handleViewRequests = (senior: SeniorDto) => {
     setSelectedSeniorForRequests(senior);

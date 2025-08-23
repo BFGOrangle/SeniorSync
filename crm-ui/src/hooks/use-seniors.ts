@@ -321,7 +321,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>, careLevels
     contactPhone: initialData?.contactPhone || '',
     contactEmail: initialData?.contactEmail || '',
     address: initialData?.address || '',
-    careLevelId: initialData?.careLevelId || null,
+    careLevelId: initialData?.careLevelId,
     characteristics: typeof initialData?.characteristics === 'string' ? initialData?.characteristics : '',
   });
 
