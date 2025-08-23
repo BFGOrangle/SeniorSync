@@ -264,7 +264,7 @@ export const seniorUtils = {
       contactPhone: string;
       contactEmail: string;
       address: string;
-      careLevelId: number;
+      careLevelId: number | null | undefined;
       characteristics: string;
     },
     characteristicsTags: string[] = [] // Add this parameter
@@ -276,7 +276,7 @@ export const seniorUtils = {
       contactPhone: formData.contactPhone.trim() || null,
       contactEmail: formData.contactEmail.trim() || null,
       address: formData.address.trim() || null,
-      careLevelId: formData.careLevelId || null,
+      careLevelId: formData.careLevelId ?? null,
       // Use the characteristicsTags parameter instead of parsing the string
       characteristics: characteristicsTags.length > 0 ? characteristicsTags : null,
     };
@@ -333,7 +333,7 @@ export const seniorUtils = {
       contactPhone: senior.contactPhone || '',
       contactEmail: senior.contactEmail || '',
       address: senior.address || '',
-      careLevelId: senior.careLevelId || null,
+      careLevelId: senior.careLevelId ?? null,
       characteristics: senior.characteristics?.join(', ') || '',
     };
   },
