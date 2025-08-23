@@ -377,7 +377,7 @@ export function useSeniorForm(initialData?: Partial<CreateSeniorDto>, careLevels
       contactPhone: newData?.contactPhone || '',
       contactEmail: newData?.contactEmail || '',
       address: newData?.address || '',
-      careLevelId: newData?.careLevelId || null,
+      careLevelId: newData?.careLevelId,
       characteristics: typeof newData?.characteristics === 'string' ? newData?.characteristics : '',
     });
     setErrors({});

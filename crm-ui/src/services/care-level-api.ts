@@ -281,45 +281,6 @@ export class CareLevelApiService {
       throw error;
     }
   }
-
-  /**
-   * Bulk operations helper - validate multiple care levels
-   */
-  async validateCareLevels(careLevels: CreateCareLevelDto[]): Promise<{ valid: boolean; errors: string[] }> {
-    console.log('🔍 Validating care levels:', careLevels);
-    
-    const errors: string[] = [];
-    
-    try {
-      // Check for duplicates within the array
-      const names = careLevels.map(cl => cl.careLevel.toUpperCase());
-      const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
-      if (duplicates.length > 0) {
-        errors.push(`Duplicate care level names: ${[...new Set(duplicates)].join(', ')}`);
-      }
-      
-      // Check for existing care levels
-      for (const careLevel of careLevels) {
-        const exists = await this.checkCareLevelExists(careLevel.careLevel);
-        if (exists) {
-          errors.push(`Care level '${careLevel.careLevel}' already exists`);
-        }
-        
-        // Validate hex color format
-        if (!/^#[0-9A-Fa-f]{6}$/.test(careLevel.careLevelColor)) {
-          errors.push(`Invalid color format for '${careLevel.careLevel}': ${careLevel.careLevelColor}`);
-        }
-      }
-      
-      const isValid = errors.length === 0;
-      console.log('✅ Care level validation completed:', { valid: isValid, errorCount: errors.length });
-      
-      return { valid: isValid, errors };
-    } catch (error) {
-      console.error('❌ Failed to validate care levels:', error);
-      throw error;
-    }
-  }
 }
 
 // Export singleton instance
