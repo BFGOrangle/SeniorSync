@@ -10,3 +10,4 @@ import org.mapstruct.ReportingPolicy;
 public interface UpdateCareLevelMapper {
     void updateExistingCareLevelFromDto(UpdateCareLevelDto updateCareLevelDto, @MappingTarget CareLevel existingCareLevel);
 }
+

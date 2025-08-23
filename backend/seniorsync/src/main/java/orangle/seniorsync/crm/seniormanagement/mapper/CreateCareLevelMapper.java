@@ -9,3 +9,4 @@ import org.mapstruct.ReportingPolicy;
 public interface CreateCareLevelMapper {
     CareLevel toEntity(CreateCareLevelDto createCareLevelDto);
 }
+

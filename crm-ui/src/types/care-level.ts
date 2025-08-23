@@ -141,3 +141,4 @@ export class CareLevelUtils {
     return found?.careLevelColor || '#6b7280'; // Gray fallback
   }
 }
+

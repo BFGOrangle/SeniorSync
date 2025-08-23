@@ -21,3 +21,4 @@ public record UpdateCareLevelDto(
         String careLevelColor
 ) {
 }
+

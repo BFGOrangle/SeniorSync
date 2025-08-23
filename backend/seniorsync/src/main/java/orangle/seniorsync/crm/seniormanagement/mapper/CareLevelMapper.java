@@ -9,3 +9,4 @@ import org.mapstruct.ReportingPolicy;
 public interface CareLevelMapper {
     CareLevelDto toDto(CareLevel careLevel);
 }
+

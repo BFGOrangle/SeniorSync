@@ -79,3 +79,4 @@ public interface ICareLevelService {
      */
     void initializeDefaultCareLevelsForCenter(Long centerId);
 }
+
