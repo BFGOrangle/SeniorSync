@@ -224,6 +224,21 @@ public class CognitoService {
         }
     }
 
+    public void deleteUser(String usernameOrEmail) {
+        try {
+            AdminDeleteUserRequest request = AdminDeleteUserRequest.builder()
+                    .userPoolId(userPoolId)
+                    .username(usernameOrEmail)
+                    .build();
+
+            cognitoClient.adminDeleteUser(request);
+            log.info("Successfully deleted user: {}", usernameOrEmail);
+        } catch (CognitoIdentityProviderException e) {
+            log.error("Failed to delete user {}: {}", usernameOrEmail, e.getMessage());
+            throw new RuntimeException("Failed to delete user in Cognito", e);
+        }
+    }
+
     public List<UserType> listUsersInGroup(String groupName) {
         try {
             ListUsersInGroupRequest request = ListUsersInGroupRequest.builder()

@@ -171,26 +171,12 @@ function CreateStaffForm({
             name="jobTitle"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Job Title *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel>Job Title *</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a job title" />
-                    </SelectTrigger>
+                    <Input placeholder="Enter job title" {...field} />
                   </FormControl>
-                  <SelectContent>
-                    {COMMON_JOB_TITLES.map((title) => (
-                      <SelectItem key={title} value={title}>
-                        {title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  If your job title is not listed, select "Other" and contact your administrator.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+                  <FormMessage />
+                </FormItem>
             )}
           />
         </div>
@@ -213,7 +199,7 @@ function CreateStaffForm({
                   />
                 </FormControl>
                 <FormDescription>
-                  This will be used as the login username.
+                  This will be used as the login username. (This cannot be edited after creation)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -241,13 +227,12 @@ function CreateStaffForm({
                           const digits = e.target.value.replace(/\D/g, '').slice(0,8);
                           setLocalPhone(digits);
                         }}
-                        className="[&:not(:focus)]:pl-0"
                       />
                     </div>
                   </div>
                 </FormControl>
                 <FormDescription>
-                  Enter 8-digit Singapore number. Will be saved as +65XXXXXXXX.
+                  Enter 8-digit Singapore number. (This cannot be edited after creation)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -313,7 +298,7 @@ function CreateStaffForm({
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Administrators can manage staff and have full access. Staff members have limited access.
+                  Administrators can manage staff and have full access. Staff members have limited access. (This can be edited later)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -456,20 +441,9 @@ function UpdateStaffForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Job Title *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a job title" />
-                    </SelectTrigger>
+                <FormControl>
+                    <Input placeholder="Enter job title" {...field} />
                   </FormControl>
-                  <SelectContent>
-                    {COMMON_JOB_TITLES.map((title) => (
-                      <SelectItem key={title} value={title}>
-                        {title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <FormDescription>
                   If your job title is not listed, select "Other" and contact your administrator.
                 </FormDescription>
@@ -479,7 +453,7 @@ function UpdateStaffForm({
           />
         </div>
 
-        {/* Contact Information */}
+        {/* For now dont allow email and mobile number editing as backend dont have logic that updates cognito yet*/}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Contact Information</h3>
           
@@ -494,10 +468,11 @@ function UpdateStaffForm({
                     type="email" 
                     placeholder="Enter email address" 
                     {...field} 
+                    disabled={true}
                   />
                 </FormControl>
                 <FormDescription>
-                  This will be used as the login username.
+                  This email address cannot be changed after account creation.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -534,12 +509,13 @@ function UpdateStaffForm({
                           setLocalPhone(digits);
                         }}
                         className="[&:not(:focus)]:pl-0"
+                        disabled
                       />
                     </div>
                   </div>
                 </FormControl>
                 <FormDescription>
-                  Enter 8-digit Singapore number. Will be saved as +65XXXXXXXX.
+                  This phone number cannot be changed after account creation.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

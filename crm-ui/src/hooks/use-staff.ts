@@ -292,30 +292,12 @@ export function useStaff({ staffId, staffSub }: useStaffProps) {
   const { toast } = useToast();
 
   const fetchStaff = useCallback(async () => {
-    if (!staff && !staffSub) {
+    if (!staffId && !staffSub) {
       setError(new StaffApiError(500, "Need to provide staffId or staffSub to fetch staff details"));
       return;
     }
     // Always take staff id first
-    if (!staffId) {
-      setStaff(null);
-      return;
-    } else if (staffSub !== null && staffSub !== undefined) {
-      // Here means we need to query for user id using their cognito sub
-      try {
-        const data = await staffApiService.getStaffByCognitoSub(staffSub);
-        setStaff(data);
-        return
-      } catch (err) {
-        const apiError = err instanceof StaffApiError ? err : new StaffApiError(500, 'Failed to load staff by sub');
-        setError(apiError);
-        toast({
-          title: 'Error Loading Staff Member',
-          description: apiError.errors[0]?.message || 'Failed to load staff member details.',
-          variant: 'destructive',
-        });
-      }
-    } else {
+    if (staffId !== null && staffId !== undefined) {
       try {
         setLoading(true);
         setError(null);
@@ -332,6 +314,24 @@ export function useStaff({ staffId, staffSub }: useStaffProps) {
       } finally {
         setLoading(false);
       }
+    } else if (staffSub !== null && staffSub !== undefined) {
+      // Here means we need to query for user id using their cognito sub
+      try {
+        const data = await staffApiService.getStaffByCognitoSub(staffSub);
+        setStaff(data);
+        return
+      } catch (err) {
+        const apiError = err instanceof StaffApiError ? err : new StaffApiError(500, 'Failed to load staff by sub');
+        setError(apiError);
+        toast({
+          title: 'Error Loading Staff Member',
+          description: apiError.errors[0]?.message || 'Failed to load staff member details.',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      console.error("No staffId or staffSub provided to fetch staff details");
+      setError(new StaffApiError(500, "No staffId or staffSub provided to fetch staff details"));
     }
   }, [staffId, toast]);
 
@@ -379,7 +379,7 @@ export function useStaff({ staffId, staffSub }: useStaffProps) {
 
   useEffect(() => {
     fetchStaff();
-  }, [fetchStaff]);
+  }, [fetchStaff, staffId, staffSub]);
 
   return {
     staff,

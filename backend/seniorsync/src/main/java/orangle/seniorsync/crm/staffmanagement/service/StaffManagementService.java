@@ -248,17 +248,7 @@ public class StaffManagementService implements IStaffManagementService {
             if (updateStaffDto.jobTitle() != null) {
                 staff.setJobTitle(updateStaffDto.jobTitle());
             }
-            if (updateStaffDto.contactPhone() != null) {
-                staff.setContactPhone(updateStaffDto.contactPhone());
-            }
-            if (updateStaffDto.contactEmail() != null) {
-                // Check if new email is already taken
-                Optional<Staff> existingStaff = staffRepository.findByContactEmail(updateStaffDto.contactEmail());
-                if (existingStaff.isPresent() && !existingStaff.get().getId().equals(staffId)) {
-                    throw new IllegalArgumentException("Email already in use by another staff member");
-                }
-                staff.setContactEmail(updateStaffDto.contactEmail());
-            }
+            // We don't allow updating contact phone/email for now as logic to sync with Cognito is not implemented
             if (updateStaffDto.roleType() != null && updateStaffDto.roleType() != staff.getRoleType()) {
                 // Good place to use optional but KIV when we have more time
                 boolean groupRemoved = cognitoService.removeUserFromGroup(staff.getContactEmail(), staff.getRoleType().toString());
@@ -310,12 +300,15 @@ public class StaffManagementService implements IStaffManagementService {
         }
 
         try {
-            // Soft delete - just deactivate
-            staff.setIsActive(false);
-            staffRepository.save(staff);
-
-            log.info("Successfully deleted (deactivated) staff member with ID: {}", staffId);
-
+            // Deactivate in Cognito before deleting
+            log.info("Deactivating staff member in Cognito: {}", staff.getContactEmail());
+            cognitoService.disableUser(staff.getContactEmail());
+            // Delete from Cognito
+            log.info("Deactivating staff member in Cognito: {}", staff.getContactEmail());
+            cognitoService.deleteUser(staff.getContactEmail());
+            // Delete from database
+            staffRepository.delete(staff);
+            log.info("Successfully deleted staff member with ID: {}", staffId);
         } catch (Exception e) {
             log.error("Error deleting staff member: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to delete staff member: " + e.getMessage());
