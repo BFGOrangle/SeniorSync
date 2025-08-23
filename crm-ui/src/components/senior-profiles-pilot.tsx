@@ -286,7 +286,9 @@ export default function SeniorProfiles() {
     // Add care level filter
     if (selectedCareLevel !== "all") {
       const selectedLevel = allCareLevels.find(level => level.careLevel === selectedCareLevel);
-      filter.careLevelId = selectedLevel?.id;
+      if (selectedLevel?.id != null) {
+        filter.careLevelId = selectedLevel.id;
+      }
     }
 
       applyFilter(filter);
@@ -537,7 +539,12 @@ export default function SeniorProfiles() {
                         }`}
                         style={{ backgroundColor: careLevel.careLevelColor }}
                         onClick={() => {
-                          createForm.updateField('careLevelId', careLevel.id.toString());
+                          // Toggle functionality: if already selected, deselect; otherwise select
+                          if (createForm.formData.careLevelId === careLevel.id) {
+                            createForm.updateField('careLevelId', '');
+                          } else {
+                            createForm.updateField('careLevelId', careLevel.id.toString());
+                          }
                         }}
                         disabled={isLoading('create')}
                       >
@@ -1263,7 +1270,12 @@ export default function SeniorProfiles() {
                       }`}
                       style={{ backgroundColor: careLevel.careLevelColor }}
                       onClick={() => {
-                        editForm.updateField('careLevelId', careLevel.id.toString());
+                        // Toggle functionality: if already selected, deselect; otherwise select
+                        if (editForm.formData.careLevelId === careLevel.id) {
+                          editForm.updateField('careLevelId', '');
+                        } else {
+                          editForm.updateField('careLevelId', careLevel.id.toString());
+                        }
                       }}
                       disabled={isLoading('update')}
                     >

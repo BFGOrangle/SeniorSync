@@ -46,7 +46,7 @@ public class Senior {
     private String address;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "care_level_id", nullable = false)
+    @JoinColumn(name = "care_level_id")
     private CareLevel careLevel;
 
     @Column(name = "characteristics")

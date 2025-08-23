@@ -72,7 +72,7 @@ public class SeniorSpecs {
         return (root, query, cb) ->
                 careLevelId == null
                         ? cb.conjunction()
-                        : cb.equal(root.get("careLevelId"), careLevelId);
+                        : cb.equal(root.get("careLevel").get("id"), careLevelId);
     }
 
     public static Specification<Senior> hasCharacteristics(String[] characteristics) {
