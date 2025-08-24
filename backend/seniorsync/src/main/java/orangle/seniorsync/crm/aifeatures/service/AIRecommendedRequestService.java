@@ -6,6 +6,7 @@ import orangle.seniorsync.common.util.SecurityContextUtil;
 import orangle.seniorsync.crm.aifeatures.client.LLMClient;
 import orangle.seniorsync.crm.aifeatures.dto.AIRecommendedRequestDto;
 import orangle.seniorsync.crm.requestmanagement.dto.SeniorRequestDto;
+import orangle.seniorsync.crm.requestmanagement.enums.RequestStatus;
 import orangle.seniorsync.crm.requestmanagement.mapper.SeniorRequestMapper;
 import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import orangle.seniorsync.crm.requestmanagement.repository.SeniorRequestRepository;
@@ -56,7 +57,9 @@ public class AIRecommendedRequestService extends AbstractCenterFilteredService<S
     }
 
     private List<SeniorRequestDto> getAllSeniorRequests() {
-        List<SeniorRequest> seniorRequests = findAllWithCenterFilter(null);
+        Specification<SeniorRequest> incompleteSpec = (root, query, cb) ->
+                cb.notEqual(root.get("status"), RequestStatus.COMPLETED);
+        List<SeniorRequest> seniorRequests = findAllWithCenterFilter(incompleteSpec);
         String prompt = buildPrompt(seniorRequests);
         String response = getRankedResponse(prompt);
         return parseAndRankRequests(response, seniorRequests);
