@@ -79,13 +79,14 @@ public class AIRecommendedRequestService extends AbstractCenterFilteredService<S
         log.info("Building prompt for AI recommendations");
 
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Please rank the following senior care requests by priority based on urgency, severity, status and impact. ");
+        prompt.append("Please rank the following senior care requests by priority based on urgency, severity, due date, status and impact. ");
         prompt.append("Return the IDs in order of highest to lowest priority:\n\n");
         for(SeniorRequest request : seniorRequests) {
-            prompt.append(String.format("ID: %d, Type: %s, Description: %s, Status: %s\n",
+            prompt.append(String.format("ID: %d, Type: %s, Description: %s, Due date: %s, Status: %s\n",
                     request.getId(),
                     request.getRequestTypeId(),
                     request.getDescription(),
+                    request.getDueDate(),
                     request.getStatus()));
         }
 

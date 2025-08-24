@@ -452,16 +452,54 @@ function AIRankedRequestCard({ request, rank, onClick }: AIRankedRequestCardProp
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
+              <span>Date created:</span>
               {new Date(request.createdAt).toLocaleDateString()}
             </div>
-            
+            {request.dueDate && (() => {
+              const due = new Date(request.dueDate);
+              const now = new Date();
+              const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+              const diffTime = dueDay.getTime() - today.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              let label = "";
+              let colorClass = "bg-gray-100 text-gray-700";
+              if (diffDays < 0) {
+                label = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
+                colorClass = "bg-red-100 text-red-700";
+              } else if (diffDays === 0) {
+                label = "Due today";
+                colorClass = "bg-orange-100 text-orange-700";
+              } else if (diffDays === 1) {
+                label = "Due tomorrow";
+                colorClass = "bg-yellow-100 text-yellow-700";
+              } else if (diffDays <= 7) {
+                label = `Due in ${diffDays} days`;
+                colorClass = "bg-blue-100 text-blue-700";
+              }
+              // If due in <= 7 days (or overdue), show only badge
+              if (diffDays <= 7) {
+                return (
+                  <div className="flex items-center gap-1">
+                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${colorClass}`}>{label}</span>
+                  </div>
+                );
+              }
+              // If due in > 7 days, show only the date
+              return (
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-orange-500" />
+                  <span>Due date:</span>
+                  {new Date(request.dueDate).toLocaleDateString()}
+                </div>
+              );
+            })()}
             {request.assignedStaffName && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 {request.assignedStaffName}
               </div>
             )}
-
             {request.requestTypeName && (
               <div className="text-purple-600">
                 {request.requestTypeName}
