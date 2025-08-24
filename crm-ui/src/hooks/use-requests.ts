@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   RequestApiError,
@@ -25,6 +25,7 @@ export function useRequestManagement() {
   // PHASE 2: Enhanced spam detection state management
   const [spamDetectionStatus, setSpamDetectionStatus] = useState<Map<number, 'pending' | 'completed'>>(new Map());
   const [spamPollingActive, setSpamPollingActive] = useState(false);
+  const completedRequestsRef = useRef(new Set<number>());
   
   const { toast } = useToast();
 
@@ -57,6 +58,7 @@ export function useRequestManagement() {
         requestsNeedingSpam.forEach(id => pendingMap.set(id, 'pending'));
         setSpamDetectionStatus(pendingMap);
         setSpamPollingActive(true);
+        completedRequestsRef.current.clear(); 
         
         // STEP 5: Start polling for updates
         let pollAttempts = 0;
@@ -114,13 +116,15 @@ export function useRequestManagement() {
                 const newMap = new Map(prev);
                 updates.forEach((_, requestId) => {
                   newMap.set(requestId, 'completed');
+                  completedRequestsRef.current.add(requestId);
                 });
                 return newMap;
               });
             }
             
             // Check if all requests have been processed or max attempts reached
-            const completedCount = Array.from(spamDetectionStatus.values()).filter(status => status === 'completed').length + updates.size;
+            // const completedCount = Array.from(spamDetectionStatus.values()).filter(status => status === 'completed').length + updates.size;
+            const completedCount = completedRequestsRef.current.size + updates.size;
             const allComplete = completedCount >= requestsNeedingSpam.length || pollAttempts >= maxPollAttempts;
             
             if (allComplete) {
@@ -174,7 +178,7 @@ export function useRequestManagement() {
         variant: 'destructive',
       });
     }
-  }, [toast, spamDetectionStatus]);
+  }, [toast]);
 
   // Initial load
   useEffect(() => {

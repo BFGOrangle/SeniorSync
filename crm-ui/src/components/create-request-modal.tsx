@@ -168,7 +168,7 @@ export function CreateRequestModal({
       seniorId: undefined,
       requestTypeId: undefined,
       priority: 3,
-      dueDate: new Date().toISOString(),
+      dueDate: undefined,
 
     },
   });

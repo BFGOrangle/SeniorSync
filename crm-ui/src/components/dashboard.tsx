@@ -171,18 +171,19 @@ export default function Dashboard() {
           data={priorityDistribution}
           loading={loading}
         />
-        <RequestTypesChart data={requestTypeSummaries} loading={loading} />
-        <MonthlyTrendChart data={monthlyTrend} loading={loading} />
+        {/* <RequestTypesChart data={requestTypeSummaries} loading={loading} />
+        <MonthlyTrendChart data={monthlyTrend} loading={loading} /> */}
       </div>
 
       {/* Staff Workload and Request Details */}
-      <div className={`grid gap-6 ${showStaffWorkload ? 'md:grid-cols-1 lg:grid-cols-2' : 'md:grid-cols-1'}`}>
-        {/* Only show StaffWorkloadChart in center mode for admins */}
+      {/* Only show StaffWorkloadChart in center mode for admins */}
+      {/* <div className={`grid gap-6 ${showStaffWorkload ? 'md:grid-cols-1 lg:grid-cols-2' : 'md:grid-cols-1'}`}>
+        
         {showStaffWorkload && (
           <StaffWorkloadChart data={staffWorkload} loading={loading} />
         )}
         <RequestTypeDetails data={requestTypeSummaries} loading={loading} />
-      </div>
+      </div> */}
 
       {/* Floating Create Request Button */}
       <CreateRequestModal

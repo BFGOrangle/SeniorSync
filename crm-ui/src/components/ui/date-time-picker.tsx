@@ -21,7 +21,7 @@ export function DateTimePicker({ value, onChange, disabled }: DateTimePickerProp
     value ? new Date(value) : undefined
   );
   const [time, setTime] = React.useState(
-    value ? new Date(value).toTimeString().slice(0, 8) : "10:30:00"
+    value ? new Date(value).toTimeString().slice(0, 8) : ""
   );
 
   // Sync down from parent (also handle clearing)
