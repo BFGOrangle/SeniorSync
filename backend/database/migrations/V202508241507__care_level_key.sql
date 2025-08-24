@@ -1,0 +1,1 @@
+ALTER TABLE senior_sync.care_level_types DROP CONSTRAINT IF EXISTS care_level_types_care_level_key;
