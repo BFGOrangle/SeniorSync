@@ -449,9 +449,12 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
 
     @Transactional(readOnly = true)
     public RequestFilterOptionsDto getFilterOptions() {
+        Long currentUserCenterId = userContextService.getRequestingUserCenterId();
+        
         // Get all active staff
         List<StaffOptionDto> staffOptions = staffRepository.findByIsActiveTrue()
                 .stream()
+                .filter(staff -> staff.getCenter().getId().equals(currentUserCenterId))
                 .map(staff -> new StaffOptionDto(
                         staff.getId(),
                         staff.getFullName(),
