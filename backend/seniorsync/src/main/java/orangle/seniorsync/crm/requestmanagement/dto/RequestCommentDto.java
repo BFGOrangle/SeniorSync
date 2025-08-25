@@ -8,6 +8,7 @@ public record RequestCommentDto(
         String commentType,
         Long commenterId,
         Long requestId,
+        String commenterName,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
