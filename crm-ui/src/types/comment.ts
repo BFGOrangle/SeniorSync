@@ -5,6 +5,7 @@ export interface RequestCommentDto {
   commentType: string;
   commenterId: number;
   requestId: number;
+  commenterName: string;
   createdAt: string; // ISO string (OffsetDateTime from backend)
   updatedAt: string; // ISO string
 }
@@ -22,7 +23,7 @@ export interface RequestComment {
   comment: string;
   commentType: CommentType;
   commenterId: number;
-  commenterName?: string; // Populated from staff/senior data
+  commenterName: string; // Populated from staff/senior data
   requestId: number;
   createdAt: string;
   updatedAt?: string;
@@ -99,13 +100,13 @@ export const COMMENT_TYPE_CONFIG: Record<CommentType, {
 // Utility functions for comment management
 export class CommentUtils {
   // Convert backend RequestCommentDto to frontend RequestComment
-  static fromDto(dto: RequestCommentDto, commenterName?: string): RequestComment {
+  static fromDto(dto: RequestCommentDto): RequestComment {
     return {
       id: dto.id,
       comment: dto.comment,
       commentType: dto.commentType as CommentType,
       commenterId: dto.commenterId,
-      commenterName,
+      commenterName: dto.commenterName, // Use commenterName from DTO
       requestId: dto.requestId,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
