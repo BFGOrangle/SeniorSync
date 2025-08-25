@@ -180,38 +180,30 @@ export function RequestCard({
                 variant="secondary"
                 className="text-xs font-mono bg-gray-50 text-gray-600 hover:bg-gray-50"
               >
-                {request.id}
+              {request.seniorName || "Unknown Senior"}
               </Badge>
+            </div>
+              <Badge
+                variant="outline"
+                className={cn(
+                "text-xs font-medium px-1.5 py-0.5",
+                getPriorityColor(request.frontendPriority)
+                )}
+              >
+              {request.frontendPriority.charAt(0).toUpperCase() +
+                request.frontendPriority.slice(1)}
+              </Badge>
+          </div>
+
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Clock className="h-3 w-3" />
                 <span className="font-medium">
                   {formatDate(request.createdAt)}
                 </span>
-                {!isKanban && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs font-medium",
-                      getStatusColor(request.frontendStatus)
-                    )}
-                  >
-                    {request.frontendStatus
-                      .replace("-", " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </Badge>
-                )}
               </div>
             </div>
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs font-medium px-1.5 py-0.5",
-                getPriorityColor(request.frontendPriority)
-              )}
-            >
-              {request.frontendPriority.charAt(0).toUpperCase() +
-                request.frontendPriority.slice(1)}
-            </Badge>
           </div>
 
           <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 leading-tight">
