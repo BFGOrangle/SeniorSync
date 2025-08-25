@@ -26,7 +26,10 @@ public class DailyReminderService implements IDailyReminderService{
     @Scheduled(cron = "0 0 8 * * ?") // Runs daily at 8:00 AM
     public void sendDailyReminders() {
         // Logic to send daily reminders
-        OffsetDateTime startOfDay = OffsetDateTime.now().toLocalDate().atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+        OffsetDateTime startOfDay = OffsetDateTime.now(java.time.ZoneId.of("Asia/Singapore"))
+            .toLocalDate()
+            .atStartOfDay(java.time.ZoneId.of("Asia/Singapore"))
+            .toOffsetDateTime();
         OffsetDateTime endOfDay = startOfDay.plusDays(1).minusNanos(1);
 
         // Find reminders for the entire day
