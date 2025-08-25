@@ -38,9 +38,12 @@ export function DateTimePicker({ value, onChange, disabled }: DateTimePickerProp
   // Helper to emit combined datetime
   const emit = React.useCallback(
     (baseDate: Date, t: string) => {
+      if (!baseDate || isNaN(baseDate.getTime())) return;
       const [h, m, s] = t.split(":");
+      if ([h, m, s].some((v) => isNaN(+v))) return;
       const combined = new Date(baseDate);
       combined.setHours(+h, +m, +s, 0);
+      if (isNaN(combined.getTime())) return;
       const nextIso = combined.toISOString();
       if (value !== nextIso) onChange(nextIso);
     },
