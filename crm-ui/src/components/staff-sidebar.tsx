@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ClipboardList,
   Sparkles,
+  BugIcon,
 } from "lucide-react";
 
 import {
@@ -65,6 +66,19 @@ const managementItems = [
     title: "Senior Profiles",
     url: "/staff/senior-profiles",
     icon: Users,
+  },
+];
+
+const feedbackFormsItems = [
+  {
+    title: "End of Day Feedback Form",
+    url: "https://forms.gle/7JqhVV6RYp8F7WVB8",
+    icon: Brain,
+  },
+    {
+    title: "Bug Submission Form",
+    url: "https://forms.gle/KffzWQn35NQzRMG99",
+    icon: BugIcon,
   },
 ];
 
@@ -230,6 +244,36 @@ export function StaffSidebar() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+
+        <SidebarGroup>
+        <SidebarGroupLabel>Feedback Forms - Pilot Testing</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {feedbackFormsItems.map((item) => {
+              const isActive = pathname === item.url;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={item.title}
+                  >
+                    <Link 
+                      href={item.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>        
       </SidebarContent>
 
       
