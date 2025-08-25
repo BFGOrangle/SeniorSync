@@ -131,7 +131,6 @@ export function ReminderSection({
             {reminders.length}
           </Badge>
         </div>
-        {isEditing && (
           <Button
             size="sm"
             onClick={() => setIsAddingReminder(!isAddingReminder)}
@@ -139,7 +138,6 @@ export function ReminderSection({
           >
             {isAddingReminder ? "Cancel" : "Add Reminder"}
           </Button>
-        )}
       </div>
 
       {/* Error display */}
@@ -159,7 +157,7 @@ export function ReminderSection({
       )}
 
       {/* Add reminder form */}
-      {isAddingReminder && isEditing && (
+      {isAddingReminder && (
         <div className="bg-gray-50 p-4 rounded-md border">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -236,7 +234,7 @@ export function ReminderSection({
                 key={reminder.id}
                 className={cn(
                   "flex items-start justify-between p-4 rounded-md border transition-colors",
-                  overdue && "border-red-200 bg-red-50",
+                  overdue && "border-green-200 bg-green-50",
                   !overdue && "border-gray-200 bg-white hover:bg-gray-50"
                 )}
               >
@@ -244,14 +242,14 @@ export function ReminderSection({
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex items-center gap-2">
                       {overdue ? (
-                        <AlertCircle className="h-4 w-4 text-red-500" />
+                        <AlertCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <Clock className="h-4 w-4 text-blue-500" />
                       )}
                       <span className="font-medium">{reminder.title}</span>
                       {overdue && (
-                        <Badge variant="destructive" className="text-xs">
-                          Overdue
+                        <Badge variant="default" className="text-xs">
+                          Done
                         </Badge>
                       )}
                     </div>
@@ -267,19 +265,16 @@ export function ReminderSection({
                     <span>{formatDate(reminder.reminderDateTime)}</span>
                   </div>
                 </div>
-
-                {isEditing && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteReminder(reminder.id)}
-                      className="h-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteReminder(reminder.id)}
+                    className="h-8"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             );
           })}
@@ -289,11 +284,9 @@ export function ReminderSection({
           <div className="text-center py-8 text-gray-500">
             <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No reminders set for this request.</p>
-            {isEditing && (
               <p className="text-xs mt-1">
                 Click "Add Reminder" to create one.
               </p>
-            )}
           </div>
         )
       )}
