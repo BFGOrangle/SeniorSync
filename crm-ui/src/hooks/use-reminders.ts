@@ -14,6 +14,7 @@ import {
   ReminderApiError,
   ReminderValidationError,
 } from "@/services/reminder-api";
+import { useCurrentUser } from "@/contexts/user-context";
 
 interface UseRemindersOptions {
   requestId?: number;
@@ -53,6 +54,7 @@ export function useReminders({
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useCurrentUser();
 
   // Fetch reminders from the API
   const fetchReminders = useCallback(async () => {
@@ -93,7 +95,8 @@ export function useReminders({
       try {
         const newReminder = await createReminderForRequest(
           requestId,
-          reminderData
+          reminderData,
+          currentUser?.backendStaffId || null
         );
 
         // Update local state
@@ -113,7 +116,7 @@ export function useReminders({
         throw err;
       }
     },
-    [requestId]
+    [requestId, currentUser?.backendStaffId]
   );
 
   // Update an existing reminder

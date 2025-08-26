@@ -121,12 +121,14 @@ export async function fetchRemindersForRequest(
 
 export async function createReminderForRequest(
   requestId: number,
-  reminderData: Omit<CreateReminderDto, "requestId">
+  reminderData: Omit<CreateReminderDto, "requestId">,
+  staffAssigneeId?: number | null
 ): Promise<Reminder> {
   try {
     const createData: CreateReminderDto = {
       ...reminderData,
       requestId,
+      staffAssigneeId,
     };
     return await reminderApi.createReminder(createData);
   } catch (error) {
