@@ -5,6 +5,7 @@ export interface ReminderDto {
   description: string;
   reminderDate: string; // ISO string (OffsetDateTime from backend)
   requestId: number;
+  staffAssigneeId: number | null; // Added missing field from backend
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }
@@ -14,6 +15,7 @@ export interface CreateReminderDto {
   description: string;
   requestId: number;
   reminderDate: string; // ISO string
+  staffAssigneeId?: number | null; // Added missing field from backend (optional for frontend)
 }
 
 export interface UpdateReminderDto {
@@ -21,6 +23,7 @@ export interface UpdateReminderDto {
   title: string;
   description: string;
   reminderDate: string; // ISO string
+  staffAssigneeId?: number | null; // Added missing field from backend (optional for frontend)
 }
 
 // Frontend types for UI compatibility
@@ -32,6 +35,7 @@ export interface Reminder {
   isCompleted: boolean; // Frontend-only field for UI state
   createdAt?: string;
   requestId: number; // Added to link to request
+  staffAssigneeId?: number | null; // Added to track assignee
 }
 
 // Utility functions for reminder management
@@ -46,6 +50,7 @@ export class ReminderUtils {
       isCompleted: false, // Default value, could be enhanced later
       createdAt: dto.createdAt,
       requestId: dto.requestId,
+      staffAssigneeId: dto.staffAssigneeId,
     };
   }
 
@@ -58,6 +63,7 @@ export class ReminderUtils {
       description: reminder.description || "",
       requestId: reminder.requestId,
       reminderDate: reminder.reminderDateTime || "",
+      staffAssigneeId: reminder.staffAssigneeId,
     };
   }
 
@@ -68,6 +74,7 @@ export class ReminderUtils {
       title: reminder.title,
       description: reminder.description || "",
       reminderDate: reminder.reminderDateTime,
+      staffAssigneeId: reminder.staffAssigneeId,
     };
   }
 }
