@@ -19,12 +19,14 @@ public class ReminderService implements IReminderService {
     private final ReminderMapper reminderMapper;
     private final CreateReminderMapper createReminderMapper;
     private final UpdateReminderMapper updateReminderMapper;
+    private final INotificationService notificationService;
 
-    public ReminderService(ReminderRepository reminderRepository, ReminderMapper reminderMapper, CreateReminderMapper createReminderMapper, UpdateReminderMapper updateReminderMapper) {
+    public ReminderService(ReminderRepository reminderRepository, ReminderMapper reminderMapper, CreateReminderMapper createReminderMapper, UpdateReminderMapper updateReminderMapper, INotificationService notificationService) {
         this.reminderRepository = reminderRepository;
         this.reminderMapper = reminderMapper;
         this.createReminderMapper = createReminderMapper;
         this.updateReminderMapper = updateReminderMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -43,6 +45,7 @@ public class ReminderService implements IReminderService {
     /**
      * Creates a new reminder based on the provided DTO.
      * Maps the DTO to an entity, saves it to the repository, and returns the created request as a DTO.
+     * Also sends an email notification to the assigned staff member.
      *
      * @param createReminderDto the DTO containing the details of the reminder to be created
      * @return the created ReminderDto
@@ -51,6 +54,12 @@ public class ReminderService implements IReminderService {
     public ReminderDto createReminder(CreateReminderDto createReminderDto) {
         Reminder reminderToCreate = createReminderMapper.toEntity(createReminderDto);
         Reminder createdReminder = reminderRepository.save(reminderToCreate);
+        
+        // Send notification email if reminder is assigned to a staff member (async)
+        if (createdReminder.getStaffAssigneeId() != null) {
+            notificationService.notifyReminderCreationAsync(createdReminder);
+        }
+        
         return reminderMapper.toDto(createdReminder);
     }
 

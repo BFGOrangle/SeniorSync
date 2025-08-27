@@ -16,6 +16,7 @@ import orangle.seniorsync.crm.requestmanagement.repository.RequestTypeRepository
 import orangle.seniorsync.crm.requestmanagement.spec.SeniorRequestSpecs;
 import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
 import orangle.seniorsync.crm.staffmanagement.model.Staff;
+import orangle.seniorsync.crm.reminder.service.INotificationService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class RequestManagementService extends AbstractCenterFilteredService<SeniorRequest, Long> implements IRequestManagementService {
 
     private final SeniorRequestRepository seniorRequestRepository;
@@ -35,6 +39,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     private final StaffRepository staffRepository;
     private final RequestTypeRepository requestTypeRepository;
     private final IUserContextService userContextService;
+    private final INotificationService notificationService;
 
     public RequestManagementService(
             SeniorRequestRepository seniorRequestRepository,
@@ -43,7 +48,8 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
             UpdateSeniorRequestMapper updateSeniorRequestMapper,
             StaffRepository staffRepository,
             RequestTypeRepository requestTypeRepository,
-            IUserContextService userContextService) {
+            IUserContextService userContextService,
+            INotificationService notificationService) {
         super(userContextService);
         this.seniorRequestRepository = seniorRequestRepository;
         this.createSeniorRequestMapper = createSeniorRequestMapper;
@@ -52,6 +58,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         this.staffRepository = staffRepository;
         this.requestTypeRepository = requestTypeRepository;
         this.userContextService = userContextService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -167,13 +174,49 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         
         SeniorRequest existingSeniorRequest = requests.get(0);
         
+        // Store the previous assignee ID for notification logic
+        Long previousAssigneeId = existingSeniorRequest.getAssignedStaffId();
+        Long newAssigneeId = updateSeniorRequestDto.assignedStaffId();
+        
         // Update existing request object with the new values from the DTO in place
         updateSeniorRequestMapper.updateExitingSeniorRequestFromDto(updateSeniorRequestDto, existingSeniorRequest);
         if (existingSeniorRequest.getStatus() == RequestStatus.COMPLETED) {
             existingSeniorRequest.setCompletedAt(TimeUtils.getUtcTimeNow());
         }
         seniorRequestRepository.save(existingSeniorRequest);
+        
+        // Handle assignment/unassignment notifications
+        handleAssignmentNotifications(existingSeniorRequest, previousAssigneeId, newAssigneeId);
+        
         return seniorRequestMapper.toDto(existingSeniorRequest);
+    }
+
+    /**
+     * Handle assignment and unassignment notifications when assignedStaffId changes
+     * Notifications are sent asynchronously to avoid impacting API response time
+     * @param request the request being updated
+     * @param previousAssigneeId the previous assignee ID (can be null)
+     * @param newAssigneeId the new assignee ID (can be null)
+     */
+    private void handleAssignmentNotifications(SeniorRequest request, Long previousAssigneeId, Long newAssigneeId) {
+        // Only proceed if assignment actually changed
+        if (java.util.Objects.equals(previousAssigneeId, newAssigneeId)) {
+            return;
+        }
+        
+        // Send unassignment notification to previous assignee (async)
+        if (previousAssigneeId != null) {
+            notificationService.notifyRequestUnassignmentAsync(request, previousAssigneeId);
+            log.debug("Queued unassignment notification for request {} to previous staff {}", 
+                request.getId(), previousAssigneeId);
+        }
+        
+        // Send assignment notification to new assignee (async)
+        if (newAssigneeId != null) {
+            notificationService.notifyRequestAssignmentAsync(request, newAssigneeId);
+            log.debug("Queued assignment notification for request {} to staff {}", 
+                request.getId(), newAssigneeId);
+        }
     }
 
     public List<SeniorRequestDto> findRequestsBySenior(long id) {
@@ -314,15 +357,6 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     }
 
     /**
-     * Get the current user's staff ID
-     * @return The staff ID for the current authenticated user
-     * @throws IllegalStateException if user is not authenticated or doesn't have a staff record
-     */
-    private Long requireCurrentUserId() {
-        return userContextService.getRequestingUser().getId();
-    }
-
-    /**
      * Get center-level dashboard data (all requests across the organization)
      * Only available for ADMIN role
      * This is essentially the same as getDashboard() but with explicit admin check
@@ -362,6 +396,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
      * Assign a request to a staff member with updated role-based business rules:
      * - Both Admin and Staff can assign any request to any staff member
      * - Validates that target staff exists and belongs to same center
+     * - Sends email notification to the assigned staff member
      *
      * @param requestId the ID of the request to assign
      * @param assignRequestDto the assignment details
@@ -383,7 +418,6 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         
         SeniorRequest request = requests.get(0);
 
-        Long currentUserId = requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
         boolean isStaff = !SecurityContextUtil.isCurrentUserAdmin();
         Long targetStaffId = assignRequestDto.assignedStaffId();
@@ -397,9 +431,18 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         // This validation applies to both admin and staff
         // TODO: Implement staff validation to ensure target staff exists and belongs to same center
         
+        // Store previous assignment for potential notification
+        Long previousAssigneeId = request.getAssignedStaffId();
+        
         // Perform assignment
         request.setAssignedStaffId(targetStaffId);
         seniorRequestRepository.save(request);
+
+        // Send notification email to newly assigned staff member (async)
+        if (targetStaffId != null && !targetStaffId.equals(previousAssigneeId)) {
+            notificationService.notifyRequestAssignmentAsync(request, targetStaffId);
+            log.debug("Queued assignment notification for request {} to staff {}", requestId, targetStaffId);
+        }
 
         return seniorRequestMapper.toDto(request);
     }
@@ -407,6 +450,7 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
     /**
      * Unassign a request (remove assignment) with updated role-based business rules:
      * - Both Admin and Staff can unassign any request
+     * - Sends email notification to the previously assigned staff member
      *
      * @param requestId the ID of the request to unassign
      * @return the updated SeniorRequestDto
@@ -426,7 +470,6 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
         
         SeniorRequest request = requests.get(0);
 
-        Long currentUserId = requireCurrentUserId();
         boolean isAdmin = SecurityContextUtil.isCurrentUserAdmin();
         boolean isStaff = !SecurityContextUtil.isCurrentUserAdmin();
 
@@ -440,9 +483,18 @@ public class RequestManagementService extends AbstractCenterFilteredService<Seni
             throw new SecurityException("Request is not assigned");
         }
 
+        // Store previous assignment for notification
+        Long previousStaffId = request.getAssignedStaffId();
+
         // Perform unassignment
         request.setAssignedStaffId(null);
         seniorRequestRepository.save(request);
+
+        // Send notification email to previously assigned staff member (async)
+        if (previousStaffId != null) {
+            notificationService.notifyRequestUnassignmentAsync(request, previousStaffId);
+            log.debug("Queued unassignment notification for request {} to staff {}", requestId, previousStaffId);
+        }
 
         return seniorRequestMapper.toDto(request);
     }
