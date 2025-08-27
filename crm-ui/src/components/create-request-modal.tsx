@@ -181,7 +181,9 @@ export function CreateRequestModal({
         page: 0,
         size: 50,
       });
-      setSeniors(seniorsData.content);
+      setSeniors(seniorsData.content.sort((a, b) => 
+        `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
+      ));
     } catch (error) {
       console.error("Error loading initial data:", error);
       toast({

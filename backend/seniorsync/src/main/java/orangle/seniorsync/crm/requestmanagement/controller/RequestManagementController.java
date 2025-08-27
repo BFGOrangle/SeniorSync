@@ -3,8 +3,6 @@ package orangle.seniorsync.crm.requestmanagement.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import orangle.seniorsync.common.service.IUserContextService;
-import orangle.seniorsync.common.service.UserContextService;
 import orangle.seniorsync.crm.requestmanagement.dto.*;
 import orangle.seniorsync.crm.requestmanagement.service.IRequestManagementService;
 import org.springframework.http.HttpStatus;
@@ -23,7 +21,6 @@ import orangle.seniorsync.crm.requestmanagement.dto.AssignRequestDto;
 public class RequestManagementController {
 
     private final IRequestManagementService requestManagementService;
-    private final IUserContextService userContextService;
 
     /**
      * Create a new senior request.
@@ -58,11 +55,15 @@ public class RequestManagementController {
      * Assign or reassign a request to a staff member
      * Business rules enforced in service layer:
      * - Both Admin and Staff can assign any request to any staff member
+     * 
+     * @deprecated This endpoint is not used by the frontend. Assignment changes should 
+     * be made via PUT /api/requests (updateRequest) which also handles email notifications.
      *
      * @param requestId the ID of the request to assign
      * @param assignRequestDto the assignment details
      * @return updated SeniorRequestDto with HTTP 200
      */
+    @Deprecated
     @PutMapping("/{requestId}/assign")
     public ResponseEntity<SeniorRequestDto> assignRequest(
             @PathVariable Long requestId,
@@ -76,10 +77,14 @@ public class RequestManagementController {
      * Unassign a request (remove assignment)
      * Business rules enforced in service layer:
      * - Both Admin and Staff can unassign any request
+     * 
+     * @deprecated This endpoint is not used by the frontend. Assignment changes should 
+     * be made via PUT /api/requests (updateRequest) which also handles email notifications.
      *
      * @param requestId the ID of the request to unassign
      * @return updated SeniorRequestDto with HTTP 200
      */
+    @Deprecated
     @DeleteMapping("/{requestId}/assign")
     public ResponseEntity<SeniorRequestDto> unassignRequest(@PathVariable Long requestId) {
         SeniorRequestDto unassignedRequest = requestManagementService.unassignRequest(requestId);
