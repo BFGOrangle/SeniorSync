@@ -411,8 +411,9 @@ export const requestUtils = {
         }
       }
 
-      // Due date filter
-      if (filters.dueDate) {
+      // Due date filter - only apply to non-completed requests
+      // Completed requests should not show overdue status as it's irrelevant
+      if (filters.dueDate && request.frontendStatus !== 'completed') {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const tomorrow = new Date(today);
@@ -478,6 +479,22 @@ export const requestUtils = {
         
         if (hasDueDateFilters && !dueDateMatches) {
           return false;
+        }
+      }
+
+      // Auto-filter completed requests to show only last week by default
+      // This improves UX by keeping the completed column clean and relevant
+      if (request.frontendStatus === 'completed') {
+        if (request.completedAt) {
+          const completedDate = new Date(request.completedAt);
+          const today = new Date();
+          const oneWeekAgo = new Date(today);
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          
+          // Only show completed requests from the last week
+          if (completedDate < oneWeekAgo) {
+            return false;
+          }
         }
       }
 

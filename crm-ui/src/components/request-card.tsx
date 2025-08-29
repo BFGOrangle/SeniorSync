@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, AlertTriangle } from "lucide-react";
+import { Clock, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { useCurrentUser } from "@/contexts/user-context";
 import { AssigneeSection } from "@/components/assignee-section";
@@ -159,6 +159,37 @@ export function RequestCard({
     };
   };
 
+  const formatCompletionDate = (completedAt: string | undefined) => {
+    if (!completedAt) return null;
+
+    const completed = new Date(completedAt);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const completedDay = new Date(completed.getFullYear(), completed.getMonth(), completed.getDate());
+    
+    const diffTime = today.getTime() - completedDay.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    let label: string;
+    const colorClass = "text-green-600 bg-green-50 border-green-200";
+
+    if (diffDays === 0) {
+      label = "Completed today";
+    } else if (diffDays === 1) {
+      label = "Completed yesterday";
+    } else if (diffDays <= 7) {
+      label = `Completed ${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    } else {
+      label = `Completed ${formatDate(completedAt)}`;
+    }
+
+    return {
+      label,
+      colorClass,
+      icon: CheckCircle,
+    };
+  };
+
   return (
     <>
       <Card
@@ -216,27 +247,53 @@ export function RequestCard({
             </p>
           )}
 
-          {/* Due Date Display */}
-          {request.dueDate && (
-            <div className="mb-3">
-              {(() => {
-                const dueDateInfo = formatDueDate(request.dueDate);
-                if (!dueDateInfo) return null;
-                const IconComponent = dueDateInfo.icon;
-                return (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs font-medium flex items-center gap-1",
-                      dueDateInfo.colorClass
-                    )}
-                  >
-                    <IconComponent className="h-3 w-3" />
-                    {dueDateInfo.label}
-                  </Badge>
-                );
-              })()}
-            </div>
+          {/* Date Display - Due Date for non-completed, Completion Date for completed */}
+          {request.frontendStatus === 'completed' ? (
+            /* Completion Date Display for completed requests */
+            request.completedAt && (
+              <div className="mb-3">
+                {(() => {
+                  const completionInfo = formatCompletionDate(request.completedAt);
+                  if (!completionInfo) return null;
+                  const IconComponent = completionInfo.icon;
+                  return (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-xs font-medium flex items-center gap-1",
+                        completionInfo.colorClass
+                      )}
+                    >
+                      <IconComponent className="h-3 w-3" />
+                      {completionInfo.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+            )
+          ) : (
+            /* Due Date Display for non-completed requests */
+            request.dueDate && (
+              <div className="mb-3">
+                {(() => {
+                  const dueDateInfo = formatDueDate(request.dueDate);
+                  if (!dueDateInfo) return null;
+                  const IconComponent = dueDateInfo.icon;
+                  return (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-xs font-medium flex items-center gap-1",
+                        dueDateInfo.colorClass
+                      )}
+                    >
+                      <IconComponent className="h-3 w-3" />
+                      {dueDateInfo.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+            )
           )}
 
           <div className="flex items-center justify-between mb-3">
