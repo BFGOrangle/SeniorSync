@@ -10,12 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Loader2, Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface RequestTypeRow { id?: number; name: string; description?: string | null }
+interface RequestTypeRow { id?: number; name: string; description?: string | null; isGlobal?: boolean | null }
 
 export default function AdminRequestTypesPage() {
   const [centerId, setCenterId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [types, setTypes] = useState<RequestTypeRow[]>([]);
+  const [customTypes, setCustomTypes] = useState<RequestTypeRow[]>([]);
+  const [globalTypes, setGlobalTypes] = useState<RequestTypeRow[]>([]);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -26,9 +27,18 @@ export default function AdminRequestTypesPage() {
     setLoading(true);
     try {
   const list: RequestTypeDto[] = await requestTypeApiService.getAllByCenter(cid);
-  // Exclude global types from admin center-scoped management view
-  const centerOnly = list.filter(rt => !rt.isGlobal);
-  setTypes(centerOnly.map(rt => ({ id: rt.id, name: rt.name, description: rt.description })));
+  setGlobalTypes(
+    list
+      .filter(rt => rt.isGlobal)
+      .map(rt => ({ id: rt.id, name: rt.name, description: rt.description, isGlobal: rt.isGlobal }))
+      .sort((a,b) => a.name.localeCompare(b.name))
+  );
+  setCustomTypes(
+    list
+      .filter(rt => !rt.isGlobal)
+      .map(rt => ({ id: rt.id, name: rt.name, description: rt.description, isGlobal: rt.isGlobal }))
+      .sort((a,b) => a.name.localeCompare(b.name))
+  );
     } catch (e) {
       console.error(e);
       toast({ title: 'Error', description: 'Failed to load request types', variant: 'destructive' });
@@ -58,7 +68,7 @@ export default function AdminRequestTypesPage() {
       await requestTypeApiService.create({ name: newName.trim(), description: newDescription.trim(), centerId });
       setNewName('');
       setNewDescription('');
-      await load(centerId);
+  await load(centerId);
       toast({ title: 'Created', description: 'Request type added' });
     } catch (e) {
       toast({ title: 'Error', description: 'Failed to create type', variant: 'destructive' });
@@ -97,9 +107,10 @@ export default function AdminRequestTypesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Request Types</CardTitle>
-          <CardDescription>Manage custom request types for your center only. Global types (if any) are not shown here.</CardDescription>
+          <CardDescription>Global types are available to all centers (read-only). Custom types belong to your center.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Custom Types Creation + List (on top) */}
           <div className="space-y-2 border rounded-md p-4 bg-muted/40">
             <div className="flex gap-2">
               <Input placeholder="New request type name *" value={newName} onChange={e => setNewName(e.target.value)} disabled={!centerId || creating} />
@@ -110,14 +121,15 @@ export default function AdminRequestTypesPage() {
             <Textarea placeholder="Description (required)" value={newDescription} onChange={e => setNewDescription(e.target.value)} disabled={!centerId || creating} className="min-h-[70px]" />
             <p className="text-[11px] text-muted-foreground">Provide a clear name and description. These are center-scoped.</p>
           </div>
+          {/* Custom Types List */}
           {loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
-          ) : types.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No request types yet. Add one above.</p>
+          ) : customTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No custom types yet. Add one above.</p>
           ) : (
             <ul className="divide-y border rounded-md">
-              {types.map((t, idx) => (
-                <li key={idx} className="px-3 py-2 text-sm flex flex-col gap-1">
+              {customTypes.map(t => (
+                <li key={t.id} className="px-3 py-2 text-sm flex flex-col gap-1">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{t.name}</span>
                     <Button disabled={!t.id || deletingId === t.id} size="icon" variant="ghost" onClick={() => deleteType(t.id, t.name)}>
@@ -129,6 +141,30 @@ export default function AdminRequestTypesPage() {
               ))}
             </ul>
           )}
+
+          <div className="border-b" />
+
+          {/* Global Types Section (now below) */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground">Global Types</h3>
+            {loading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+            ) : globalTypes.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No global types available.</p>
+            ) : (
+              <ul className="divide-y border rounded-md bg-muted/30">
+                {globalTypes.map(t => (
+                  <li key={t.id} className="px-3 py-2 text-sm flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{t.name}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">GLOBAL</span>
+                    </div>
+                    {t.description && <p className="text-xs text-muted-foreground leading-snug line-clamp-3">{t.description}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
