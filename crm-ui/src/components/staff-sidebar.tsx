@@ -52,6 +52,12 @@ const overviewItems = [
         url: "/staff/request-management/ai-recommendations",
         icon: Sparkles,
       }
+      ,
+      {
+        title: "Request Types",
+        url: "/staff/request-management/request-types",
+        icon: ClipboardList,
+      }
     ]
   },
   {

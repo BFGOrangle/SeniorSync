@@ -129,11 +129,7 @@ export function SearchableSelect({
           }
         }}
       >
-        <div 
-          className="p-2" 
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-        >
+  <div className="p-2" onClick={(e) => e.stopPropagation()}>
           <Input
             placeholder={searchPlaceholder}
             value={search}
@@ -143,15 +139,13 @@ export function SearchableSelect({
             autoFocus
             onMouseDown={(e) => e.stopPropagation()}
           />
-          <div 
+          <div
             className="max-h-60 overflow-y-auto overscroll-contain"
-            onMouseDown={(e) => e.stopPropagation()}
+            // Allow natural mouse wheel & scrollbar interactions
+            onWheel={(e) => e.stopPropagation()}
           >
             {filteredOptions.length > 0 ? (
-              <div 
-                className="space-y-1 p-1"
-                onMouseDown={(e) => e.stopPropagation()}
-              >
+              <div className="space-y-1 p-1">
                 {filteredOptions.map((option) => (
                   <div
                     key={option.value}
@@ -162,12 +156,13 @@ export function SearchableSelect({
                     )}
                     onClick={(e) => {
                       e.preventDefault();
+                      // stopPropagation to avoid closing before selection logic runs
                       e.stopPropagation();
                       if (!option.disabled) {
                         handleSelect(option.value);
                       }
                     }}
-                    onMouseDown={(e) => e.preventDefault()}
+                    // Don't prevent default on mousedown so scrollbar & wheel work naturally
                   >
                     <Check
                       className={cn(
