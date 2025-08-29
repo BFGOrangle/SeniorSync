@@ -51,6 +51,7 @@ import { SpamIndicatorBadge } from "@/components/spam-indicator-badge";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
 import { Calendar } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { RequestTypeSelectWithCreate } from "@/components/request-type-selector";
 
 type Priority = "low" | "medium" | "high" | "urgent";
 type Status = "todo" | "in-progress" | "completed";
@@ -479,9 +480,32 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="requestType">Request Type</Label>
-                <Badge variant="secondary" className="px-2">
-                  {editedRequest.requestTypeName || "N/A"}
-                </Badge>
+                {isEditing && canEdit ? (
+                  <div className="space-y-1">
+                    <RequestTypeSelectWithCreate
+                      value={editedRequest.requestTypeId}
+                      onChange={(id, meta) => {
+                        setEditedRequest({
+                          ...editedRequest,
+                          requestTypeId: id,
+                          requestTypeName: meta?.name || editedRequest.requestTypeName
+                        });
+                      }}
+                    />
+                    {editedRequest.requestTypeDescription && (
+                      <p className="text-xs text-muted-foreground leading-snug">{editedRequest.requestTypeDescription}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <Badge variant="secondary" className="px-2">
+                      {editedRequest.requestTypeName || "N/A"}
+                    </Badge>
+                    {editedRequest.requestTypeDescription && (
+                      <p className="text-xs text-muted-foreground leading-snug">{editedRequest.requestTypeDescription}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2 md:col-span-2">

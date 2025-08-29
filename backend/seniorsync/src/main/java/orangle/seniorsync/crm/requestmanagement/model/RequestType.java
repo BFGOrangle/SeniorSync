@@ -22,4 +22,10 @@ public class RequestType {
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
+    @Column(name = "is_global")
+    private Boolean isGlobal = Boolean.FALSE;
+
+    @Column(name = "center_id")
+    private Long centerId;
+
 }

@@ -218,6 +218,7 @@ export function useRequestManagement() {
                 seniorAddress: updatedRequest.seniorAddress,
                 assignedStaffName: assignedStaffName,
                 requestTypeName: updatedRequest.requestTypeName,
+                requestTypeDescription: updatedRequest.requestTypeDescription,
               })
             : request
         )
@@ -567,7 +568,8 @@ export function useRequest(requestId: number | null) {
         seniorEmail: updatedRequest.seniorEmail,
         seniorAddress: updatedRequest.seniorAddress,
         assignedStaffName: assignedStaffName,
-        requestTypeName: updatedRequest.requestTypeName,
+  requestTypeName: updatedRequest.requestTypeName,
+  requestTypeDescription: updatedRequest.requestTypeDescription,
       });
 
       setRequest(enhancedUpdated);

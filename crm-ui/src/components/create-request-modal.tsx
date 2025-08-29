@@ -32,95 +32,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, PlusCircle } from "lucide-react";
 import { CreateSeniorRequestDto } from "@/types/request";
 import { SeniorDto } from "@/types/senior";
 import { RequestManagementApiService } from "@/services/request-api";
 import { seniorApiService } from "@/services/senior-api";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { requestTypeApiService, RequestTypeDto } from "@/services/request-type-api";
+import { staffApiService } from "@/services/staff-api";
+import { RequestTypeSelectWithCreate } from "@/components/request-type-selector";
 
-// Hardcoded request types from database migration
-const REQUEST_TYPES = [
-  {
-    id: 1,
-    name: "Reading Assistance",
-    description: "Help with reading books, mail, documents, or digital content",
-  },
-  {
-    id: 2,
-    name: "Physical Item Moving",
-    description:
-      "Assistance with moving, lifting, or rearranging furniture and belongings",
-  },
-  {
-    id: 3,
-    name: "Transportation",
-    description:
-      "Help with transportation to appointments, shopping, or social activities",
-  },
-  {
-    id: 4,
-    name: "Medication Reminders",
-    description: "Reminders and assistance with medication schedules",
-  },
-  {
-    id: 5,
-    name: "Grocery Shopping",
-    description: "Shopping for groceries and household necessities",
-  },
-  {
-    id: 6,
-    name: "Meal Preparation",
-    description: "Assistance with preparing nutritious meals",
-  },
-  {
-    id: 7,
-    name: "Housekeeping",
-    description: "Help with light cleaning, laundry, and household chores",
-  },
-  {
-    id: 8,
-    name: "Technology Support",
-    description:
-      "Assistance with computers, phones, tablets, or other digital devices",
-  },
-  {
-    id: 9,
-    name: "Social Visit",
-    description: "Friendly visits for companionship and social interaction",
-  },
-  {
-    id: 10,
-    name: "Wellness Check",
-    description: "Regular check-ins to ensure health and safety",
-  },
-  {
-    id: 11,
-    name: "Outdoor Assistance",
-    description: "Help with gardening, yard work, or outdoor maintenance",
-  },
-  {
-    id: 12,
-    name: "Administrative Help",
-    description: "Assistance with paperwork, bills, forms, or applications",
-  },
-  {
-    id: 13,
-    name: "Personal Care",
-    description: "Help with hygiene, dressing, or other personal care tasks",
-  },
-  {
-    id: 14,
-    name: "Exercise Support",
-    description:
-      "Assistance with prescribed exercises or physical activity routines",
-  },
-  {
-    id: 15,
-    name: "Errands",
-    description: "Help with miscellaneous errands outside the home",
-  },
-];
+// Dynamic request types fetched per center (string names for now)
+interface DynamicRequestType { id?: number; name: string; description?: string | null }
 
 // Form validation schema matching backend API
 const createRequestSchema = z.object({
@@ -158,6 +81,11 @@ export function CreateRequestModal({
   const [isLoading, setIsLoading] = useState(false);
   const [seniors, setSeniors] = useState<SeniorDto[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [requestTypes, setRequestTypes] = useState<DynamicRequestType[]>([]);
+  const [centerId, setCenterId] = useState<number | null>(null);
+  const [creatingRequestType, setCreatingRequestType] = useState(false);
+  const [newRequestTypeName, setNewRequestTypeName] = useState("");
+  const [loadingRequestTypes, setLoadingRequestTypes] = useState(false);
 
   const { toast } = useToast();
   const requestApi = new RequestManagementApiService();
@@ -184,6 +112,13 @@ export function CreateRequestModal({
       setSeniors(seniorsData.content.sort((a, b) => 
         `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
       ));
+
+      // Load current user staff profile to obtain centerId
+      const staffProfile = await staffApiService.getCurrentUserProfile();
+      if (staffProfile?.centerId) {
+        setCenterId(staffProfile.centerId);
+        await loadRequestTypes(staffProfile.centerId);
+      }
     } catch (error) {
       console.error("Error loading initial data:", error);
       toast({
@@ -195,6 +130,23 @@ export function CreateRequestModal({
       setLoadingData(false);
     }
   }, [toast]);
+
+  const loadRequestTypes = async (centerIdToUse: number) => {
+    setLoadingRequestTypes(true);
+    try {
+  const list: RequestTypeDto[] = await requestTypeApiService.getAllByCenter(centerIdToUse);
+  setRequestTypes(list.map(rt => ({ id: rt.id, name: rt.name, description: rt.description })));
+    } catch (e) {
+      console.error("Failed to load request types", e);
+      toast({
+        title: "Error",
+        description: "Could not load request types.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRequestTypes(false);
+    }
+  };
 
   // Load seniors when modal opens
   useEffect(() => {
@@ -305,7 +257,7 @@ export function CreateRequestModal({
                   </FormItem>
                 )}
               />
-              {/* Request Type */}
+              {/* Request Type with inline creation (reusable component) */}
               <FormField
                 control={form.control}
                 name="requestTypeId"
@@ -313,19 +265,10 @@ export function CreateRequestModal({
                   <FormItem>
                     <FormLabel>Request Type</FormLabel>
                     <FormControl>
-                      <SearchableSelect
-                        options={REQUEST_TYPES.map((type) => ({
-                          value: type.id.toString(),
-                          label: type.name,
-                          subtitle: type.description,
-                        }))}
-                        value={field.value?.toString()}
-                        onValueChange={(value) =>
-                          field.onChange(value ? parseInt(value) : undefined)
-                        }
-                        placeholder="Select request type..."
-                        searchPlaceholder="Search request types..."
-                        emptyMessage="No request types found matching your search"
+                      <RequestTypeSelectWithCreate
+                        value={field.value}
+                        onChange={(id) => field.onChange(id)}
+                        placeholder={loadingRequestTypes ? "Loading request types..." : "Select request type..."}
                       />
                     </FormControl>
                     <FormMessage />

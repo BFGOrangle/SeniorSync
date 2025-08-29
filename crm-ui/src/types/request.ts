@@ -104,6 +104,7 @@ export interface SeniorRequestDisplayView extends SeniorRequestView {
 
   // Additional request type information
   requestTypeName?: string;
+  requestTypeDescription?: string;
 
   // Frontend compatibility fields (computed from backend data)
   frontendStatus: "todo" | "in-progress" | "completed";
@@ -191,6 +192,7 @@ export const RequestUtils = {
       seniorAddress?: string;
       assignedStaffName?: string;
       requestTypeName?: string;
+  requestTypeDescription?: string;
     }
   ): SeniorRequestDisplayView {
     return {
@@ -211,6 +213,7 @@ export const RequestUtils = {
       seniorAddress?: string;
       assignedStaffName?: string;
       requestTypeName?: string;
+  requestTypeDescription?: string;
     }
   ): SeniorRequestDisplayView {
     return {
