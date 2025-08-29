@@ -32,6 +32,7 @@ public class RequestTypeController {
         return requestTypeService.createDefaultRequestTypesIfNotExist(createRequestTypeDto);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteRequestTypeById(@PathVariable Long id) {
         requestTypeService.deleteRequestTypeById(id);
