@@ -46,6 +46,7 @@ export default function RequestManagement() {
   const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban-status");
   const [filters, setFilters] = useState<RequestFilterOptions>({});
+  const [showAllCompleted, setShowAllCompleted] = useState(false);
   const [sort, setSort] = useState<RequestSortOption>({
     field: "createdAt",
     direction: "desc",
@@ -75,11 +76,17 @@ export default function RequestManagement() {
   const processedRequests = useMemo(() => {
     if (!mounted || !requests) return [];
     
+    // Include showAllCompleted in the filters
+    const filtersWithCompleted = {
+      ...filters,
+      showAllCompleted: showAllCompleted
+    };
+    
     // Use the enhanced requests for filtering
-    const filteredRequests = filterAndSortRequests(filters, sort.field, sort.direction);
+    const filteredRequests = filterAndSortRequests(filtersWithCompleted, sort.field, sort.direction);
     
     return filteredRequests;
-  }, [requests, filters, sort, mounted, filterAndSortRequests]);
+  }, [requests, filters, showAllCompleted, sort, mounted, filterAndSortRequests]);
 
   const handleRequestUpdate = async (updatedRequest: SeniorRequestDisplayView) => {
     try {
@@ -324,6 +331,8 @@ export default function RequestManagement() {
             requests={processedRequests}
             onRequestUpdate={handleRequestUpdate}
             spamDetectionStatus={spamDetectionStatus} // PHASE 4: Pass spam detection status
+            showAllCompleted={showAllCompleted}
+            onShowAllCompletedChange={setShowAllCompleted}
           />
         )}
         {viewMode === "kanban-priority" && (

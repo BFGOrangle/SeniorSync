@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, Clock, Phone, Calendar, AlertTriangle } from "lucide-react";
+import { ArrowUpDown, Clock, Phone, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { SpamDetectionIndicator } from "@/components/spam-detection-indicator";
 import { cn } from "@/lib/utils";
@@ -135,6 +135,37 @@ export function RequestTableView({
       icon: IconComponent,
       isUrgent: diffDays <= 1,
       isOverdue: diffDays < 0,
+    };
+  };
+
+  const formatCompletionDate = (completedAt: string | undefined) => {
+    if (!completedAt) return null;
+
+    const completed = new Date(completedAt);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const completedDay = new Date(completed.getFullYear(), completed.getMonth(), completed.getDate());
+    
+    const diffTime = today.getTime() - completedDay.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    let label: string;
+    const colorClass = "text-green-600 bg-green-50 border-green-200";
+
+    if (diffDays === 0) {
+      label = "Completed today";
+    } else if (diffDays === 1) {
+      label = "Completed yesterday";
+    } else if (diffDays <= 7) {
+      label = `Completed ${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    } else {
+      label = `Completed ${formatDate(completedAt)}`;
+    }
+
+    return {
+      label,
+      colorClass,
+      icon: CheckCircle,
     };
   };
 
@@ -341,41 +372,82 @@ export function RequestTableView({
         </Button>
       ),
       cell: ({ row }) => {
+        const request = row.original;
         const dueDate = row.getValue("dueDate") as string | undefined;
         
-        if (!dueDate) {
+        // Show completion date for completed requests, due date for others
+        if (request.frontendStatus === 'completed') {
+          const completedAt = request.completedAt;
+          
+          if (!completedAt) {
+            return (
+              <div className="text-sm text-gray-400">
+                Completed (no date)
+              </div>
+            );
+          }
+
+          const completionInfo = formatCompletionDate(completedAt);
+          if (!completionInfo) {
+            return (
+              <div className="text-sm text-gray-400">
+                Completed (no date)
+              </div>
+            );
+          }
+
+          const IconComponent = completionInfo.icon;
+
           return (
-            <div className="text-sm text-gray-400">
-              No due date
+            <div className="flex items-center gap-1">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs font-medium flex items-center gap-1",
+                  completionInfo.colorClass
+                )}
+              >
+                <IconComponent className="h-3 w-3" />
+                {completionInfo.label}
+              </Badge>
+            </div>
+          );
+        } else {
+          // Show due date for non-completed requests
+          if (!dueDate) {
+            return (
+              <div className="text-sm text-gray-400">
+                No due date
+              </div>
+            );
+          }
+
+          const dueDateInfo = formatDueDate(dueDate);
+          if (!dueDateInfo) {
+            return (
+              <div className="text-sm text-gray-400">
+                No due date
+              </div>
+            );
+          }
+
+          const IconComponent = dueDateInfo.icon;
+
+          return (
+            <div className="flex items-center gap-1">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs font-medium flex items-center gap-1",
+                  dueDateInfo.colorClass
+                )}
+              >
+                <IconComponent className="h-3 w-3" />
+                {dueDateInfo.label}
+              </Badge>
             </div>
           );
         }
-
-        const dueDateInfo = formatDueDate(dueDate);
-        if (!dueDateInfo) {
-          return (
-            <div className="text-sm text-gray-400">
-              No due date
-            </div>
-          );
-        }
-
-        const IconComponent = dueDateInfo.icon;
-
-        return (
-          <div className="flex items-center gap-1">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs font-medium flex items-center gap-1",
-                dueDateInfo.colorClass
-              )}
-            >
-              <IconComponent className="h-3 w-3" />
-              {dueDateInfo.label}
-            </Badge>
-          </div>
-        );
       },
     },
     {

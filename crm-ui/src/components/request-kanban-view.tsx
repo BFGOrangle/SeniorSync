@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { SeniorRequestDisplayView } from "@/types/request";
 import { RequestCard } from "@/components/request-card";
 import { DroppableColumn } from "@/components/ui/droppable-column";
@@ -29,6 +30,8 @@ interface RequestKanbanViewProps {
   requests: SeniorRequestDisplayView[];
   onRequestUpdate: (request: SeniorRequestDisplayView) => void;
   spamDetectionStatus?: Map<number, 'pending' | 'completed'>; // PHASE 4: Add spam detection status
+  showAllCompleted?: boolean;
+  onShowAllCompletedChange?: (showAll: boolean) => void;
 }
 
 interface Column {
@@ -63,6 +66,8 @@ export function RequestKanbanView({
   requests,
   onRequestUpdate,
   spamDetectionStatus = new Map(), // PHASE 4: Default to empty map
+  showAllCompleted = false,
+  onShowAllCompletedChange,
 }: RequestKanbanViewProps) {
   const [activeRequest, setActiveRequest] =
     useState<SeniorRequestDisplayView | null>(null);
@@ -185,12 +190,27 @@ export function RequestKanbanView({
                         {column.description}
                       </span>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-white/80 text-gray-700 font-medium"
-                    >
-                      {columnRequests.length}
-                    </Badge>
+                    {/* Only show badge for Completed column with toggle functionality */}
+                    {column.id === 'completed' ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge
+                          variant="secondary"
+                          className="bg-white/80 text-gray-700 font-medium"
+                        >
+                          {columnRequests.length}
+                        </Badge>
+                        {columnRequests.length > 0 && onShowAllCompletedChange && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onShowAllCompletedChange(!showAllCompleted)}
+                            className="text-xs h-6 px-2 text-gray-600 hover:text-gray-800 hover:bg-white/60"
+                          >
+                            {showAllCompleted ? "Recent only" : "Show all"}
+                          </Button>
+                        )}
+                      </div>
+                    ) : null}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 flex-1 flex flex-col min-h-0 overflow-hidden">
