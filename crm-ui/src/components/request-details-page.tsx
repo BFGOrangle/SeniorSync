@@ -557,7 +557,14 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-500" />
                         <span className="font-medium">
-                          {new Date(editedRequest.dueDate).toLocaleString()}
+                          {new Date(editedRequest.dueDate).toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true
+                          })}
                         </span>
                         {/* Show urgency indicator */}
                         {(() => {

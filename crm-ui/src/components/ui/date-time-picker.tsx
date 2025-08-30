@@ -1,119 +1,181 @@
+"use client";
+ 
 import * as React from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { CalendarIcon } from "@radix-ui/react-icons";
+import { format } from "date-fns";
+ 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { startOfToday, isBefore } from "date-fns";
-
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  PopoverPortal
+} from "@/components/ui/popover";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+ 
 interface DateTimePickerProps {
-  value?: string;                    // ISO string
-  onChange: (value: string) => void; // emits ISO string
+  value?: string | Date;
+  onChange?: (value: string | undefined) => void;
   disabled?: boolean;
 }
 
-export function DateTimePicker({ value, onChange, disabled }: DateTimePickerProps) {
-  const [open, setOpen] = React.useState(false);
-
-  // Local UI state
-  const [date, setDate] = React.useState<Date | undefined>(
-    value ? new Date(value) : undefined
-  );
-  const [time, setTime] = React.useState(
-    value ? new Date(value).toTimeString().slice(0, 8) : ""
-  );
-
-  // Sync down from parent (also handle clearing)
-  React.useEffect(() => {
-    if (!value) {
-      setDate(undefined);
-      return;
+export function DateTimePicker({ value, onChange, disabled = false }: DateTimePickerProps) {
+  const [date, setDate] = React.useState<Date | undefined>(() => {
+    if (value) {
+      return new Date(value);
     }
-    const incoming = new Date(value);
-    setDate(incoming);
-    setTime(incoming.toTimeString().slice(0, 8));
+    return undefined;
+  });
+  const [isOpen, setIsOpen] = React.useState(false);
+ 
+  // Update internal state when value prop changes
+  React.useEffect(() => {
+    if (value) {
+      setDate(new Date(value));
+    } else {
+      setDate(undefined);
+    }
   }, [value]);
 
-  // Helper to emit combined datetime
-  const emit = React.useCallback(
-    (baseDate: Date, t: string) => {
-      if (!baseDate || isNaN(baseDate.getTime())) return;
-      const [h, m, s] = t.split(":");
-      if ([h, m, s].some((v) => isNaN(+v))) return;
-      const combined = new Date(baseDate);
-      combined.setHours(+h, +m, +s, 0);
-      if (isNaN(combined.getTime())) return;
-      const nextIso = combined.toISOString();
-      if (value !== nextIso) onChange(nextIso);
-    },
-    [onChange, value]
-  );
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+      onChange?.(selectedDate.toISOString());
+    }
+  };
+ 
+  const handleTimeChange = (
+    type: "hour" | "minute" | "ampm",
+    value: string
+  ) => {
+    // If no date is selected, default to today
+    const baseDate = date ?? new Date();
+    const newDate = new Date(baseDate);
+    newDate.setHours(0);
+    newDate.setMinutes(0);
 
-  // If time changes, recompute with current date
-  React.useEffect(() => {
-    if (date) emit(date, time);
-  }, [time, date, emit]);
-
+    if (type === "hour") {
+      newDate.setHours(
+        (parseInt(value) % 12) + (newDate.getHours() >= 12 ? 12 : 0)
+      );
+    } else if (type === "minute") {
+      newDate.setMinutes(parseInt(value));
+    } else if (type === "ampm") {
+      const currentHours = newDate.getHours();
+      newDate.setHours(
+        value === "PM"
+          ? (currentHours < 12 ? currentHours + 12 : currentHours)
+          : (currentHours >= 12 ? currentHours - 12 : currentHours)
+      );
+    }
+    setDate(newDate);
+    onChange?.(newDate.toISOString());
+  };
+ 
   return (
-    <div className="flex gap-4">
-      <div className="flex flex-col gap-3">
-        <Label htmlFor="date-picker" className="px-1">
-          Date
-        </Label>
-        <Popover open={open} onOpenChange={setOpen} modal={true}>
-        <PopoverTrigger asChild>
-            <Button
-            type="button"                     // important inside forms
-            variant="outline"
-            id="date-picker"
-            className="w-32 justify-between font-normal"
-            disabled={disabled}
-            >
-            {date ? date.toLocaleDateString() : "Select date"}
-            <ChevronDownIcon className="h-4 w-4" />
-            </Button>
-        </PopoverTrigger>
-
-        <PopoverContent
-            align="start"
-            sideOffset={6}
-            className="z-[100] w-auto overflow-hidden p-0"  // higher than dialog overlay
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled}
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground"
+          )}
         >
-            <Calendar
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? format(date, "MM/dd/yyyy hh:mm aa") : "MM/DD/YYYY hh:mm aa"}
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverPortal>
+        <PopoverContent
+          align="start"
+          sideOffset={6}
+          className="z-[100] w-auto overflow-hidden p-0"
+        >
+          <div className="sm:flex">
+          <Calendar
             mode="single"
             selected={date}
-            captionLayout="dropdown"
-            // use a day-granularity disable if needed:
-            // disabled={(d) => isBefore(d, startOfToday())}
-            onSelect={(d) => {
-                if (!d) return;
-                setDate(d);
-                setOpen(false);
-            }}
+            onSelect={handleDateSelect}
             initialFocus
-            />
+          />
+          <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
+            <ScrollArea className="w-64 sm:w-auto">
+              <div className="flex sm:flex-col p-2">
+                {hours.reverse().map((hour) => (
+                  <Button
+                    key={hour}
+                    size="icon"
+                    variant={
+                      date && date.getHours() % 12 === hour % 12
+                        ? "default"
+                        : "ghost"
+                    }
+                    className="sm:w-full shrink-0 aspect-square"
+                    onClick={() => handleTimeChange("hour", hour.toString())}
+                  >
+                    {hour}
+                  </Button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" className="sm:hidden" />
+            </ScrollArea>
+            <ScrollArea className="w-64 sm:w-auto">
+              <div className="flex sm:flex-col p-2">
+                {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
+                  <Button
+                    key={minute}
+                    size="icon"
+                    variant={
+                      date && date.getMinutes() === minute
+                        ? "default"
+                        : "ghost"
+                    }
+                    className="sm:w-full shrink-0 aspect-square"
+                    onClick={() =>
+                      handleTimeChange("minute", minute.toString())
+                    }
+                  >
+                    {minute}
+                  </Button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" className="sm:hidden" />
+            </ScrollArea>
+            <ScrollArea className="">
+              <div className="flex sm:flex-col p-2">
+                {["AM", "PM"].map((ampm) => (
+                  <Button
+                    key={ampm}
+                    size="icon"
+                    variant={
+                      date &&
+                      ((ampm === "AM" && date.getHours() < 12) ||
+                        (ampm === "PM" && date.getHours() >= 12))
+                        ? "default"
+                        : "ghost"
+                    }
+                    className="sm:w-full shrink-0 aspect-square"
+                    onClick={() => handleTimeChange("ampm", ampm)}
+                  >
+                    {ampm}
+                  </Button>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+          {/* time selector UI */}
         </PopoverContent>
-        </Popover>
+      </PopoverPortal>
+    </Popover>
 
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <Label htmlFor="time-picker" className="px-1">
-          Time
-        </Label>
-        <Input
-          type="time"
-          id="time-picker"
-          step="1"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          disabled={disabled}
-          className="bg-background appearance-none
-                     [&::-webkit-calendar-picker-indicator]:hidden
-                     [&::-webkit-calendar-picker-indicator]:appearance-none"
-        />
-      </div>
-    </div>
   );
 }
