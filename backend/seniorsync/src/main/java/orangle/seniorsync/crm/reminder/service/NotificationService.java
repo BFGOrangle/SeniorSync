@@ -202,7 +202,7 @@ public class NotificationService implements INotificationService {
     
     private String buildReminderCreationHtml(String staffName, Reminder reminder) {
         String reminderDate = reminder.getReminderDate().format(DATE_FORMATTER);
-        String dashboardUrl = appBaseUrl + "/dashboard";
+        String dashboardUrl = appBaseUrl + "/admin/dashboard";
         
         return String.format("""
             <!DOCTYPE html>
@@ -244,7 +244,7 @@ public class NotificationService implements INotificationService {
                     
                     <div class="footer">
                         <p>This is an automated notification from SeniorSync.</p>
-                        <p>You will also receive daily reminder emails at 8:00 AM for pending reminders.</p>
+                        <p>You will receive a reminder email at the scheduled time.</p>
                     </div>
                 </div>
             </body>
@@ -307,6 +307,67 @@ public class NotificationService implements INotificationService {
         );
     }
     
+    private String buildReminderTriggeredHtml(String staffName, Reminder reminder) {
+        String reminderDate = reminder.getReminderDate().format(DATE_FORMATTER);
+        String dashboardUrl = appBaseUrl + "/admin/dashboard";
+        
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Reminder Alert</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; }
+                    .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    .header { background-color: #f59e0b; color: white; padding: 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px; }
+                    .alert-box { background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #f59e0b; }
+                    .button { display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 15px 0; }
+                    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }
+                    .time-highlight { background-color: #dc2626; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+                    .urgent { background-color: #fef2f2; border-left-color: #dc2626; }
+                    .urgent .time-highlight { background-color: #dc2626; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔔 Reminder Alert</h1>
+                        <p>It's time for your scheduled reminder!</p>
+                    </div>
+                    
+                    <h2>Hello %s,</h2>
+                    <p>This is your scheduled reminder notification. Please review the details below and take the necessary action:</p>
+                    
+                    <div class="alert-box urgent">
+                        <h3>⚠️ Action Required</h3>
+                        <p><strong>Title:</strong> %s</p>
+                        <p><strong>Description:</strong> %s</p>
+                        <p><strong>Scheduled Time:</strong> <span class="time-highlight">%s</span></p>
+                        <p><strong>Reminder ID:</strong> #%d</p>
+                    </div>
+                    
+                    <p>Please ensure you complete this task promptly. If you've already completed it, you can mark it as done in SeniorSync.</p>
+                    
+                    <a href="%s" class="button">📱 Open SeniorSync Dashboard</a>
+                    
+                    <div class="footer">
+                        <p>This is an automated reminder from SeniorSync.</p>
+                        <p>If you believe this reminder was sent in error, please contact your administrator.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """,
+            staffName,
+            escapeHtml(reminder.getTitle()),
+            escapeHtml(reminder.getDescription()),
+            reminderDate,
+            reminder.getId(),
+            dashboardUrl
+        );
+    }
+    
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -366,5 +427,37 @@ public class NotificationService implements INotificationService {
                 request.getId(), previousAssigneeId, e.getMessage(), e);
         }
         return CompletableFuture.completedFuture(null);
+    }
+    
+    @Override
+    public void notifyReminderTriggered(Reminder reminder) {
+        log.info("Sending reminder notification for reminder {} to staff {}", 
+            reminder.getId(), reminder.getStaffAssigneeId());
+        
+        Optional<Staff> staffOpt = staffRepository.findById(reminder.getStaffAssigneeId());
+        if (staffOpt.isEmpty()) {
+            log.warn("Staff not found for reminder notification. Staff ID: {}, Reminder ID: {}", 
+                reminder.getStaffAssigneeId(), reminder.getId());
+            return;
+        }
+        
+        Staff staff = staffOpt.get();
+        String email = staff.getContactEmail();
+        
+        if (email == null || email.trim().isEmpty()) {
+            log.warn("No valid email found for staff {}. Skipping reminder notification for reminder ID: {}", 
+                staff.getId(), reminder.getId());
+            return;
+        }
+        
+        String subject = "⏰ Reminder: " + reminder.getTitle();
+        String htmlBody = buildReminderTriggeredHtml(staff.getFullName(), reminder);
+        
+        try {
+            emailService.sendHtmlEmail(email, subject, htmlBody);
+            log.info("Reminder notification sent successfully to {}", email);
+        } catch (Exception e) {
+            log.error("Failed to send reminder notification to {}: {}", email, e.getMessage(), e);
+        }
     }
 }

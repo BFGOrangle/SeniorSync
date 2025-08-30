@@ -49,4 +49,10 @@ public interface INotificationService {
      * @param previousStaffId The staff member who was previously assigned
      */
     void notifyRequestUnassignment(SeniorRequest request, Long previousStaffId);
+    
+    /**
+     * Send reminder notification when a scheduled reminder is triggered
+     * @param reminder The reminder to send notification for
+     */
+    void notifyReminderTriggered(Reminder reminder);
 }
