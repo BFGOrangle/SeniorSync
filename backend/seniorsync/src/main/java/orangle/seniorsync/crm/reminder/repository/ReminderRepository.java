@@ -11,4 +11,5 @@ import java.util.List;
 public interface ReminderRepository extends JpaRepository<Reminder, Long> {
     List<Reminder> findByRequestId(Long requestId);
     List<Reminder> findByReminderDateBetween(OffsetDateTime start, OffsetDateTime end);
+    List<Reminder> findByReminderDateAfter(OffsetDateTime dateTime);
 }
