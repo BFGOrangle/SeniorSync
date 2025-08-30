@@ -344,6 +344,7 @@ export function RequestFilters({
                         </Label>
                       </div>
                     ))}
+
                   </div>
                 </div>
 
@@ -650,6 +651,7 @@ export function RequestFilters({
                     Staff ({filters.assignedStaff.length})
                   </Badge>
                 )}
+
                 {filters.dueDate && Object.keys(filters.dueDate).length > 0 && (
                   <Badge variant="secondary" className="text-xs">
                     Due Date ({Object.keys(filters.dueDate).length})

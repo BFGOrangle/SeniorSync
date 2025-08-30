@@ -304,6 +304,7 @@ export function useRequestManagement() {
       requestType?: number[];
       assignedStaff?: number[];
       searchTerm?: string;
+      showAllCompleted?: boolean; // Show all completed requests, not just last week
       dueDate?: {
         overdue?: boolean;
         dueToday?: boolean;

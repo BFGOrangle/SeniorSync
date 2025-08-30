@@ -222,12 +222,7 @@ export function RequestKanbanPriorityView({
                       </span>
                     </div>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className="bg-white/80 text-gray-700 font-medium"
-                  >
-                    {columnRequests.length}
-                  </Badge>
+                  {/* Count badges removed for cleaner priority view */}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 flex-1 flex flex-col min-h-0 overflow-hidden">

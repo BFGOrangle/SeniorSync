@@ -344,6 +344,7 @@ export const requestUtils = {
       requestType?: number[];
       assignedStaff?: number[];
       searchTerm?: string;
+      showAllCompleted?: boolean; // Show all completed requests, not just last week
       dueDate?: {
         overdue?: boolean;
         dueToday?: boolean;
@@ -483,8 +484,9 @@ export const requestUtils = {
       }
 
       // Auto-filter completed requests to show only last week by default
+      // UNLESS the user explicitly wants to see all completed requests
       // This improves UX by keeping the completed column clean and relevant
-      if (request.frontendStatus === 'completed') {
+      if (request.frontendStatus === 'completed' && !filters.showAllCompleted) {
         if (request.completedAt) {
           const completedDate = new Date(request.completedAt);
           const today = new Date();
