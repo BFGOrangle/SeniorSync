@@ -3,16 +3,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Calendar, Clock, User, FileText, Bell } from 'lucide-react';
-import { useDailyOverview } from '@/hooks/use-daily-overview';
+import { useDailyOverview, DashboardMode } from '@/hooks/use-daily-overview';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 interface DailyOverviewWidgetProps {
   className?: string;
+  mode?: DashboardMode;
 }
 
-export function DailyOverviewWidget({ className }: DailyOverviewWidgetProps) {
-  const { todaysReminders, todaysRequests, loading, error } = useDailyOverview();
+export function DailyOverviewWidget({ className, mode = 'personal' }: DailyOverviewWidgetProps) {
+  const { todaysReminders, todaysRequests, loading, error } = useDailyOverview(mode);
 
   if (loading) {
     return (
@@ -63,7 +64,7 @@ export function DailyOverviewWidget({ className }: DailyOverviewWidgetProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Daily Overview
+          {mode === 'personal' ? 'My Daily Overview' : 'Daily Overview'}
           {hasUrgentRequests && (
             <Badge variant="destructive" className="ml-auto">
               <AlertTriangle className="h-3 w-3 mr-1" />

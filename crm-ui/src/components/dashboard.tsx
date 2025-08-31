@@ -10,10 +10,6 @@ import {
 import {
   StatusDistributionChart,
   PriorityDistributionChart,
-  RequestTypesChart,
-  MonthlyTrendChart,
-  StaffWorkloadChart,
-  RequestTypeDetails,
 } from "@/components/dashboard-charts";
 
 import { CreateRequestModal } from "@/components/create-request-modal";
@@ -145,7 +141,7 @@ export default function Dashboard() {
 
       {/* Due Date Analytics Widget */}
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-        <DailyOverviewWidget className="lg:col-span-1" />
+        <DailyOverviewWidget className="lg:col-span-1" mode={mode} />
         
         {/* AI Recommendations Section - now in grid */}
         <div className="lg:col-span-2">
