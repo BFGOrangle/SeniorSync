@@ -21,6 +21,8 @@ import { RequestComment, CommentType, CommentUtils, COMMENT_TYPE_CONFIG } from "
 import { useRequestComments } from "@/hooks/use-comments";
 import { useCurrentUser } from "@/contexts/user-context";
 import { cn } from "@/lib/utils";
+import { MentionCommentInput } from "@/components/mention-comment-input";
+import { CommentWithMentions, MentionedStaffList } from "@/components/comment-with-mentions";
 
 interface CommentSectionProps {
   requestId: number;
@@ -54,6 +56,7 @@ export function CommentSection({ requestId, className }: CommentSectionProps) {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [selectedCommentType, setSelectedCommentType] = useState<CommentType>('GENERAL');
+  const [mentionedStaffIds, setMentionedStaffIds] = useState<number[]>([]);
 
   const getCommentIcon = (commentType: CommentType) => {
     const config = COMMENT_TYPE_CONFIG[commentType];
@@ -73,11 +76,18 @@ export function CommentSection({ requestId, className }: CommentSectionProps) {
     if (!newComment.trim()) return;
 
     try {
-      await createComment(newComment.trim(), selectedCommentType, currentUserId);
+      // The backend automatically handles mention notifications asynchronously
+      await createComment(
+        newComment.trim(), 
+        selectedCommentType, 
+        currentUserId,
+        mentionedStaffIds.length > 0 ? mentionedStaffIds : undefined
+      );
       
       // Reset form
       setNewComment("");
       setSelectedCommentType('GENERAL');
+      setMentionedStaffIds([]);
       setIsAddingComment(false);
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -160,11 +170,11 @@ export function CommentSection({ requestId, className }: CommentSectionProps) {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Comment</label>
-            <Textarea
+            <MentionCommentInput
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Enter your comment or follow-up action..."
-              className="min-h-[100px]"
+              onChange={setNewComment}
+              onMentionedStaffChange={setMentionedStaffIds}
+              placeholder="Enter your comment or follow-up action... Type @ to mention staff"
             />
           </div>
 
@@ -176,6 +186,7 @@ export function CommentSection({ requestId, className }: CommentSectionProps) {
                 setIsAddingComment(false);
                 setNewComment("");
                 setSelectedCommentType('GENERAL');
+                setMentionedStaffIds([]);
               }}
             >
               Cancel
@@ -252,9 +263,15 @@ export function CommentSection({ requestId, className }: CommentSectionProps) {
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {comment.comment}
-                </p>
+                <CommentWithMentions comment={comment} />
+                
+                {/* Show mentioned staff if any */}
+                {comment.mentionedStaff && comment.mentionedStaff.length > 0 && (
+                  <MentionedStaffList 
+                    mentionedStaff={comment.mentionedStaff}
+                    className="mt-2"
+                  />
+                )}
 
                 <div className="mt-2 text-xs text-gray-500">
                   {CommentUtils.formatTimestamp(comment.createdAt)}

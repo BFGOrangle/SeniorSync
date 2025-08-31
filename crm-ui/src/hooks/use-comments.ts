@@ -26,7 +26,7 @@ interface UseCommentsReturn {
   
   // Actions
   fetchComments: () => Promise<void>;
-  createComment: (comment: string, commentType: CommentType, commenterId: number) => Promise<RequestComment>;
+  createComment: (comment: string, commentType: CommentType, commenterId: number, mentionedStaffIds?: number[]) => Promise<RequestComment>;
   deleteComment: (commentId: number) => Promise<void>;
   
   // Local state management (for UI optimizations)
@@ -78,7 +78,8 @@ export function useComments({
   const createComment = useCallback(async (
     comment: string,
     commentType: CommentType,
-    commenterId: number
+    commenterId: number,
+    mentionedStaffIds?: number[]
   ): Promise<RequestComment> => {
     if (!requestId) {
       throw new Error('Request ID is required to create a comment');
@@ -87,7 +88,7 @@ export function useComments({
     setError(null);
     
     try {
-      const newComment = await createCommentForRequest(requestId, comment, commentType, commenterId);
+      const newComment = await createCommentForRequest(requestId, comment, commentType, commenterId, mentionedStaffIds);
       
       // Add to local state (at the beginning since we sort by newest first)
       setComments(prev => [newComment, ...prev]);

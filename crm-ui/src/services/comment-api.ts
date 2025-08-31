@@ -93,7 +93,8 @@ export async function createCommentForRequest(
   requestId: number,
   comment: string,
   commentType: string,
-  commenterId: number
+  commenterId: number,
+  mentionedStaffIds?: number[]
 ): Promise<RequestComment> {
   try {
     const createData: CreateCommentDto = {
@@ -101,6 +102,7 @@ export async function createCommentForRequest(
       comment,
       commentType,
       commenterId,
+      mentionedStaffIds,
     };
     return await commentApi.createComment(createData);
   } catch (error) {
