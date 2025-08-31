@@ -70,6 +70,7 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editedRequest, setEditedRequest] =
     useState<SeniorRequestDisplayView | null>(null);
+  const [dueDateValidationError, setDueDateValidationError] = useState<string | null>(null);
 
   const {
     request,
@@ -90,6 +91,11 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
 
   const handleSave = async () => {
     if (!editedRequest) return;
+    
+    // Check for validation errors before saving
+    if (dueDateValidationError) {
+      return; // Don't save if there are validation errors
+    }
 
     try {
       await updateRequest(editedRequest);
@@ -103,6 +109,7 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
   const handleCancel = () => {
     if (request) {
       setEditedRequest(request);
+      setDueDateValidationError(null);
       setIsEditing(false);
     }
   };
@@ -266,7 +273,12 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
             </>
           ) : canEdit && isEditing ? (
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleSave} className="h-8">
+              <Button 
+                size="sm" 
+                onClick={handleSave} 
+                className="h-8"
+                disabled={!!dueDateValidationError}
+              >
                 <Save className="h-4 w-4 mr-1" />
                 Save
               </Button>
@@ -574,6 +586,8 @@ export function RequestDetailsPage({ requestId }: RequestDetailsPageProps) {
                       })
                     }
                     disabled={false}
+                    requireTime={true}
+                    onValidationError={setDueDateValidationError}
                   />
                 ) : (
                   <div className="flex items-center gap-2">

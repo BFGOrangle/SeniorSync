@@ -1,3 +1,10 @@
+// Mention information
+export interface MentionedStaff {
+  id: number;
+  name: string;
+  email?: string;
+}
+
 // Backend API types for comment management
 export interface RequestCommentDto {
   id: number;
@@ -8,6 +15,8 @@ export interface RequestCommentDto {
   commenterName: string;
   createdAt: string; // ISO string (OffsetDateTime from backend)
   updatedAt: string; // ISO string
+  mentionedStaffIds?: number[]; // Staff IDs mentioned in this comment
+  mentionedStaff?: MentionedStaff[]; // Full staff information for mentions
 }
 
 export interface CreateCommentDto {
@@ -15,6 +24,7 @@ export interface CreateCommentDto {
   comment: string;
   commentType: string;
   commenterId: number;
+  mentionedStaffIds?: number[]; // Staff IDs to mention
 }
 
 // Frontend types for UI compatibility
@@ -27,6 +37,8 @@ export interface RequestComment {
   requestId: number;
   createdAt: string;
   updatedAt?: string;
+  mentionedStaffIds?: number[]; // Staff IDs mentioned in this comment
+  mentionedStaff?: MentionedStaff[]; // Full staff information for mentions
 }
 
 // Comment types based on business logic
@@ -110,6 +122,8 @@ export class CommentUtils {
       requestId: dto.requestId,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
+      mentionedStaffIds: dto.mentionedStaffIds,
+      mentionedStaff: dto.mentionedStaff,
     };
   }
 
@@ -118,13 +132,15 @@ export class CommentUtils {
     requestId: number,
     comment: string,
     commentType: CommentType,
-    commenterId: number
+    commenterId: number,
+    mentionedStaffIds?: number[]
   ): CreateCommentDto {
     return {
       requestId,
       comment,
       commentType,
       commenterId,
+      mentionedStaffIds,
     };
   }
 
@@ -192,5 +208,80 @@ export class CommentUtils {
     } catch {
       return 'Unknown';
     }
+  }
+
+  // Parse @ mentions from comment text
+  static parseMentions(comment: string): string[] {
+    const mentionRegex = /@([a-zA-Z0-9._-]+)/g;
+    const mentions: string[] = [];
+    let match;
+    
+    while ((match = mentionRegex.exec(comment)) !== null) {
+      const mention = match[1];
+      if (!mentions.includes(mention)) {
+        mentions.push(mention);
+      }
+    }
+    
+    return mentions;
+  }
+
+  // Format comment with mentions highlighted
+  static formatCommentWithMentions(comment: string, mentionedStaff?: MentionedStaff[]): string {
+    if (!mentionedStaff || mentionedStaff.length === 0) {
+      return comment;
+    }
+
+    let formattedComment = comment;
+    
+    // Create a map of mention patterns to staff info
+    const mentionMap = new Map<string, MentionedStaff>();
+    mentionedStaff.forEach(staff => {
+      // Try to match by name variations
+      const nameVariations = [
+        staff.name.toLowerCase().replace(/\s+/g, '.'),
+        staff.name.toLowerCase().replace(/\s+/g, '_'),
+        staff.name.toLowerCase().replace(/\s+/g, ''),
+      ];
+      
+      nameVariations.forEach(variation => {
+        mentionMap.set(variation, staff);
+      });
+    });
+
+    // Replace mentions with highlighted versions
+    const mentionRegex = /@([a-zA-Z0-9._-]+)/g;
+    formattedComment = formattedComment.replace(mentionRegex, (match, username) => {
+      const staff = mentionMap.get(username.toLowerCase());
+      if (staff) {
+        return `<span class="mention" data-staff-id="${staff.id}">@${staff.name}</span>`;
+      }
+      return match;
+    });
+
+    return formattedComment;
+  }
+
+  // Extract staff IDs from mention text and staff list
+  static extractMentionedStaffIds(comment: string, staffOptions: Array<{id: number, fullName: string}>): number[] {
+    const mentions = this.parseMentions(comment);
+    const staffIds: number[] = [];
+    
+    mentions.forEach(mention => {
+      const staff = staffOptions.find(s => {
+        const nameVariations = [
+          s.fullName.toLowerCase().replace(/\s+/g, '.'),
+          s.fullName.toLowerCase().replace(/\s+/g, '_'),
+          s.fullName.toLowerCase().replace(/\s+/g, ''),
+        ];
+        return nameVariations.includes(mention.toLowerCase());
+      });
+      
+      if (staff && !staffIds.includes(staff.id)) {
+        staffIds.push(staff.id);
+      }
+    });
+    
+    return staffIds;
   }
 }

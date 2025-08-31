@@ -1,6 +1,7 @@
 package orangle.seniorsync.crm.requestmanagement.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public record RequestCommentDto(
         Long id,
@@ -10,6 +11,8 @@ public record RequestCommentDto(
         Long requestId,
         String commenterName,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        List<Long> mentionedStaffIds,
+        List<MentionedStaffDto> mentionedStaff
 ) {
 }

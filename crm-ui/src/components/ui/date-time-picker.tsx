@@ -14,14 +14,23 @@ import {
   PopoverPortal
 } from "@/components/ui/popover";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { X } from "lucide-react";
  
 interface DateTimePickerProps {
   value?: string | Date;
   onChange?: (value: string | undefined) => void;
   disabled?: boolean;
+  requireTime?: boolean;
+  onValidationError?: (error: string | null) => void;
 }
 
-export function DateTimePicker({ value, onChange, disabled = false }: DateTimePickerProps) {
+export function DateTimePicker({ 
+  value, 
+  onChange, 
+  disabled = false, 
+  requireTime = false,
+  onValidationError 
+}: DateTimePickerProps) {
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (value) {
       return new Date(value);
@@ -29,22 +38,60 @@ export function DateTimePicker({ value, onChange, disabled = false }: DateTimePi
     return undefined;
   });
   const [isOpen, setIsOpen] = React.useState(false);
+  const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [hasUserSetTime, setHasUserSetTime] = React.useState(false);
  
   // Update internal state when value prop changes
   React.useEffect(() => {
     if (value) {
-      setDate(new Date(value));
+      const newDate = new Date(value);
+      setDate(newDate);
+      // If date has time set, mark as user has set time
+      setHasUserSetTime(newDate.getHours() !== 0 || newDate.getMinutes() !== 0);
     } else {
       setDate(undefined);
+      setHasUserSetTime(false);
     }
+    setValidationError(null);
   }, [value]);
 
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
   
+  const validateDateTime = (dateToValidate: Date | undefined) => {
+    if (requireTime && dateToValidate) {
+      // Check if time has been explicitly set (not default midnight)
+      const hasTime = hasUserSetTime || (dateToValidate.getHours() !== 0 || dateToValidate.getMinutes() !== 0);
+      if (!hasTime) {
+        const error = "Please set a time for the selected date";
+        setValidationError(error);
+        onValidationError?.(error);
+        return false;
+      }
+    }
+    setValidationError(null);
+    onValidationError?.(null);
+    return true;
+  };
+  
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      setDate(selectedDate);
-      onChange?.(selectedDate.toISOString());
+      const newDate = new Date(selectedDate);
+      // If time hasn't been set yet, set a default time
+      if (!hasUserSetTime) {
+        // Set default time to 9:00 AM
+        newDate.setHours(9, 0, 0, 0);
+        setHasUserSetTime(true); // Mark as time has been set with default
+      } else {
+        // Preserve existing time if user had set it
+        if (date) {
+          newDate.setHours(date.getHours(), date.getMinutes());
+        }
+      }
+      setDate(newDate);
+      
+      if (validateDateTime(newDate)) {
+        onChange?.(newDate.toISOString());
+      }
     }
   };
  
@@ -55,13 +102,15 @@ export function DateTimePicker({ value, onChange, disabled = false }: DateTimePi
     // If no date is selected, default to today
     const baseDate = date ?? new Date();
     const newDate = new Date(baseDate);
-    newDate.setHours(0);
-    newDate.setMinutes(0);
+    
+    // Preserve existing time components when changing one component
+    if (date) {
+      newDate.setHours(date.getHours(), date.getMinutes());
+    }
 
     if (type === "hour") {
-      newDate.setHours(
-        (parseInt(value) % 12) + (newDate.getHours() >= 12 ? 12 : 0)
-      );
+      const currentAmPm = newDate.getHours() >= 12 ? 12 : 0;
+      newDate.setHours((parseInt(value) % 12) + currentAmPm);
     } else if (type === "minute") {
       newDate.setMinutes(parseInt(value));
     } else if (type === "ampm") {
@@ -72,25 +121,55 @@ export function DateTimePicker({ value, onChange, disabled = false }: DateTimePi
           : (currentHours >= 12 ? currentHours - 12 : currentHours)
       );
     }
+    
+    setHasUserSetTime(true);
     setDate(newDate);
-    onChange?.(newDate.toISOString());
+    
+    if (validateDateTime(newDate)) {
+      onChange?.(newDate.toISOString());
+    }
   };
  
+  const handleClear = () => {
+    setDate(undefined);
+    setHasUserSetTime(false);
+    setValidationError(null);
+    onValidationError?.(null);
+    onChange?.(undefined);
+    setIsOpen(false);
+  };
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+    <div className="space-y-2">
+      <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
       <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground"
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            className={cn(
+              "flex-1 justify-start text-left font-normal",
+              !date && "text-muted-foreground",
+              validationError && "border-red-500 focus:border-red-500"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, "MM/dd/yyyy hh:mm aa") : "MM/DD/YYYY hh:mm aa"}
+          </Button>
+          {date && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              disabled={disabled}
+              onClick={handleClear}
+              className="shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "MM/dd/yyyy hh:mm aa") : "MM/DD/YYYY hh:mm aa"}
-        </Button>
+        </div>
       </PopoverTrigger>
 
       <PopoverPortal>
@@ -175,7 +254,10 @@ export function DateTimePicker({ value, onChange, disabled = false }: DateTimePi
           {/* time selector UI */}
         </PopoverContent>
       </PopoverPortal>
-    </Popover>
-
+      </Popover>
+      {validationError && (
+        <p className="text-sm text-red-600">{validationError}</p>
+      )}
+    </div>
   );
 }
