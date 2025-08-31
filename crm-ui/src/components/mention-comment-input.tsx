@@ -84,13 +84,13 @@ export function MentionCommentInput({
     return staffOptions
       .map(staff => ({
         id: staff.id,
-        name: staff.fullName,
+        fullName: staff.fullName,
         jobTitle: staff.jobTitle,
         mention: staff.fullName.toLowerCase().replace(/\s+/g, '.'), // "John Doe" -> "john.doe"
       }))
       .filter(suggestion => 
         query === "" || 
-        suggestion.name.toLowerCase().includes(query.toLowerCase()) ||
+        suggestion.fullName.toLowerCase().includes(query.toLowerCase()) ||
         suggestion.mention.includes(query.toLowerCase())
       )
       .slice(0, 6); // Limit to 6 suggestions for better UX in cursor popup
@@ -270,11 +270,11 @@ export function MentionCommentInput({
                 onMouseEnter={() => setSelectedIndex(index)}
               >
                 <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium text-blue-700 flex-shrink-0">
-                  {suggestion.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {suggestion.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="font-medium text-gray-900 truncate text-sm">
-                    {suggestion.name}
+                    {suggestion.fullName}
                   </span>
                   <span className="text-xs text-blue-600 truncate">
                     @{suggestion.mention}
