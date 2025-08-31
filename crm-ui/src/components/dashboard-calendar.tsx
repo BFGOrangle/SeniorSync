@@ -76,11 +76,13 @@ export function DashboardCalendar({
           tasks: []
         };
         
-        existing.count += 1;
+        if (request.frontendStatus !== "completed") {
+            existing.count += 1;
+        }
         existing.tasks.push(request);
         
-        // Check if overdue or due today
-        if (dueDate < today && !isSameDay(dueDate, today)) {
+        // Check if overdue or due today (but don't count completed requests as overdue)
+        if (dueDate < today && !isSameDay(dueDate, today) && request.frontendStatus !== "completed") {
           existing.overdue += 1;
         } else if (isSameDay(dueDate, today)) {
           existing.dueToday += 1;
@@ -253,10 +255,10 @@ export function DashboardCalendar({
               {taskData.count > 0 && (
                 <div className="absolute bottom-1 right-1">
                   <Badge 
-                    variant={"destructive"}
+                    variant={taskData.overdue > 0 ? "destructive" : "secondary"}
                     className="text-xs px-1.5 py-0.5"
                   >
-                    Requests due: {taskData.count}
+                    {taskData.overdue > 0 ? `Overdue requests: ${taskData.overdue}` : `Requests due: ${taskData.count}`}
                   </Badge>
                 </div>
               )}
