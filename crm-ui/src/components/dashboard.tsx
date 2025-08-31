@@ -10,15 +10,11 @@ import {
 import {
   StatusDistributionChart,
   PriorityDistributionChart,
-  RequestTypesChart,
-  MonthlyTrendChart,
-  StaffWorkloadChart,
-  RequestTypeDetails,
 } from "@/components/dashboard-charts";
 
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { AIRecommendationsWidget } from "@/components/ai-recommendations-widget";
-import { DueDateAnalyticsWidget } from "@/components/dashboard/due-date-analytics-widget";
+import { DailyOverviewWidget } from "@/components/dashboard/daily-overview-widget";
 import { RefreshCw, Calendar, Plus } from "lucide-react";
 import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
 import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
@@ -145,7 +141,7 @@ export default function Dashboard() {
 
       {/* Due Date Analytics Widget */}
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-        <DueDateAnalyticsWidget className="lg:col-span-1" />
+        <DailyOverviewWidget className="lg:col-span-1" mode={mode} />
         
         {/* AI Recommendations Section - now in grid */}
         <div className="lg:col-span-2">

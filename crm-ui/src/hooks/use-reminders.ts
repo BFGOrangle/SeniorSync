@@ -6,7 +6,6 @@ import {
   ReminderUtils,
 } from "@/types/reminder";
 import {
-  reminderApi,
   fetchRemindersForRequest,
   createReminderForRequest,
   updateReminder as updateReminderApi,
@@ -58,11 +57,6 @@ export function useReminders({
 
   // Fetch reminders from the API
   const fetchReminders = useCallback(async () => {
-    if (!requestId) {
-      setReminders([]);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 

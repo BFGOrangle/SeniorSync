@@ -1,6 +1,8 @@
 package orangle.seniorsync.crm.reminder.service;
 
 import lombok.extern.slf4j.Slf4j;
+import orangle.seniorsync.common.service.AbstractCenterFilteredService;
+import orangle.seniorsync.common.service.IUserContextService;
 import orangle.seniorsync.crm.reminder.dto.CreateReminderDto;
 import orangle.seniorsync.crm.reminder.dto.ReminderDto;
 import orangle.seniorsync.crm.reminder.dto.UpdateReminderDto;
@@ -9,15 +11,17 @@ import orangle.seniorsync.crm.reminder.mapper.ReminderMapper;
 import orangle.seniorsync.crm.reminder.mapper.UpdateReminderMapper;
 import orangle.seniorsync.crm.reminder.model.Reminder;
 import orangle.seniorsync.crm.reminder.repository.ReminderRepository;
-import orangle.seniorsync.crm.staffmanagement.model.Staff;
+import orangle.seniorsync.crm.requestmanagement.model.SeniorRequest;
 import orangle.seniorsync.crm.staffmanagement.repository.StaffRepository;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Slf4j
 @Service
-public class ReminderService implements IReminderService {
+public class ReminderService extends AbstractCenterFilteredService<Reminder, Long> implements IReminderService {
 
     private final ReminderRepository reminderRepository;
     private final ReminderMapper reminderMapper;
@@ -25,8 +29,6 @@ public class ReminderService implements IReminderService {
     private final UpdateReminderMapper updateReminderMapper;
     private final INotificationService notificationService;
     private final QuartzReminderSchedulerService schedulerService;
-    private final StaffRepository staffRepository;
-    private final IEmailService emailService;
 
     public ReminderService(ReminderRepository reminderRepository, 
                           ReminderMapper reminderMapper, 
@@ -35,25 +37,45 @@ public class ReminderService implements IReminderService {
                           INotificationService notificationService,
                           QuartzReminderSchedulerService schedulerService,
                           StaffRepository staffRepository,
-                          IEmailService emailService) {
+                          IEmailService emailService,
+                          IUserContextService userContextService) {
+        super(userContextService);
         this.reminderRepository = reminderRepository;
         this.reminderMapper = reminderMapper;
         this.createReminderMapper = createReminderMapper;
         this.updateReminderMapper = updateReminderMapper;
         this.notificationService = notificationService;
         this.schedulerService = schedulerService;
-        this.staffRepository = staffRepository;
-        this.emailService = emailService;
+    }
+
+    @Override
+    protected JpaSpecificationExecutor<Reminder> getRepository() {
+        return reminderRepository;
+    }
+
+    @Override
+    protected Specification<Reminder> createCenterFilterSpec(Long centerId) {
+        return (root, query, criteriaBuilder) -> {
+            // Use subquery since there's no JPA relationship between Reminder and SeniorRequest
+            var subquery = query.subquery(Long.class);
+            var requestRoot = subquery.from(SeniorRequest.class);
+            subquery.select(requestRoot.get("id"));
+            subquery.where(criteriaBuilder.equal(requestRoot.get("centerId"), centerId));
+            
+            return criteriaBuilder.in(root.get("requestId")).value(subquery);
+        };
     }
 
     @Override
     public List<ReminderDto> findReminders(Long requestId) {
-        List<Reminder> reminders;
-        if (requestId == null) {
-            reminders = reminderRepository.findAll();
-        } else {
-            reminders = reminderRepository.findByRequestId(requestId);
+        Specification<Reminder> spec = null;
+        
+        if (requestId != null) {
+            spec = (root, query, criteriaBuilder) -> 
+                criteriaBuilder.equal(root.get("requestId"), requestId);
         }
+        
+        List<Reminder> reminders = findAllWithCenterFilter(spec);
         return reminders.stream()
                 .map(reminderMapper::toDto)
                 .toList();

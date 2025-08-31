@@ -109,7 +109,7 @@ export const reminderApi = new ReminderApiClient();
 
 // Export helper functions for use in components
 export async function fetchRemindersForRequest(
-  requestId: number
+  requestId?: number
 ): Promise<Reminder[]> {
   try {
     return await reminderApi.getReminders(requestId);

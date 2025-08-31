@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -27,6 +28,8 @@ public class NotificationService implements INotificationService {
     
     @Value("${seniorsync.app.base-url:https://seniorsync.sg}")
     private String appBaseUrl;
+
+    private ZoneOffset utcPlus8Offset = ZoneOffset.ofHours(8);
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm");
     
@@ -201,7 +204,9 @@ public class NotificationService implements INotificationService {
     }
     
     private String buildReminderCreationHtml(String staffName, Reminder reminder) {
-        String reminderDate = reminder.getReminderDate().format(DATE_FORMATTER);
+        String reminderDate = reminder.getReminderDate()
+                .withOffsetSameInstant(utcPlus8Offset)
+                .format(DATE_FORMATTER);
         String dashboardUrl = appBaseUrl + "/admin/dashboard";
         
         return String.format("""
@@ -308,7 +313,9 @@ public class NotificationService implements INotificationService {
     }
     
     private String buildReminderTriggeredHtml(String staffName, Reminder reminder) {
-        String reminderDate = reminder.getReminderDate().format(DATE_FORMATTER);
+        String reminderDate = reminder.getReminderDate()
+                .withOffsetSameInstant(utcPlus8Offset)
+                .format(DATE_FORMATTER);
         String dashboardUrl = appBaseUrl + "/admin/dashboard";
         
         return String.format("""
