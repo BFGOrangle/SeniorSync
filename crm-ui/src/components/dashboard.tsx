@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   TotalRequestsCard,
@@ -10,13 +11,16 @@ import {
 import {
   StatusDistributionChart,
   PriorityDistributionChart,
+  StaffWorkloadChart,
 } from "@/components/dashboard-charts";
+import {DashboardCalendar} from "@/components/dashboard-calendar";
 
 import { CreateRequestModal } from "@/components/create-request-modal";
 import { AIRecommendationsWidget } from "@/components/ai-recommendations-widget";
 import { DailyOverviewWidget } from "@/components/dashboard/daily-overview-widget";
 import { RefreshCw, Calendar, Plus } from "lucide-react";
 import { useDashboardWithMode } from "@/hooks/use-dashboard-with-mode";
+import { useRequestManagement } from "@/hooks/use-requests";
 import { DashboardToggle, DashboardMode } from "@/components/dashboard-toggle";
 import { useCurrentUser } from "@/contexts/user-context";
 import { ErrorMessageCallout } from "@/components/error-message-callout";
@@ -43,6 +47,21 @@ export default function Dashboard() {
     forceRefresh,
     clearError,
   } = useDashboardWithMode(isAdmin ? "center" : "personal");
+
+  // Get requests data for the calendar
+  const { requests: allRequests, loading: requestsLoading } = useRequestManagement();
+
+  // Filter requests based on dashboard mode
+  const requests = useMemo(() => {
+    if (mode === 'personal' && currentUser?.backendStaffId) {
+      // In personal mode, only show requests assigned to the current user
+      return allRequests.filter(request => 
+        request.assignedStaffId === currentUser.backendStaffId
+      );
+    }
+    // In center mode, show all requests
+    return allRequests;
+  }, [allRequests, mode, currentUser?.backendStaffId]);
 
   const handleRefresh = async () => {
     await forceRefresh();
@@ -173,13 +192,28 @@ export default function Dashboard() {
 
       {/* Staff Workload and Request Details */}
       {/* Only show StaffWorkloadChart in center mode for admins */}
-      {/* <div className={`grid gap-6 ${showStaffWorkload ? 'md:grid-cols-1 lg:grid-cols-2' : 'md:grid-cols-1'}`}>
-        
+      <div className={`grid gap-6 ${showStaffWorkload ? 'md:grid-cols-1 lg:grid-cols-3' : 'md:grid-cols-1'}`}>
+
         {showStaffWorkload && (
           <StaffWorkloadChart data={staffWorkload} loading={loading} />
         )}
-        <RequestTypeDetails data={requestTypeSummaries} loading={loading} />
-      </div> */}
+
+        <div className="lg:col-span-2">
+        <DashboardCalendar 
+          requests={requests}
+          mode={mode}
+          onDateClick={(date, tasks) => {
+            // Navigate to request management 
+            if (isAdmin) {
+              window.location.href = `/admin/request-management`;
+            } else {
+              window.location.href = `/staff/request-management`;
+            }
+          }}
+        />
+        </div>
+        {/* <RequestTypeDetails data={requestTypeSummaries} loading={loading} /> */}
+      </div>
 
       {/* Floating Create Request Button */}
       <CreateRequestModal
