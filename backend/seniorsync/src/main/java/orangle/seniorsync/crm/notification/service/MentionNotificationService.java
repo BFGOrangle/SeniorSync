@@ -56,7 +56,6 @@ public class MentionNotificationService implements IMentionNotificationService {
         }
         
         SeniorRequest request = requestOpt.get();
-        String requestUrl = appBaseUrl + "/requests/" + request.getId();
         
         // Send email to each mentioned staff member
         for (Long staffId : mentionRequest.getMentionedStaffIds()) {
@@ -70,6 +69,9 @@ public class MentionNotificationService implements IMentionNotificationService {
                 
                 Staff staff = staffOpt.get();
                 String email = staff.getContactEmail();
+                String rolePath = determineRolePath(staff);
+
+                String requestUrl = appBaseUrl + rolePath + "/requests/" + request.getId();
                 
                 if (email == null || email.trim().isEmpty()) {
                     log.warn("No email address found for staff member {}", staffId);
@@ -134,4 +136,17 @@ public class MentionNotificationService implements IMentionNotificationService {
             requestUrl
         );
     }
+
+    /**
+     * Determines the role-based path prefix for URLs based on staff role
+     * @param staff The staff member
+     * @return "/admin" for admin users, "/staff" for regular staff
+     */
+    private String determineRolePath(Staff staff) {
+        if (staff.isAdmin()) {
+            return "/admin";
+        }
+        return "/staff";
+    }
+
 }

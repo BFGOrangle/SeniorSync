@@ -62,7 +62,7 @@ public class NotificationService implements INotificationService {
         }
         
         String subject = "New Request Assigned: " + request.getTitle();
-        String htmlBody = buildRequestAssignmentHtml(staff.getFullName(), request, seniorName);
+        String htmlBody =  buildRequestAssignmentHtml(staff.getFullName(), request, seniorName, staff);
         
         try {
             emailService.sendHtmlEmail(email, subject, htmlBody);
@@ -97,7 +97,7 @@ public class NotificationService implements INotificationService {
         }
         
         String subject = "New Reminder: " + reminder.getTitle();
-        String htmlBody = buildReminderCreationHtml(staff.getFullName(), reminder);
+        String htmlBody = buildReminderCreationHtml(staff.getFullName(), reminder, staff);
         
         try {
             emailService.sendHtmlEmail(email, subject, htmlBody);
@@ -137,8 +137,9 @@ public class NotificationService implements INotificationService {
         }
     }
     
-    private String buildRequestAssignmentHtml(String staffName, SeniorRequest request, String seniorName) {
-        String requestUrl = appBaseUrl + "/requests/" + request.getId();
+    private String buildRequestAssignmentHtml(String staffName, SeniorRequest request, String seniorName, Staff staff) {
+        String rolePath = determineRolePath(staff);
+        String requestUrl = appBaseUrl + rolePath + "/requests/" + request.getId();
         
         return String.format("""
             <!DOCTYPE html>
@@ -203,11 +204,12 @@ public class NotificationService implements INotificationService {
         );
     }
     
-    private String buildReminderCreationHtml(String staffName, Reminder reminder) {
+    private String buildReminderCreationHtml(String staffName, Reminder reminder, Staff staff) {
         String reminderDate = reminder.getReminderDate()
                 .withOffsetSameInstant(utcPlus8Offset)
                 .format(DATE_FORMATTER);
-        String dashboardUrl = appBaseUrl + "/admin/dashboard";
+        String rolePath = determineRolePath(staff);
+        String dashboardUrl = appBaseUrl + rolePath + "/dashboard";
         
         return String.format("""
             <!DOCTYPE html>
@@ -312,11 +314,12 @@ public class NotificationService implements INotificationService {
         );
     }
     
-    private String buildReminderTriggeredHtml(String staffName, Reminder reminder) {
+    private String buildReminderTriggeredHtml(String staffName, Reminder reminder, Staff staff) {
         String reminderDate = reminder.getReminderDate()
                 .withOffsetSameInstant(utcPlus8Offset)
                 .format(DATE_FORMATTER);
-        String dashboardUrl = appBaseUrl + "/admin/dashboard";
+        String rolePath = determineRolePath(staff);
+        String dashboardUrl = appBaseUrl + rolePath + "/dashboard";
         
         return String.format("""
             <!DOCTYPE html>
@@ -398,6 +401,18 @@ public class NotificationService implements INotificationService {
         return "Low";
     }
     
+    /**
+     * Determines the role-based path prefix for URLs based on staff role
+     * @param staff The staff member
+     * @return "/admin" for admin users, "/staff" for regular staff
+     */
+    private String determineRolePath(Staff staff) {
+        if (staff.isAdmin()) {
+            return "/admin";
+        }
+        return "/staff";
+    }
+    
     // Async implementations
     
     @Override
@@ -458,7 +473,7 @@ public class NotificationService implements INotificationService {
         }
         
         String subject = "⏰ Reminder: " + reminder.getTitle();
-        String htmlBody = buildReminderTriggeredHtml(staff.getFullName(), reminder);
+        String htmlBody = buildReminderTriggeredHtml(staff.getFullName(), reminder, staff);
         
         try {
             emailService.sendHtmlEmail(email, subject, htmlBody);
