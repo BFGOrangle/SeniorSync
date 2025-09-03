@@ -43,7 +43,7 @@ export function useDailyOverview(mode: DashboardMode = 'personal'): DailyOvervie
       if (!request.dueDate) return false;
       const dueDate = new Date(request.dueDate);
       const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-      return dueDateOnly.getTime() === today.getTime();
+      return dueDateOnly.getTime() === today.getTime() && request.status != "COMPLETED";
     });
 
     // Apply mode-based filtering
